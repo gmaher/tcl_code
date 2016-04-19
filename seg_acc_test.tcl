@@ -43,7 +43,9 @@ proc testSegAcc {} {
 	global lsGUIcurrentPathNumber
 	global lsGUIcurrentPositionNumber
 	global itklsGUIParamsBatch
-	
+	global itklsGUIParams
+	global symbolicName
+
 	foreach grpName [group_names] {
 		set grpPoints {}
 		foreach obj [group_get $grpName] {
@@ -63,9 +65,15 @@ proc testSegAcc {} {
 			set lsGUIcurrentPathNumber $pathmap($grpName)
 			set lsGUIcurrentPositionNumber 0
 			set itklsGUIParamsBatch(addToGroup) 1
+			set itklsGUIParamsBatch(posList) $grpPoints
+			set itklsGUIParams(phyRadius) 0.3125
+
+			#itklsBatchRun
+			lsGUIupdatePath
 
 			itkLSDoBatch $pathmap($grpName) $grpPoints $new_name
 			#lsGUIaddToGroupBatch "levelset"
+
 			guiSV_group_update_tree
 		}
 	}
@@ -96,3 +104,6 @@ proc testSegAcc {} {
 #lsGUIaddToGroup{"levelset"} looks at lsGUIcurrentPositionNumber, 
 #lsGUIcurrentPathNumber, lsGUIcurrentGroup
 #levelset runs separately from add to group
+
+#For batch level set
+#need phyRadius set and need to update path start and end points
