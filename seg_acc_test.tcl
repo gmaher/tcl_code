@@ -1,27 +1,3 @@
-#NOTES:
-#guiCVloadVTI
-#guiCVloadMha -> sets global gImageVol(mha_filename) to image filename
-#guiPPloadPaths -> sets global gImageVol(path_file) to path filename, calls guiFNMloadHandPaths
-#guiSV_group_load_groups -> sets directory, calls guiSV_group_update_tree, can also get group names
-# by doing [group_names]
-# can get group ids by doing [group_iditems groupName {}]
-#guiSV_model_load_model
-#guiFNMloadHandPaths -> calls guiSV_path_update_tree
-#gPathPoints: global variable that contains labels (pathID, pointID) and (pathID, "name") and (int, splintPts)
-#the path data can be accessed via gPathPoint(pathId,pointId)
-#lsGUIaddToGroup {type}, set type = "levelset"
-#createPREOPgrpLoadGroups
-#guiSV_group_save_groups: saves groups by calling
-#createPREOPgrpSaveGroups, saves every group in group_names by calling
-#group_saveProfiles
-
-#Button binds to guiSV_group_new_group (use this to create group?)
-#runs group_create $name and guiSV_group_update_tree (this creates a group)
-
-##ADDING TO GROUP/RUNNING LEVELSET
-#lsGUIaddToGroup{"levelset"} looks at lsGUIcurrentPositionNumber, 
-#lsGUIcurrentPathNumber, lsGUIcurrentGroup
-#levelset runs separately from add to group 
 proc testSegAcc {} {
 	#load image (hard coded for now)
 	global gImageVol
@@ -79,3 +55,28 @@ proc testSegAcc {} {
 	}
 	guiSV_group_update_tree
 }
+
+#NOTES:
+#guiCVloadVTI
+#guiCVloadMha -> sets global gImageVol(mha_filename) to image filename
+#guiPPloadPaths -> sets global gImageVol(path_file) to path filename, calls guiFNMloadHandPaths
+#guiSV_group_load_groups -> sets directory, calls guiSV_group_update_tree, can also get group names
+# by doing [group_names]
+# can get group ids by doing [group_iditems groupName {}]
+#guiSV_model_load_model
+#guiFNMloadHandPaths -> calls guiSV_path_update_tree
+#gPathPoints: global variable that contains labels (pathID, pointID) and (pathID, "name") and (int, splintPts)
+#the path data can be accessed via gPathPoint(pathId,pointId)
+#lsGUIaddToGroup {type}, set type = "levelset"
+#createPREOPgrpLoadGroups
+#guiSV_group_save_groups: saves groups by calling
+#createPREOPgrpSaveGroups, saves every group in group_names by calling
+#group_saveProfiles
+
+#Button binds to guiSV_group_new_group (use this to create group?)
+#runs group_create $name and guiSV_group_update_tree (this creates a group)
+
+##ADDING TO GROUP/RUNNING LEVELSET
+#lsGUIaddToGroup{"levelset"} looks at lsGUIcurrentPositionNumber, 
+#lsGUIcurrentPathNumber, lsGUIcurrentGroup
+#levelset runs separately from add to group
