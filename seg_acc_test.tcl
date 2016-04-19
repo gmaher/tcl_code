@@ -14,7 +14,7 @@ proc testSegAcc {} {
 	createPREOPgrpLoadGroups
 	guiSV_group_update_tree
 
-	after 100
+	after 1000
 
 	#get path names
 	global gPathPoints
@@ -31,11 +31,18 @@ proc testSegAcc {} {
 			set pathmap($gPathPoints($i)) $a
 		}
 	}
+
+	#pathids now contains all pathids
+	#pathnames now contains all path names
+	#pathmap maps from pathnames to ids
 	puts $pathids
 	puts $pathnames
 	puts [array names pathmap]
 
 	global lsGUIcurrentGroup
+	global lsGUIcurrentPathNumber
+	global lsGUIcurrentPositionNumber
+
 	foreach grpName [group_names] {
 		set grpPoints {}
 		foreach obj [group_get $grpName] {
@@ -47,9 +54,17 @@ proc testSegAcc {} {
 			append new_name "_autogen"
 			group_create $new_name
 			puts $new_name
+			puts $pathmap($grpName)
+
+			after 1000
+
 			set lsGUIcurrentGroup $new_name
+			set lsGUIcurrentPathNumber $pathmap($grpName)
+			set lsGUIcurrentPositionNumber 0
+			set itklsGUIParamsBatch(addToGroup) 1
+
 			itkLSDoBatch $pathmap($grpName) $grpPoints $new_name
-			lsGUIaddToGroupBatch "levelset"
+			#lsGUIaddToGroupBatch "levelset"
 			guiSV_group_update_tree
 		}
 	}
