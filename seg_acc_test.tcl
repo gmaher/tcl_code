@@ -42,7 +42,8 @@ proc testSegAcc {} {
 	global lsGUIcurrentGroup
 	global lsGUIcurrentPathNumber
 	global lsGUIcurrentPositionNumber
-
+	global itklsGUIParamsBatch
+	
 	foreach grpName [group_names] {
 		set grpPoints {}
 		foreach obj [group_get $grpName] {
