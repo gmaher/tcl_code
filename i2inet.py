@@ -118,7 +118,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     #caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
 
     #output_size = npa([96,96,48],dtype=int)[::-1]
-    output_size = npa([48,48,48],dtype=int)[::-1]
+    output_size = npa([60,60,48],dtype=int)[::-1]
     overlap = output_size/npa([8,8,8],dtype=int)[::-1]
 
 
@@ -417,8 +417,16 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
 ########################################################
 # Actual code to be run 
 ########################################################
-inputfile = '/home/gabriel/projects/weiguang/SU0187_2008_247_33758142.mha'
+inputs = []
+#inputs.append('./models/OSMSC0001/OSMSC0001-cm.mha')
+inputs.append('./models/OSMSC0002/OSMSC0002-cm.mha')
+inputs.append('./models/OSMSC0003/OSMSC0003-cm.mha')
+#inputs.append('./models/OSMSC0004/OSMSC0004-cm.mha')
+#inputs.append('./models/OSMSC0005/OSMSC0005-cm.mha')
+
+
 netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
 caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
 
-makeEdgeMap(inputfile, netFile, caffeModel)
+for inputfile in inputs:
+    makeEdgeMap(inputfile, netFile, caffeModel)
