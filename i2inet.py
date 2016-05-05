@@ -4,7 +4,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ##########################################
     # Block 1
     ##########################################
-
+    print("start block 1")
 
 
     import matplotlib.pylab as plt
@@ -34,6 +34,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ###########################################
     # Block 2
     ###########################################
+    print("start block 2")
     def load_net(net_proto,caffeModel=None):
         f = tempfile.NamedTemporaryFile(mode='w+', delete=False)
         f.write(str(net_proto))
@@ -47,9 +48,10 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
         text_format.Merge(open(netFile).read(),net_proto)
         return net_proto
 
-     ##########################################
-     # Block 3
-     ##########################################
+    ##########################################
+    # Block 3
+    ##########################################
+    print("start block 3")
     def sitk_to_caffe(img,is_label=False,has_channels=False):
         data = sitk.GetArrayFromImage(img)
         if is_label:
@@ -112,6 +114,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ############################################
     # Block 4
     ############################################
+    print("start block 4")
     #inputfile = '/home/gabriel/projects/OSMSC0087/OSMSC0087-cm.mha'
     #inputfile = '/home/gabriel/projects/weiguang/SU0187_2008_247_33758142.mha'
     #netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
@@ -138,6 +141,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ###############################################
     # Block 5
     ###############################################
+    print("start block 5")
     def CalcuatePre(img,roi,output_size,overlap):
 
         img_size=np.array(img.GetSize())
@@ -196,6 +200,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ########################################
     # Block 6
     ########################################
+    print("start block 6")
     def PreprocessImageAndWrite(img,outputname,txtfile,output_size,
                         proc_dict,imginfo=dict()):
         
@@ -261,6 +266,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     #################################################
     # Block 7
     #################################################
+    print("start block 7")
     net_proto=load_proto(netFile)
     net_proto.layer[0].hdf5_data_param.source = txtfile
     with open(txtfile,'r') as f:
@@ -269,6 +275,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     #################################################
     # Block 8
     #################################################
+    print("start block 8")
     tempoutdir=os.path.join(tempdir,"output")
     outtxtfile = os.path.join(tempoutdir,fnbase+".txt")
     if not os.path.exists(tempoutdir): os.makedirs(tempoutdir)
@@ -276,6 +283,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     #################################################
     # Block 9
     #################################################
+    print("start block 9")
     net=load_net(net_proto,caffeModel)
     with open(net_proto.layer[0].hdf5_data_param.source,'r') as f:
         img_files= [line.strip() for line in f]
@@ -314,6 +322,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ###################################################
     # Block 10
     ###################################################
+    print("start block 10")
     net=load_net(net_proto,caffeModel)
     with open(net_proto.layer[0].hdf5_data_param.source,'r') as f:
         img_files= [line.strip() for line in f]
@@ -335,7 +344,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ####################################################
     # Block 11
     ####################################################
-
+    print("start block 11")
     for imgbname,outtxtfile in outtxtfiles.iteritems():
         with open(outtxtfile,'r') as f:
             allfiles={os.path.split(line.strip())[1]:line.strip() for line in f}
@@ -366,6 +375,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ######################################################
     # Block 12
     ######################################################
+    print("start block 12")
     E=np.zeros(img_size_pad)+1
     zz=list()
     for i in range(fnarray.shape[0]):
@@ -398,6 +408,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     ########################################################
     # Block 13
     ########################################################
+    print("start block 13")
     E=E-E.min()
     E.min()*255,E.max()*255
     itkE=cast_int16(sitk.GetImageFromArray(E*255))
@@ -409,6 +420,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     #########################################################
     # Block 14
     #########################################################
+    print("start block 14")
     if not os.path.exists(outputdir): os.makedirs(outputdir)
     outputname=os.path.join(outputdir,imgbname+'.mha')
     print("Writing file:",outputname)
@@ -429,4 +441,6 @@ netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt
 caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
 
 for inputfile in inputs:
+    print("start: ", inputfile)
     makeEdgeMap(inputfile, netFile, caffeModel)
+    print("end: ", inputfile)
