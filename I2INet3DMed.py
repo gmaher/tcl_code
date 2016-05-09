@@ -1,18 +1,17 @@
 from __future__ import print_function
+def makeEdgeMap(name, inputfile, netFile, caffeModel):
+    # coding: utf-8
 
-def makeEdgeMap(inputfile, netFile, caffeModel):
-    ##########################################
-    # Block 1
-    ##########################################
-    print("start block 1")
+    # In[1]:
 
 
+    #get_ipython().magic(u'matplotlib inline')
     import matplotlib.pylab as plt
     import numpy as np
     import SimpleITK as sitk
     import os,sys,h5py,tempfile,re
     caffe_prefix = os.path.expandvars('$HOME/projects/caffe-sv')
-    caffe_root = os.path.expandvars('$HOME/projects/caffe_build')
+    caffe_root = os.path.expandvars('../../')
     caffe_pycaffe = os.path.join(caffe_root,'python')
     if not caffe_pycaffe in sys.path:
         sys.path.append(caffe_pycaffe)
@@ -31,10 +30,9 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
 
     import pandas
 
-    ###########################################
-    # Block 2
-    ###########################################
-    print("start block 2")
+
+    # In[2]:
+
     def load_net(net_proto,caffeModel=None):
         f = tempfile.NamedTemporaryFile(mode='w+', delete=False)
         f.write(str(net_proto))
@@ -48,10 +46,9 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
         text_format.Merge(open(netFile).read(),net_proto)
         return net_proto
 
-    ##########################################
-    # Block 3
-    ##########################################
-    print("start block 3")
+
+    # In[3]:
+
     def sitk_to_caffe(img,is_label=False,has_channels=False):
         data = sitk.GetArrayFromImage(img)
         if is_label:
@@ -111,23 +108,23 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     def basename(fn):
         return os.path.split(os.path.splitext(fn)[0])[1]
 
-    ############################################
-    # Block 4
-    ############################################
-    print("start block 4")
+
+    # In[4]:
+
     #inputfile = '/home/gabriel/projects/OSMSC0087/OSMSC0087-cm.mha'
     #inputfile = '/home/gabriel/projects/weiguang/SU0187_2008_247_33758142.mha'
+    #inputfile = '/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha'
     #netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
     #caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
-
+    #name = "OSMSC001"
     #output_size = npa([96,96,48],dtype=int)[::-1]
     output_size = npa([48,48,48],dtype=int)[::-1]
     overlap = output_size/npa([12,12,12],dtype=int)[::-1]
 
 
 
-    outputdir='./EdgeMaps/'
-    tempdir='./tempdir/'
+    outputdir='./EdgeMaps/' + name + '/'
+    tempdir='./tempdir/' + name + '/'
 
     roi=None
     fnbase=basename(inputfile)
@@ -138,10 +135,9 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     print("inputfile:",inputfile,"\nbasename",basename(inputfile))
     print("output_size:",output_size,"overlap:",overlap,"roi:",roi if roi is not None else "All")
 
-    ###############################################
-    # Block 5
-    ###############################################
-    print("start block 5")
+
+    # In[5]:
+
     def CalcuatePre(img,roi,output_size,overlap):
 
         img_size=np.array(img.GetSize())
@@ -197,10 +193,9 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     print(outputbasename.format(0,0,0))
     print(txtfile)
 
-    ########################################
-    # Block 6
-    ########################################
-    print("start block 6")
+
+    # In[6]:
+
     def PreprocessImageAndWrite(img,outputname,txtfile,output_size,
                         proc_dict,imginfo=dict()):
         
@@ -261,29 +256,31 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
         print("Done!",n)
         return imginfo
     imginfo = PreprocessImageAndWrite(img,outputbasename,txtfile,output_size,
-                        proc_dict)
+                        proc_dict)       
 
-    #################################################
-    # Block 7
-    #################################################
-    print("start block 7")
+
+    # In[ ]:
+
+
+
+
+    # In[7]:
+
     net_proto=load_proto(netFile)
     net_proto.layer[0].hdf5_data_param.source = txtfile
     with open(txtfile,'r') as f:
         img_files= [line.strip() for line in f]
 
-    #################################################
-    # Block 8
-    #################################################
-    print("start block 8")
+
+    # In[8]:
+
     tempoutdir=os.path.join(tempdir,"output")
     outtxtfile = os.path.join(tempoutdir,fnbase+".txt")
     if not os.path.exists(tempoutdir): os.makedirs(tempoutdir)
 
-    #################################################
-    # Block 9
-    #################################################
-    print("start block 9")
+
+    # In[9]:
+
     net=load_net(net_proto,caffeModel)
     with open(net_proto.layer[0].hdf5_data_param.source,'r') as f:
         img_files= [line.strip() for line in f]
@@ -319,10 +316,9 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
         sys.stdout.flush()
     print("Done!",n)
 
-    ###################################################
-    # Block 10
-    ###################################################
-    print("start block 10")
+
+    # In[10]:
+
     net=load_net(net_proto,caffeModel)
     with open(net_proto.layer[0].hdf5_data_param.source,'r') as f:
         img_files= [line.strip() for line in f]
@@ -341,10 +337,10 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
         if not os.path.exists(output_subdir): os.makedirs(output_subdir)
         if imgbname not in outtxtfiles.keys(): outtxtfiles[imgbname]=outtxtfile
 
-    ####################################################
-    # Block 11
-    ####################################################
-    print("start block 11")
+
+    # In[11]:
+
+
     for imgbname,outtxtfile in outtxtfiles.iteritems():
         with open(outtxtfile,'r') as f:
             allfiles={os.path.split(line.strip())[1]:line.strip() for line in f}
@@ -355,7 +351,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
             padpre,padpost=npa(f['padpre']),npa(f['padpost'])
             overlap,stride=npa(f['overlap']),npa(f['stride'])
             regE_=os.path.split(outputbasename)[1].replace('{:03d}','(\d*)').replace(fnbase,"{:s}")
-    #         print(padpre,padpost,overlap,img_size,img_size_pad,)
+            print(padpre,padpost,overlap,img_size,img_size_pad,)
         
         regE=regE_.format(imgbname)
         print(regE)
@@ -372,10 +368,14 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
         for fn,inds in fn_nums.iteritems():
             fnarray[inds[0],inds[1],inds[2]]=fn
 
-    ######################################################
-    # Block 12
-    ######################################################
-    print("start block 12")
+       
+        
+
+
+    # In[16]:
+
+    print("overlap: ", overlap)
+    print("fnarray: ", fnarray)
     E=np.zeros(img_size_pad)+1
     zz=list()
     for i in range(fnarray.shape[0]):
@@ -405,10 +405,9 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
                                                           overlap[0]/2:-overlap[0]/2]
     E=E[padpre[2]:-padpost[2],padpre[1]:-padpost[1],padpre[0]:-padpost[0]]
 
-    ########################################################
-    # Block 13
-    ########################################################
-    print("start block 13")
+
+    # In[14]:
+
     E=E-E.min()
     E.min()*255,E.max()*255
     itkE=cast_int16(sitk.GetImageFromArray(E*255))
@@ -417,31 +416,39 @@ def makeEdgeMap(inputfile, netFile, caffeModel):
     imgs=[dict(name='E',**sitk_imginfo_dict(itkE)),dict(name='img',**sitk_imginfo_dict(orgImg))]
     pandas.DataFrame(imgs)
 
-    #########################################################
-    # Block 14
-    #########################################################
-    print("start block 14")
+
+    # In[15]:
+
     if not os.path.exists(outputdir): os.makedirs(outputdir)
     outputname=os.path.join(outputdir,imgbname+'.mha')
     print("Writing file:",outputname)
     sitk.WriteImage(itkE,outputname)
 
-########################################################
-# Actual code to be run 
-########################################################
+
+# In[ ]:
+
+
+# ########################################################
+# # Actual code to be run 
+# ########################################################
 inputs = []
 #inputs.append('./models/SU0187_2008_247_33758142.mha')
 inputs.append('./models/OSMSC0001/OSMSC0001-cm.mha')
-#inputs.append('./models/OSMSC0002/OSMSC0002-cm.mha')
-#inputs.append('./models/OSMSC0003/OSMSC0003-cm.mha')
+inputs.append('./models/OSMSC0002/OSMSC0002-cm.mha')
+inputs.append('./models/OSMSC0003/OSMSC0003-cm.mha')
 #inputs.append('./models/OSMSC0004/OSMSC0004-cm.mha')
 #inputs.append('./models/OSMSC0005/OSMSC0005-cm.mha')
+
+names = []
+names.append('OSMSC0001')
+names.append('OSMSC0002')
+names.append('OSMSC0003')
 
 
 netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
 caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
 
-for inputfile in inputs:
-    print("start: ", inputfile)
-    makeEdgeMap(inputfile, netFile, caffeModel)
-    print("end: ", inputfile)
+for inputfile,name in zip(inputs,names):
+    print("start: ", inputfile, ', ', name)
+    makeEdgeMap(name, inputfile, netFile, caffeModel)
+    print("end: ", inputfile, ', ', name)
