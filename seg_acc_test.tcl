@@ -1,16 +1,52 @@
-proc testSegAcc {} {
+proc runEdgeAnalysis {} {
+
+	set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha"
+	set imgs(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm.mha"
+	set imgs(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm.mha"
+	set imgs(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142.mha"
+	
+
+	set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm_E.mha"
+	set edges(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm_E.mha"
+	set edges(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm_E.mha"
+	set edges(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142_E.mha" 
+	
+
+	set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/0001_0001-cm.paths"
+	set paths(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/0002_0001-cm.paths"
+	set paths(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/0003_0001-cm.paths"
+	set paths(3) "/home/gabriel/projects/tcl_code/models/weiguang/2008_247.paths"
+
+
+	set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/groups"
+	set grps(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/groups"
+	set grps(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/groups"
+	set grps(3) "/home/gabriel/projects/tcl_code/models/weiguang/groups"
+
+	for {set index 0} {$index < 4} {incr index} {
+		puts $imgs($index)
+		[testSegAcc $imgs($index) $paths($index) $grps($index)]
+		[testSegAcc $edges($index) $paths($index) $grps($index)]
+	}
+ 
+}
+
+proc testSegAcc {imgName pathName grpName} {
 	#load image (hard coded for now)
 	global gImageVol
-	set gImageVol(xml_filename) "/home/gabriel/projects/sample_data/image_data/vti/sample_data-cm.vti"
+	#set gImageVol(xml_filename) "/home/gabriel/projects/sample_data/image_data/vti/sample_data-cm.vti"
+	set gImageVol(xml_filename) $imgName
 	createPREOPloadsaveLoadVol
 
 	#load paths
 	global gFilenames
-	set gFilenames(path_file) "/home/gabriel/research/marsden/tutorial.paths"
+	#set gFilenames(path_file) "/home/gabriel/research/marsden/tutorial.paths"
+	set gFilenames(path_file) $pathName
 	guiFNMloadHandPaths
 
 	#load groups
-	set gFilenames(groups_dir) "/home/gabriel/research/marsden/"
+	#set gFilenames(groups_dir) "/home/gabriel/research/marsden/"
+	set gFilenames(groups_dir) $grpName
 	createPREOPgrpLoadGroups
 	guiSV_group_update_tree
 
@@ -39,6 +75,8 @@ proc testSegAcc {} {
 	puts $pathnames
 	puts [array names pathmap]
 
+	after 1000
+
 	global lsGUIcurrentGroup
 	global lsGUIcurrentPathNumber
 	global lsGUIcurrentPositionNumber
@@ -47,14 +85,23 @@ proc testSegAcc {} {
 	global symbolicName
 
 	foreach grpName [group_names] {
+		#get the points in the existing group
 		set grpPoints {}
 		foreach obj [group_get $grpName] {
 			set grpPoints [lappend grpPoints [group_itemid $grpName $obj]]
 		}
 		puts $grpPoints
+
+		#check that a corresponding path exists
+		#if so run the level set on all the points
+		#store the result in a new group
 		if {[info exists pathmap($grpName)]} {
 			set new_name $grpName
-			append new_name "_autogen"
+			if {[string match *_E* $imgName]} {
+				append new_name "_edge"
+			} else {
+				append new_name "_image"
+			}
 			group_create $new_name
 			puts $new_name
 			puts $pathmap($grpName)
@@ -68,11 +115,9 @@ proc testSegAcc {} {
 			set itklsGUIParamsBatch(posList) $grpPoints
 			set itklsGUIParams(phyRadius) 0.3125
 
-			#itklsBatchRun
 			lsGUIupdatePath
 
 			itkLSDoBatch $pathmap($grpName) $grpPoints $new_name
-			#lsGUIaddToGroupBatch "levelset"
 
 			guiSV_group_update_tree
 		}

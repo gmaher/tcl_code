@@ -433,16 +433,18 @@ def makeEdgeMap(name, inputfile, netFile, caffeModel):
 # ########################################################
 inputs = []
 #inputs.append('./models/SU0187_2008_247_33758142.mha')
-inputs.append('./models/OSMSC0001/OSMSC0001-cm.mha')
-inputs.append('./models/OSMSC0002/OSMSC0002-cm.mha')
-inputs.append('./models/OSMSC0003/OSMSC0003-cm.mha')
-#inputs.append('./models/OSMSC0004/OSMSC0004-cm.mha')
-#inputs.append('./models/OSMSC0005/OSMSC0005-cm.mha')
+#inputs.append('./models/OSMSC0001/OSMSC0001-cm.mha')
+#inputs.append('./models/OSMSC0002/OSMSC0002-cm.mha')
+#inputs.append('./models/OSMSC0003/OSMSC0003-cm.mha')
+inputs.append('./models/OSMSC0004/OSMSC0004-cm.mha')
+inputs.append('./models/OSMSC0005/OSMSC0005-cm.mha')
 
 names = []
-names.append('OSMSC0001')
-names.append('OSMSC0002')
-names.append('OSMSC0003')
+#names.append('OSMSC0001')
+#names.append('OSMSC0002')
+#names.append('OSMSC0003')
+names.append('OSMSC0004')
+names.append('OSMSC0005')
 
 
 netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
