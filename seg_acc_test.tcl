@@ -1,5 +1,6 @@
 proc runEdgeAnalysis {} {
 
+
 	set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha"
 	set imgs(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm.mha"
 	set imgs(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm.mha"
@@ -25,17 +26,27 @@ proc runEdgeAnalysis {} {
 
 	for {set index 0} {$index < 4} {incr index} {
 		puts $imgs($index)
-		[testSegAcc $imgs($index) $paths($index) $grps($index)]
-		[testSegAcc $edges($index) $paths($index) $grps($index)]
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1
 	}
  
 }
 
-proc testSegAcc {imgName pathName grpName} {
+proc testSegAcc {imgName edgeName pathName grpName use_edge} {
 	#load image (hard coded for now)
 	global gImageVol
 	#set gImageVol(xml_filename) "/home/gabriel/projects/sample_data/image_data/vti/sample_data-cm.vti"
-	set gImageVol(xml_filename) $imgName
+	#set gImageVol(mha_filename) $imgName
+
+	if {[string match *.mha* $imgName]} {
+		set gImageVol(mha_filename) $imgName
+	} else {
+		set gImageVol(xml_filename) $imgName
+	}
+
+	if {$use_edge == 1} {
+		seg_LoadEdgeImageMha $edgeName
+	}
 	createPREOPloadsaveLoadVol
 
 	#load paths
@@ -84,6 +95,13 @@ proc testSegAcc {imgName pathName grpName} {
 	global itklsGUIParams
 	global symbolicName
 
+	if {$use_edge == 1} {
+		set itklsGUIParams(2DEdgeImage) "LSEdge"
+		set itklsGUIParams(useEdgeImage) "disp"
+	} else {
+		set itklsGUIParams(useEdgeImage) 0
+	}
+
 	foreach grpName [group_names] {
 		#get the points in the existing group
 		set grpPoints {}
@@ -97,7 +115,7 @@ proc testSegAcc {imgName pathName grpName} {
 		#store the result in a new group
 		if {[info exists pathmap($grpName)]} {
 			set new_name $grpName
-			if {[string match *_E* $imgName]} {
+			if {$use_edge == 1} {
 				append new_name "_edge"
 			} else {
 				append new_name "_image"
@@ -123,6 +141,8 @@ proc testSegAcc {imgName pathName grpName} {
 		}
 	}
 	guiSV_group_update_tree
+
+	createPREOPgrpSaveGroups
 }
 
 #NOTES:
