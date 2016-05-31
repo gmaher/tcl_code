@@ -82,6 +82,11 @@ err_images = []
 invalid_edges = 0
 invalid_images = 0
 
+img_good_errors = []
+img_bad_errors = []
+edge_good_errors = []
+edge_bad_errors = []
+
 #edge errors
 for surf in groups_edges.keys():
 
@@ -96,13 +101,20 @@ for surf in groups_edges.keys():
 			if not (a.is_valid and b.is_valid):
 				invalid_edges += 1
 				print surf, ", ", grp, " is invalid"
+				edge_bad_errors.append((surf,grp))
 				continue
 
 			Adiff1 = a.difference(b).area
 			Adiff2 = b.difference(a).area
 			Adiff = Adiff1+Adiff2
 			Aunion = a.union(b).area
-			err_edges.append(Adiff/Aunion)
+			err = Adiff/Aunion
+			err_edges.append(err)
+
+			if err <= 0.1:
+				edge_good_errors.append((surf,grp))
+			elif err >=0.9:
+				edge_bad_errors.append((surf,grp))
 
 print "edges error mean: ", np.mean(err_edges)
 print "edges error std : ", np.std(err_edges)
@@ -122,20 +134,32 @@ for surf in groups_images.keys():
 			if not (a.is_valid and b.is_valid):
 				invalid_images += 1
 				print surf, ", ", grp, " is invalid"
+				img_bad_errors.append((surf,grp))
 				continue
 
 			Adiff1 = a.difference(b).area
 			Adiff2 = b.difference(a).area
 			Adiff = Adiff1+Adiff2
 			Aunion = a.union(b).area
-			err_images.append(Adiff/Aunion)
+			err = Adiff/Aunion
+			err_images.append(err)
+
+			if err <= 0.1:
+				img_good_errors.append((surf,grp))
+			elif err >= 0.9:
+				img_bad_errors.append((surf,grp))
 
 print "images error mean: ", np.mean(err_images)
 print "images error std : ", np.std(err_images)
 print "images no. invalid: ", invalid_images
 
 #make histogram plot
+import matplotlib as mpl
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+
+
+fig = plt.figure()
 edge_weights = np.ones_like(err_edges)/float(len(err_edges))
 image_weights = np.ones_like(err_images)/float(len(err_images))
 plt.hist(err_images, 30, weights=image_weights, facecolor='blue', alpha=0.5, label='images')
@@ -143,4 +167,88 @@ plt.hist(err_edges, 30, weights=edge_weights, facecolor='red', alpha=0.5, label=
 plt.legend()
 plt.xlabel('area error')
 plt.ylabel('frequency')
+plt.show()
+
+#print bad errors and good errors
+print "good errors edges"
+print edge_good_errors
+print "bad errors edges"
+print edge_bad_errors
+
+print "\n"
+
+print "good errors images"
+print img_good_errors
+print "bad errors images"
+print img_bad_errors
+
+
+#edges
+def get_contour_points(srf,grp):
+	zipped = zip(*groups_edges[srf][grp])
+	x = [i for i in zipped[0]]
+	x.append(x[0])
+	y = [i for i in zipped[1]]
+	y.append(y[0])
+	z = [i for i in zipped[2]]
+	z.append(z[0])
+
+	#images
+	zipped = zip(*groups_images[srf][grp])
+	xi = [i for i in zipped[0]]
+	xi.append(xi[0])
+	yi = [i for i in zipped[1]]
+	yi.append(yi[0])
+	zi = [i for i in zipped[2]]
+	zi.append(zi[0])
+
+	#regular
+	zipped = zip(*groups[srf][grp])
+	xg = [i for i in zipped[0]]
+	xg.append(xg[0])
+	yg = [i for i in zipped[1]]
+	yg.append(yg[0])
+	zg = [i for i in zipped[2]]
+	zg.append(zg[0])
+
+	return (x,y,z,xi,yi,zi,xg,yg,zg)
+
+fig2 = plt.figure()
+
+x,y,z,xi,yi,zi,xg,yg,zg = get_contour_points('LAD',46)
+ax = fig2.gca(projection='3d')
+ax.plot(x,y,z, color='blue', label='edge')
+ax.plot(xi,yi,zi, color='red', label='image')
+ax.plot(xg,yg,zg, color='green', label='user')
+plt.legend()
+plt.show()
+
+fig3 = plt.figure()
+
+x,y,z,xi,yi,zi,xg,yg,zg = get_contour_points('RPA33',37)
+ax = fig3.gca(projection='3d')
+ax.plot(x,y,z, color='blue', label='edge')
+ax.plot(xi,yi,zi, color='red', label='image')
+ax.plot(xg,yg,zg, color='green', label='user')
+plt.legend()
+plt.show()
+
+fig4 = plt.figure()
+
+x,y,z,xi,yi,zi,xg,yg,zg = get_contour_points('LAD',14)
+ax = fig4.gca(projection='3d')
+ax.plot(x,y,z, color='blue', label='edge')
+ax.plot(xi,yi,zi, color='red', label='image')
+ax.plot(xg,yg,zg, color='green', label='user')
+plt.legend()
+plt.show()
+
+fig5 = plt.figure()
+
+x,y,z,xi,yi,zi,xg,yg,zg = get_contour_points('RPA33',0)
+ax = fig5.gca(projection='3d')
+ax.plot(x,y,z, color='blue', label='edge')
+ax.plot(xi,yi,zi, color='red', label='image')
+ax.plot(xg,yg,zg, color='green', label='user')
+plt.legend()
 plt.show()
