@@ -1,0 +1,19 @@
+per image error
+	per path error
+
+smoothing
+
+correlation between size of vessel and error
+
+email jameson github
+
+make seed ground truth contour
+	start with right answer which one stays
+
+https://github.com/jmerkow/SimVascular/blob/master/Tcl/SimVascular_2.0/GUI/itkls-gui.tcl#L285
+[2:06:44 PM] Jameson Merkow: set seedPd /tmp/lsGUI/seedPd
+
+ repos_importVtkPd -src [img_contour $img $bcGUIthrValue]  -dst /tmp/lsGUI/seedPd
+
+group_restorePreopSegs
+	#puts it back into 2d

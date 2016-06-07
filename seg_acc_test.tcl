@@ -143,6 +143,13 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge} {
 	guiSV_group_update_tree
 
 	createPREOPgrpSaveGroups
+
+	#delete groups so they don't carry over to next image
+	foreach grp [group_names] {
+		group_delete $grp
+	}
+
+	guiSV_group_update_tree
 }
 
 #NOTES:
