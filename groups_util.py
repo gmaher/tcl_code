@@ -209,8 +209,8 @@ plt.show()
 
 fig = plt.figure()
 print df.head(10)
-err_edges = df.loc[(df['type'] == 'edge') & (df["image"] == "OSMSC0001"), 'error'].values
-err_images = df.loc[(df['type'] == 'img') & (df["image"] == "OSMSC0001"), 'error'].values
+err_edges = df.loc[(df['type'] == 'edge') & (df["image"] == "weiguang"), 'error'].values
+err_images = df.loc[(df['type'] == 'img') & (df["image"] == "weiguang"), 'error'].values
 
 edge_weights = np.ones_like(err_edges)/float(len(err_edges))
 image_weights = np.ones_like(err_images)/float(len(err_images))
