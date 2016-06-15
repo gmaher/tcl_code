@@ -44,6 +44,7 @@ dirs = []
 dirs.append("/models/OSMSC0001/0001_0001/groups/")
 dirs.append("/models/OSMSC0002/0002_0001/groups/")
 dirs.append("/models/OSMSC0003/0003_0001/groups/")
+dirs.append("/models/OSMSC0006/0006_0001/groups/")
 dirs.append("/models/weiguang/groups/")
 for adir in dirs:
 	dir_str = adir.split('/')
@@ -209,8 +210,8 @@ plt.show()
 
 fig = plt.figure()
 print df.head(10)
-err_edges = df.loc[(df['type'] == 'edge') & (df["image"] == "weiguang"), 'error'].values
-err_images = df.loc[(df['type'] == 'img') & (df["image"] == "weiguang"), 'error'].values
+err_edges = df.loc[(df['type'] == 'edge') & (df["image"] == "OSMSC0006"), 'error'].values
+err_images = df.loc[(df['type'] == 'img') & (df["image"] == "OSMSC0006"), 'error'].values
 
 edge_weights = np.ones_like(err_edges)/float(len(err_edges))
 image_weights = np.ones_like(err_images)/float(len(err_images))

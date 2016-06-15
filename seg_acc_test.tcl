@@ -1,28 +1,32 @@
 proc runEdgeAnalysis {} {
 
 
-	set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha"
-	set imgs(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm.mha"
-	set imgs(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm.mha"
-	set imgs(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142.mha"
+	# set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha"
+	# set imgs(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm.mha"
+	# set imgs(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm.mha"
+	# set imgs(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142.mha"
+	set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/OSMSC0006-cm.mha"
 	
 
-	set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm_E.mha"
-	set edges(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm_E.mha"
-	set edges(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm_E.mha"
-	set edges(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142_E.mha" 
+	# set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm_E.mha"
+	# set edges(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm_E.mha"
+	# set edges(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm_E.mha"
+	# set edges(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142_E.mha" 
+	set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/OSMSC0006-cm_E48.mha"
 	
 
-	set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/0001_0001-cm.paths"
-	set paths(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/0002_0001-cm.paths"
-	set paths(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/0003_0001-cm.paths"
-	set paths(3) "/home/gabriel/projects/tcl_code/models/weiguang/2008_247.paths"
+	# set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/0001_0001-cm.paths"
+	# set paths(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/0002_0001-cm.paths"
+	# set paths(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/0003_0001-cm.paths"
+	# set paths(3) "/home/gabriel/projects/tcl_code/models/weiguang/2008_247.paths"
+	set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/0006_0001/0006_0001-cm.paths"
 
+	# set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/groups"
+	# set grps(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/groups"
+	# set grps(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/groups"
+	# set grps(3) "/home/gabriel/projects/tcl_code/models/weiguang/groups"
+	set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/0006_0001/groups"
 
-	set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/groups"
-	set grps(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/groups"
-	set grps(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/groups"
-	set grps(3) "/home/gabriel/projects/tcl_code/models/weiguang/groups"
 
 	for {set index 0} {$index < 4} {incr index} {
 		puts $imgs($index)

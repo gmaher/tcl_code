@@ -17,3 +17,14 @@ https://github.com/jmerkow/SimVascular/blob/master/Tcl/SimVascular_2.0/GUI/itkls
 
 group_restorePreopSegs
 	#puts it back into 2d
+
+###################################3
+06/15/2016
+
+- do images in test set
+
+- error vs diameter
+
+- error on different image subsets (MR vs non MR)
+
+- error vs vessel type
