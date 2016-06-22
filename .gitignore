@@ -2,3 +2,4 @@ tempdir/
 EdgeMaps/
 tempdir/
 models/
+*.csv

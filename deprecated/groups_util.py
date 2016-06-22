@@ -175,21 +175,31 @@ for adir in groups.keys():
 							"type":'img'}, ignore_index=True)
 
 #calculate threshold success rate
+#thresholds = np.arange(0.025,1.025,0.025)
 thresholds = np.arange(0.025,1.025,0.025)
+
 edge_sucs = []
 edge_fails = []
 img_sucs = []
 img_fails = []
-for thresh in thresholds:
-	e = float(len([i for i in edge_total_errs if i <= thresh]))
-	l = len(edge_total_errs)
-	edge_sucs.append(e/l)
-	edge_fails.append(1.0-e/l)
 
-	e = float(len([i for i in img_total_errs if i <= thresh]))
-	l = len(img_total_errs)
-	img_sucs.append(e/l)
-	img_fails.append(1-e/l)
+select = 'OSMSC0001'
+
+df_thresh = df.loc[df['image'] == select]
+le = df_thresh.loc[(df_thresh['image']== select) & (df_thresh['type']==
+	'edge')].shape[0]
+li = df_thresh.loc[(df_thresh['image']== select) & (df_thresh['type']=='img')].shape[0]
+print le
+for thresh in thresholds:
+	e = df_thresh.loc[(df_thresh['type']=='edge') & (df_thresh['error'] <= thresh)]
+
+	edge_sucs.append(float(e.shape[0])/le)
+	edge_fails.append(1.0-float(e.shape[0])/le)
+
+	e = df_thresh.loc[(df_thresh['type']=='img') & (df_thresh['error'] <= thresh)]
+	
+	img_sucs.append(float(e.shape[0])/li)
+	img_fails.append(1-float(e.shape[0])/li)
 
 						
 ##make histogram plot
@@ -198,11 +208,11 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 mpl.rc('font', size=15)
 
-err_fig = plt.figure()
+print edge_sucs
+
+plt.figure()
 plt.plot(thresholds, edge_sucs, color = 'blue', marker='o', label='edge successes')
-#plt.plot(thresholds, edge_fails, color = 'blue', marker='^', label='edge failures')
 plt.plot(thresholds, img_sucs, color = 'green', marker='o', label='img successes')
-#plt.plot(thresholds, img_fails, color = 'green', marker='^', label='img failures')
 plt.xlabel(r'$\epsilon$ threshold')
 plt.ylabel('proportion groups meeting threshold')
 plt.legend(loc='center left')
@@ -210,8 +220,22 @@ plt.show()
 
 fig = plt.figure()
 print df.head(10)
-err_edges = df.loc[(df['type'] == 'edge') & (df["image"] == "OSMSC0006"), 'error'].values
-err_images = df.loc[(df['type'] == 'img') & (df["image"] == "OSMSC0006"), 'error'].values
+err_edges = df.loc[(df['type'] == 'edge') & (df["image"] == select), 'error'].values
+err_images = df.loc[(df['type'] == 'img') & (df["image"] == select), 'error'].values
+
+edge_weights = np.ones_like(err_edges)/float(len(err_edges))
+image_weights = np.ones_like(err_images)/float(len(err_images))
+plt.hist(err_images, 30, weights=image_weights, facecolor='blue', alpha=0.5, label='img')
+plt.hist(err_edges, 30, weights=edge_weights, facecolor='red', alpha=0.5, label='edge')
+plt.legend()
+plt.xlabel(r'$\epsilon$ error')
+plt.ylabel('frequency')
+plt.show()
+
+fig = plt.figure()
+print df.head(10)
+err_edges = df.loc[(df['type'] == 'edge') & (df["image"] == "weiguang"), 'error'].values
+err_images = df.loc[(df['type'] == 'img') & (df["image"] == "weiguang"), 'error'].values
 
 edge_weights = np.ones_like(err_edges)/float(len(err_edges))
 image_weights = np.ones_like(err_images)/float(len(err_images))
