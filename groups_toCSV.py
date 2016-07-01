@@ -19,7 +19,6 @@ def get_group_from_file(fn):
 
 		else:
 			num = int(num)
-			print num
 			group[num] = []
 
 			#read empty line
@@ -35,8 +34,8 @@ def get_group_from_file(fn):
 				#read next line
 				l = f.readline()
 
-def calculate_errors(image,path,groups,groups_edges,groups_images):
-	df = pd.DataFrame(columns=["image","path","radius","edge_error","image_error"])
+def calculate_errors(image,path,groups,groups_edges, err_name):
+	df = pd.DataFrame(columns=["image","path","radius",err_name])
 
 	for grp in groups.keys():
 		#edges
@@ -58,25 +57,6 @@ def calculate_errors(image,path,groups,groups_edges,groups_images):
 				Aunion = a.union(b).area
 				edge_err = Adiff/Aunion
 
-		#images
-		if grp not in groups_images.keys():
-			img_err = 1.0
-
-		else:
-			a = Polygon(groups_images[grp])
-			b = Polygon(groups[grp])
-
-			if not (a.is_valid and b.is_valid):
-				img_err = 1.0
-
-			else:
-
-				Adiff1 = a.difference(b).area
-				Adiff2 = b.difference(a).area
-				Adiff = Adiff1+Adiff2
-				Aunion = a.union(b).area
-				img_err = Adiff/Aunion
-
 		b = Polygon(groups[grp])
 
 		df = df.append({
@@ -84,14 +64,15 @@ def calculate_errors(image,path,groups,groups_edges,groups_images):
 			"path": path,
 			"group":grp,
 			"radius": sqrt(b.area/pi),
-			"edge_error": edge_err,
-			"image_error": img_err
+			err_name: edge_err
 			}, ignore_index=True)
 
 	return df
 
 
 data = []
+
+apps = ['_edge','_image','_edge_bl05','_image_bl05']
 
 for root, dirs, files in os.walk('.'):
 	if '/groups' in root:
@@ -108,13 +89,17 @@ for directory,image,files in data:
 	print image
 
 	for fn in files:
-		if (fn+"_edge" in files) & (fn+"_image" in files):
-			g = get_group_from_file(directory+'/'+fn)
-			ge = get_group_from_file(directory+'/'+fn+"_edge")
-			gi = get_group_from_file(directory+'/'+fn+"_image")
+		for app in apps:
+			if fn+app in files:
+				g = get_group_from_file(directory+'/'+fn)
+				ge = get_group_from_file(directory+'/'+fn+app)
 
-			d = d.append(calculate_errors(image,fn,g,ge,gi), ignore_index=True)
 
-d.loc[(d['edge_error']>=0.8) & (d['image_error']<=0.2)].to_csv('bad_errors.csv')
+				d = d.append(calculate_errors(image,fn,g,ge,'error'+app), ignore_index=True)
+
+
+d.loc[(d['error_edge']>=0.7) & (d['error_image']<=0.3)].to_csv('bad_errors.csv')
 
 d.to_csv('all_errors.csv')
+
+print d['path'].unique()

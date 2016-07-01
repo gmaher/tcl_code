@@ -1,42 +1,44 @@
 proc runEdgeAnalysis {} {
 
 
-	# set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha"
-	# set imgs(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm.mha"
-	# set imgs(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm.mha"
-	# set imgs(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142.mha"
-	set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/OSMSC0006-cm.mha"
+	set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha"
+	set imgs(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm.mha"
+	set imgs(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm.mha"
+	set imgs(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142.mha"
+	#set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/OSMSC0006-cm.mha"
 	
 
-	# set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm_E.mha"
-	# set edges(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm_E.mha"
-	# set edges(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm_E.mha"
-	# set edges(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142_E.mha" 
-	set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/OSMSC0006-cm_E48.mha"
+	set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm_E.mha"
+	set edges(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm_E.mha"
+	set edges(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm_E.mha"
+	set edges(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142_E.mha" 
+	#set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/OSMSC0006-cm_E48.mha"
 	
 
-	# set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/0001_0001-cm.paths"
-	# set paths(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/0002_0001-cm.paths"
-	# set paths(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/0003_0001-cm.paths"
-	# set paths(3) "/home/gabriel/projects/tcl_code/models/weiguang/2008_247.paths"
-	set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/0006_0001/0006_0001-cm.paths"
+	set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/0001_0001-cm.paths"
+	set paths(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/0002_0001-cm.paths"
+	set paths(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/0003_0001-cm.paths"
+	set paths(3) "/home/gabriel/projects/tcl_code/models/weiguang/2008_247.paths"
+	#set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/0006_0001/0006_0001-cm.paths"
 
-	# set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/groups"
-	# set grps(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/groups"
-	# set grps(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/groups"
-	# set grps(3) "/home/gabriel/projects/tcl_code/models/weiguang/groups"
-	set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/0006_0001/groups"
+	set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/groups"
+	set grps(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/groups"
+	set grps(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/groups"
+	set grps(3) "/home/gabriel/projects/tcl_code/models/weiguang/groups"
+	#set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/0006_0001/groups"
 
 
 	for {set index 0} {$index < 4} {incr index} {
 		puts $imgs($index)
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge" 2.5 1.5 
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image" 2.5 1.5
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05" 0.5 1.5
 	}
  
 }
 
-proc testSegAcc {imgName edgeName pathName grpName use_edge} {
+proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2} {
 	#load image (hard coded for now)
 	global gImageVol
 	#set gImageVol(xml_filename) "/home/gabriel/projects/sample_data/image_data/vti/sample_data-cm.vti"
@@ -119,11 +121,9 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge} {
 		#store the result in a new group
 		if {[info exists pathmap($grpName)]} {
 			set new_name $grpName
-			if {$use_edge == 1} {
-				append new_name "_edge"
-			} else {
-				append new_name "_image"
-			}
+
+			append new_name $app
+
 			group_create $new_name
 			puts $new_name
 			puts $pathmap($grpName)
@@ -135,7 +135,9 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge} {
 			set lsGUIcurrentPositionNumber 0
 			set itklsGUIParamsBatch(addToGroup) 1
 			set itklsGUIParamsBatch(posList) $grpPoints
-			set itklsGUIParams(phyRadius) 0.3125
+			set itklsGUIParams(phyRadius) 0.9
+			set itklsGUIParams(gSigma1) $blur1
+			set itklsGUIParams(gSigma2) $blur2
 
 			lsGUIupdatePath
 
