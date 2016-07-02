@@ -30,15 +30,17 @@ proc runEdgeAnalysis {} {
 
 	for {set index 0} {$index < 4} {incr index} {
 		puts $imgs($index)
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge" 2.5 1.5 
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image" 2.5 1.5
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05" 0.5 1.5
+		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge" 2.5 1.5 0.9
+		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image" 2.5 1.5 0.9
+		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 0.9 
+		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05" 0.5 1.5 0.9
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05_r03867" 0.5 1.5 0.3867 
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05_r03867" 0.5 1.5 0.3867
 	}
  
 }
 
-proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2} {
+proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad} {
 	#load image (hard coded for now)
 	global gImageVol
 	#set gImageVol(xml_filename) "/home/gabriel/projects/sample_data/image_data/vti/sample_data-cm.vti"
@@ -135,7 +137,7 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2} {
 			set lsGUIcurrentPositionNumber 0
 			set itklsGUIParamsBatch(addToGroup) 1
 			set itklsGUIParamsBatch(posList) $grpPoints
-			set itklsGUIParams(phyRadius) 0.9
+			set itklsGUIParams(phyRadius) $rad
 			set itklsGUIParams(gSigma1) $blur1
 			set itklsGUIParams(gSigma2) $blur2
 

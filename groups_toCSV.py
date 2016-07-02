@@ -71,7 +71,7 @@ def calculate_errors(image,path,groups,groups_edges, err_name):
 
 
 data = []
-
+cols=["image","path","group","radius"]
 apps = ['_edge','_image','_edge_bl05','_image_bl05']
 
 for root, dirs, files in os.walk('.'):
@@ -96,9 +96,20 @@ for directory,image,files in data:
 
 
 				d = d.append(calculate_errors(image,fn,g,ge,'error'+app), ignore_index=True)
+ 
+
+dataframes = []
+for app in apps:
+	dataframes.append(d.loc[pd.notnull(d['error'+app]), cols+['error'+app]])
 
 
-d.loc[(d['error_edge']>=0.7) & (d['error_image']<=0.3)].to_csv('bad_errors.csv')
+
+for i in range(1,len(dataframes)):
+	dataframes[0] = dataframes[0].merge(dataframes[i],how='inner', on=cols)
+
+d = dataframes[0]
+
+d.loc[(d['error_edge']>=0.9)].to_csv('bad_errors.csv')
 
 d.to_csv('all_errors.csv')
 
