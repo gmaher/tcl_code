@@ -72,7 +72,8 @@ def calculate_errors(image,path,groups,groups_edges, err_name):
 
 data = []
 cols=["image","path","group","radius"]
-apps = ['_edge','_image','_edge_bl05','_image_bl05']
+apps = ['_edge','_image','_edge_bl01_r015_ku25','_image_bl01_r015_ku25',\
+'_edge_bl01_r015','_image_bl01_r015']
 
 for root, dirs, files in os.walk('.'):
 	if '/groups' in root:

@@ -3,8 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-apps = ['_edge','_image','_edge_bl05','_image_bl05']
-colors = {'_edge':'red', '_image':'blue', '_edge_bl05':'green', '_image_bl05':'black'}
+apps = ['_edge','_image','_edge_bl01_r015_ku25','_image_bl01_r015_ku25',\
+'_edge_bl01_r015','_image_bl01_r015']
+colors = {'_edge':'red', '_image':'blue', '_edge_bl01_r015_ku25':'green',\
+ '_image_bl01_r015_ku25':'black', '_edge_bl01_r015':'yellow', '_image_bl01_r015':'pink'}
 
 df = pd.read_csv('all_errors.csv')
 
@@ -43,7 +45,7 @@ for app in apps:
 ts = np.arange(0,1.025,0.025)
 for t in ts:
 	for app in apps:
-		frac = float(np.sum(df['error'+app]<=t))/len(df['error'+app])*4
+		frac = float(np.sum(df['error'+app]<=t))/len(df['error'+app])
 		thresh_errs[app].append(frac)
 
 for app in apps:
