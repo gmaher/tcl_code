@@ -72,8 +72,10 @@ def calculate_errors(image,path,groups,groups_edges, err_name):
 
 data = []
 cols=["image","path","group","radius"]
-apps = ['_edge','_image','_edge_bl01_r015_ku25','_image_bl01_r015_ku25',\
-'_edge_bl01_r015','_image_bl01_r015']
+apps = ['_edge48',
+'_image48',
+'_edge96',
+'_image96']
 
 for root, dirs, files in os.walk('.'):
 	if '/groups' in root:
@@ -110,7 +112,7 @@ for i in range(1,len(dataframes)):
 
 d = dataframes[0]
 
-d.loc[(d['error_edge']>=0.9)].to_csv('bad_errors.csv')
+d.loc[(d['error_edge48']>=0.9)].to_csv('bad_errors.csv')
 
 d.to_csv('all_errors.csv')
 

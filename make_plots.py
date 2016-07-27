@@ -3,10 +3,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-apps = ['_edge','_image','_edge_bl01_r015_ku25','_image_bl01_r015_ku25',\
-'_edge_bl01_r015','_image_bl01_r015']
-colors = {'_edge':'red', '_image':'blue', '_edge_bl01_r015_ku25':'green',\
- '_image_bl01_r015_ku25':'black', '_edge_bl01_r015':'yellow', '_image_bl01_r015':'pink'}
+apps = ['_edge48',
+'_image48',
+'_edge96',
+'_image96']
+
+colors = {'_edge48':'red',
+'_image48':'blue',
+'_edge96':'green',
+ '_image96':'black'}
+
+markers = {'_edge48':'o',
+'_image48':'v',
+'_edge96':'D',
+'_image96':'|'}
+
 
 df = pd.read_csv('all_errors.csv')
 
@@ -42,14 +53,14 @@ thresh_errs = {}
 for app in apps:
 	thresh_errs[app] = []
 
-ts = np.arange(0,1.025,0.025)
+ts = np.arange(0,1.1,0.1)
 for t in ts:
 	for app in apps:
 		frac = float(np.sum(df['error'+app]<=t))/len(df['error'+app])
 		thresh_errs[app].append(frac)
 
 for app in apps:
-	plt.plot(ts,thresh_errs[app], color = colors[app], label=app)
+	plt.plot(ts,thresh_errs[app], color = colors[app], marker=markers[app], markersize=8, label=app, linewidth=2)
 
-plt.legend(apps, loc='lower right')
+plt.legend(apps, loc='upper left')
 plt.show()

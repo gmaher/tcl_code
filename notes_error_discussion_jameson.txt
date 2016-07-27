@@ -28,3 +28,17 @@ group_restorePreopSegs
 - error on different image subsets (MR vs non MR)
 
 - error vs vessel type
+
+######################################
+07/06/2016
+
+https://github.com/SimVascular/SimVascular/blob/master/Tcl/SimVascular_2.0/Plugins/segmentationTools.tcl#L598
+
+https://github.com/SimVascular/SimVascular/blob/master/Tcl/SimVascular_2.0/Plugins/segmentationTools.tcl#L309
+
+seg_writeSliceTiff $pathId $posList $edge_image $path "/mask/"
+
+seg_writeTiff $rtnImg ./$pathId/
+
+https://github.com/SimVascular/SimVascular/blob/master/Tcl/SimVascular_2.0/Plugins/segmentationTools.tcl#L923
+

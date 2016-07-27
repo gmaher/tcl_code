@@ -1,5 +1,7 @@
 proc runEdgeAnalysis {} {
 
+	global gOptions
+	set gOptions(resliceDims) {150 150}
 
 	set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha"
 	set imgs(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm.mha"
@@ -30,12 +32,12 @@ proc runEdgeAnalysis {} {
 
 	for {set index 0} {$index < 4} {incr index} {
 		puts $imgs($index)
-		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge" 2.5 1.5 0.9 0.9
-		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image" 2.5 1.5 0.9 0.9
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge48" 2.5 1.5 0.9 0.9
+		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image48" 2.5 1.5 0.9 0.9
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 0.9 0.9 
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05" 0.5 1.5 0.9 0.9
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl01_r015_ku25" 0.1 1.5 0.15 2.5 
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl01_r015_ku25" 0.1 1.5 0.15 2.5
+		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl01_r015_ku25" 0.1 1.5 0.15 2.5 
+		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl01_r015_ku25" 0.1 1.5 0.15 2.5
 	}
  
 }
@@ -144,7 +146,7 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 
 			lsGUIupdatePath
 
-			itkLSDoBatch $pathmap($grpName) $grpPoints $new_name
+			itkLSDoBatch_screen $pathmap($grpName) $grpPoints $new_name
 
 			guiSV_group_update_tree
 		}
@@ -188,3 +190,68 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 
 #For batch level set
 #need phyRadius set and need to update path start and end points
+
+proc itkLSDoBatch_screen {pathId posList groupName} {
+
+	# set base string
+	global lsGUIcurrentPositionNumber
+	global lsGUIcurrentPathNumber
+	global lsGUIcurrentGroup
+	global gOptions
+	global gPathPoints
+
+	set orgPosId $lsGUIcurrentPositionNumber
+	set orgPathId $lsGUIcurrentPathNumber
+	set orgGroup $lsGUIcurrentGroup
+	set lsGUIcurrentPathNumber $pathId
+	set lsGUIcurrentGroup $groupName
+	
+	global itklsGUIParamsBatch
+	set addToGroup $itklsGUIParamsBatch(addToGroup)
+	set smooth $itklsGUIParamsBatch(smooth)
+
+	set pll [llength $posList]
+	#puts "pathId: $pathId \n"
+	set notDoneList {}
+	for {set idx 0} {$idx < [llength $posList]} {incr idx 1} {
+		set lsGUIcurrentGroup $groupName
+		
+		set posId [lindex $posList $idx]
+		global lsGUIcurrentPositionNumber
+		set lsGUIcurrentPositionNumber $posId
+
+		itkLSOnPos $pathId $posId
+		set seg /lsGUI/$pathId/$posId/ls/oriented
+
+		set addToGrp $itklsGUIParamsBatch(addToGroup)
+		if { $itklsGUIParamsBatch(smooth) == "1" } {
+		    if { [lsGUIfourierSmoothSeg itklevelset 1] != "0"} {
+		    	set addToGrp "0"
+		    }
+		}
+
+		catch {repos_delete -obj tmp/pd}
+		if { [catch { geom_sampleLoop -src $seg -num 20 -dst tmp/pd} fid] } {
+			puts "Cannot loft:\n$fid"
+			set addToGrp "0"
+			lappend notDoneList $posId
+			catch {repos_delete -obj tmp/pd}
+		}
+		catch {repos_delete -obj tmp/pd}
+
+	
+		if { $addToGrp == "1" } {
+			lsGUIaddToGroup levelset
+		}	
+		after 1
+
+		#vis_renWriteJPEG lsRenWinPot_ren1 ./screens/$groupName.$pathId.$posId
+
+		lsGUIupdatePositionScale 0
+		itklsChangeFrame 0
+
+	}
+
+puts "notDoneList $notDoneList"
+
+} 
