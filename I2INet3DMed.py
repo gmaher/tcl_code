@@ -462,8 +462,8 @@ def makeEdgeMap(inputfile, netFile, caffeModel, olap=48):
 netFile = sys.argv[1]
 caffeModel = sys.argv[2]
 
-print "netFile: ", netFile
-print "caffeModel: ", caffeModel
+print ("netFile: ", netFile)
+print ("caffeModel: ", caffeModel)
 
 files = os.listdir('.')
 
