@@ -8,18 +8,18 @@ script_path = '../batch_scripts/'
 
 def make_script(name,path):
 	s =  '''#!/bin/bash
-	#SBATCH --output="/home/gdmaher/output/'''+name+'''.out"
-	#SBATCH --partition=gpu-shared
-	#SBATCH --gres=gpu:1
-	#SBATCH -t 48:00:00
-	#SBATCH --mem=20000
-	cd ''' + path + '''
-	pwd
-	echo "START"
-	#rm -rf tempdir
-	python /home/gdmaher/tcl_code/I2INet3DMed.py /home/gdmaher/I2INet3DMed/I2INet3DMed.prototxt /home/gdmaher/I2INet3DMed/I2INet3DMed.caffemodel
-	#cp -rf /scratch/$USER/$SLURM_JOB_ID/* /home/gdmaher/copy
-	echo "DONE"'''
+#SBATCH --output="/home/gdmaher/output/'''+name+'''.out"
+#SBATCH --partition=gpu-shared
+#SBATCH --gres=gpu:1
+#SBATCH -t 48:00:00
+#SBATCH --mem=20000
+cd ''' + path + '''
+pwd
+echo "START"
+#rm -rf tempdir
+python /home/gdmaher/tcl_code/I2INet3DMed.py /home/gdmaher/I2INet3DMed/I2INet3DMed.prototxt /home/gdmaher/I2INet3DMed/I2INet3DMed.caffemodel
+#cp -rf /scratch/$USER/$SLURM_JOB_ID/* /home/gdmaher/copy
+echo "DONE"'''
 
 	file = open(sys.argv[2]+name+'.sh','w')
 	file.write(s)
