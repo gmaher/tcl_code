@@ -472,5 +472,5 @@ for file in files:
     if ('.mha' in file) and (not '_E' in file):
         inputfile = './'+file
         print("start: ", inputfile)
-        makeEdgeMap(inputfile, netFile, caffeModel)
+        makeEdgeMap(inputfile, netFile, caffeModel, 96)
         print("end: ", inputfile)
