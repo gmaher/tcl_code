@@ -1,5 +1,7 @@
 from __future__ import print_function
 import os
+import sys
+
 def makeEdgeMap(inputfile, netFile, caffeModel, olap=48):
     # coding: utf-8
 
@@ -454,8 +456,14 @@ def makeEdgeMap(inputfile, netFile, caffeModel, olap=48):
 # names.append('OSMSC0006')
 
 
-netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
-caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
+#netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
+#caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
+
+netFile = sys.argv[1]
+caffeModel = sys.argv[2]
+
+print "netFile: ", netFile
+print "caffeModel: ", caffeModel
 
 files = os.listdir('.')
 

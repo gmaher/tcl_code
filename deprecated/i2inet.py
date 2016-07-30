@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+import sys
 def makeEdgeMap(inputfile, netFile, caffeModel):
     ##########################################
     # Block 1
@@ -438,8 +438,14 @@ inputs.append('./models/OSMSC0001/OSMSC0001-cm.mha')
 #inputs.append('./models/OSMSC0005/OSMSC0005-cm.mha')
 
 
-netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
-caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
+#netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
+#caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
+
+netFile = sys.argv[1]
+caffeModel = sys.argv[2]
+
+print "netFile: ", netFile
+print "model: ", caffeModel
 
 for inputfile in inputs:
     print("start: ", inputfile)

@@ -12,12 +12,12 @@ def make_script(name,path):
 	#SBATCH --partition=gpu-shared\n
 	#SBATCH --gres=gpu:1\n
 	#SBATCH -t 48:00:00\n
-	#SBATCH --mem=40000\n
+	#SBATCH --mem=20000\n
 	cd ''' + path + '''\n
 	pwd\n
 	echo "START"\n
 	#rm -rf tempdir\n
-	python /home/gdmaher/tcl_code/I2INet3DMed.py\n
+	python /home/gdmaher/tcl_code/I2INet3DMed.py /home/gdmaher/I2INet3DMed/I2INet3DMed.prototxt /home/gdmaher/I2INet3DMed/I2INet3DMed.caffemodel\n
 	#cp -rf /scratch/$USER/$SLURM_JOB_ID/* /home/gdmaher/copy\n
 	echo "DONE"'''
 

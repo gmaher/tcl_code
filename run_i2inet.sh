@@ -9,7 +9,7 @@ cd /home/gdmaher/tcl_code
 pwd
 echo "START"
 #rm -rf tempdir
-python I2INet3DMed.py
+python I2INet3DMed.py /home/gdmaher/I2INet3DMed/I2INet3DMed.prototxt /home/gdmaher/I2INet3DMed/I2INet3DMed.caffemodel
 #cp -rf /scratch/$USER/$SLURM_JOB_ID/* /home/gdmaher/copy
 echo "DONE"
 
