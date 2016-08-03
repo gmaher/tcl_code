@@ -459,12 +459,18 @@ def makeEdgeMap(inputfile, netFile, caffeModel, olap=48):
 #netFile='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.prototxt'
 #caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
 
+if len(sys.argv) < 4:
+    print("usage:")
+    print("python ", sys.argv[0], "<netfile path> <caffemodel path> <overlap>")
+    exit()
+
 netFile = sys.argv[1]
 caffeModel = sys.argv[2]
+supplied_overlap = sys.argv[3]
 
 print ("netFile: ", netFile)
 print ("caffeModel: ", caffeModel)
-
+print ("overlap: ", supplied_overlap)
 files = os.listdir('.')
 
 for file in files:
@@ -472,5 +478,5 @@ for file in files:
     if ('-cm.mha' in file) and (not '_E' in file):
         inputfile = './'+file
         print("start: ", inputfile)
-        makeEdgeMap(inputfile, netFile, caffeModel, 96)
+        makeEdgeMap(inputfile, netFile, caffeModel, supplied_overlap)
         print("end: ", inputfile)

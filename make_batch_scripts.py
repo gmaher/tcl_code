@@ -3,6 +3,12 @@ import sys
 
 #Input argument 1: folder to walk through for mha files
 #Input argument 2: folder to store batch scripts
+#input argument 3: overlap to use
+
+if len(sys.argv) < 4:
+	print "usage:"
+	print "python ", sys.argv[0], "<vascular data dir> <batch script dir> <overlap>"
+	exit()
 
 script_path = '../batch_scripts/'
 
@@ -17,7 +23,7 @@ cd ''' + path + '''
 pwd
 echo "START"
 #rm -rf tempdir
-python /home/gdmaher/tcl_code/I2INet3DMed.py /home/gdmaher/I2INet3DMed/I2INet3DMed.prototxt /home/gdmaher/I2INet3DMed/I2INet3DMed.caffemodel
+python /home/gdmaher/tcl_code/I2INet3DMed.py /home/gdmaher/I2INet3DMed/I2INet3DMed.prototxt /home/gdmaher/I2INet3DMed/I2INet3DMed.caffemodel '''+str(sys.argv[3])+'''
 #cp -rf /scratch/$USER/$SLURM_JOB_ID/* /home/gdmaher/copy
 echo "DONE"'''
 
