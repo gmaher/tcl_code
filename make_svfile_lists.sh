@@ -9,9 +9,9 @@ for dir in $1*; do
 
 	num_paths="$(find $dir -name "*.paths" | wc -l)"
 
-	num_edge_48="$(find $1 -name "*-cm_E48.mha" | wc -l)"
+	num_edge_48="$(find $dir -name "*-cm_E48.mha" | wc -l)"
 
-	num_edge_96="$(find $1 -name "*-cm_E96.mha" | wc -l)"
+	num_edge_96="$(find $dir -name "*-cm_E96.mha" | wc -l)"
 
 	echo "$num_images, $num_groups, $num_paths, $num_edge_48, $num_edge_96"
 
