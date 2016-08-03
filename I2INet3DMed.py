@@ -125,10 +125,11 @@ def makeEdgeMap(inputfile, netFile, caffeModel, olap=48):
     overlap = output_size/npa([12,12,12],dtype=int)[::-1]
 
 
-
+    jobid = os.environ['SLURM_JOB_ID']
+    user = os.environ['USER']
     #outputdir='./EdgeMaps/' + name + '/'
     #tempdir='./tempdir/' + name + '/'
-    tempdir = './tempdir' + str(np.random.randint(1e7)) +'/'
+    tempdir = '/scratch/'+str(user)+'/'+str(jobid)+'/tempdir' + str(np.random.randint(1e7)) +'/'
 
     roi=None
     fnbase=basename(inputfile)
