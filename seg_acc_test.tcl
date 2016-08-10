@@ -3,37 +3,37 @@ proc runEdgeAnalysis {} {
 	global gOptions
 	set gOptions(resliceDims) {150 150}
 
-	set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm.mha"
-	set imgs(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm.mha"
-	set imgs(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm.mha"
-	set imgs(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142.mha"
-	#set imgs(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/OSMSC0006-cm.mha"
-	
-
-	set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/OSMSC0001-cm_E.mha"
-	set edges(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/OSMSC0002-cm_E.mha"
-	set edges(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/OSMSC0003-cm_E.mha"
-	set edges(3) "/home/gabriel/projects/tcl_code/models/weiguang/SU0187_2008_247_33758142_E.mha" 
-	#set edges(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/OSMSC0006-cm_E48.mha"
-	
-
-	set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/0001_0001-cm.paths"
-	set paths(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/0002_0001-cm.paths"
-	set paths(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/0003_0001-cm.paths"
-	set paths(3) "/home/gabriel/projects/tcl_code/models/weiguang/2008_247.paths"
-	#set paths(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/0006_0001/0006_0001-cm.paths"
-
-	set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0001/0001_0001/groups"
-	set grps(1) "/home/gabriel/projects/tcl_code/models/OSMSC0002/0002_0001/groups"
-	set grps(2) "/home/gabriel/projects/tcl_code/models/OSMSC0003/0003_0001/groups"
-	set grps(3) "/home/gabriel/projects/tcl_code/models/weiguang/groups"
-	#set grps(0) "/home/gabriel/projects/tcl_code/models/OSMSC0006/0006_0001/groups"
 
 
-	for {set index 0} {$index < 4} {incr index} {
-		puts $imgs($index)
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge48" 2.5 1.5 0.9 0.9
-		testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image48" 2.5 1.5 0.9 0.9
+	set imgs [readFromFile "./images.txt"]
+
+	set edge48 [readFromFile "./edge48.txt"]
+
+	set edge96 [readFromFile "./edge96.txt"]
+
+	set grps [readFromFile "./groups.txt"]
+
+	set paths [readFromFile "./paths.txt"]
+
+	set a [llength $imgs]
+	set b [llength $edge48]
+	set c [llength $edge96]
+	set d [llength $grps]
+	set e [llength $paths]
+
+	if { $a != $b || $a != $c || $a != $d || $a != $e } {
+		error {Length of input files is unequal}
+	}
+
+	foreach img $imgs e48 $edge48 e96 $edge96 grp $grps path $paths {
+		puts $img
+		puts $e48
+		puts $e96
+		puts $grp
+		puts $path
+		testSegAcc $img $e48 $path $grp 0 "_image" 2.5 1.5 0.9 0.9
+		testSegAcc $img $e48 $path $grp 1 "_edge48" 2.5 1.5 0.9 0.9
+		testSegAcc $img $e96 $path $grp 1 "_edge96" 2.5 1.5 0.9 0.9
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 0.9 0.9 
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05" 0.5 1.5 0.9 0.9
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl01_r015_ku25" 0.1 1.5 0.15 2.5 
@@ -254,4 +254,14 @@ proc itkLSDoBatch_screen {pathId posList groupName} {
 
 puts "notDoneList $notDoneList"
 
+}
+
+proc readFromFile {fp} {
+	set file [open $fp r]
+	set data [read $file]
+	close $file
+
+	set out [split $data "\n"]
+
+	return $out
 } 

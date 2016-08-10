@@ -12,8 +12,8 @@ for dir in $1*; do
 
 	num_paths="$(find $dir -name "*.paths" | wc -l)"
 
-	#num_edge_48="$(find $dir -name "*-cm_E48.mha" | wc -l)"
-	num_edge_48=1
+	num_edge_48="$(find $dir -name "*-cm_E48.mha" | wc -l)"
+	#num_edge_48=1
 
 	num_edge_96="$(find $dir -name "*-cm_E96.mha" | wc -l)"
 

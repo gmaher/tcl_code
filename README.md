@@ -12,6 +12,9 @@
 1. `cd <directory of .mha file>`
 2. `python /path/to/tcl_code/I2INet3DMed.py <netFile> <caffeModel>`
 
+## Generate list of files to compute groups for
+`bash make_svfile_list.sh <vascular data directory>`
+
 ## Generate groups using image with and without edge maps
 
 1. Open simvascular
