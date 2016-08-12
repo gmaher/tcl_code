@@ -19,9 +19,12 @@ for dir in $1*; do
 
 	groups_done="$(ls -R $dir | grep "_edge96*" | wc -l)"
 
+	echo $dir
+	echo $groups_done
+
 	if ([ "$num_images" == "1" ] && [ "$num_groups" == "1" ]  &&
 	 [ "$num_paths" == "1" ] && [ "$num_edge_48" == "1" ] && [ "$num_edge_96" == "1" ] &&
-	 [ "$groups_done" == "0" ]);
+	 [ "$groups_done" -ne "0" ]);
 		then
 			#echo "$num_images, $num_groups, $num_paths, $num_edge_48, $num_edge_96"
 			find $dir -name "*OSMSC*-cm.mha" >> images.txt
