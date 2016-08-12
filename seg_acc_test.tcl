@@ -113,6 +113,11 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 	}
 
 	foreach grpName [group_names] {
+
+		if {[string match *edge48* $grpName] || [string match *edge96* $grpName] ||
+			[string match *image* $grpName]} {
+			continue
+		}
 		#get the points in the existing group
 		set grpPoints {}
 		foreach obj [group_get $grpName] {
@@ -120,22 +125,48 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 		}
 		puts $grpPoints
 
+		#See if there is a path that contains the group name
+		#if there is then that's probaly the path we are 
+		#looking for
+		#if there are multiple matches take the shortest one
+
 		#check that a corresponding path exists
 		#if so run the level set on all the points
 		#store the result in a new group
+		set path_to_use 0
+		set minLength 1000
 		if {[info exists pathmap($grpName)]} {
-			set new_name $grpName
+			set path_to_use $grpName
+		} 
+		if {$path_to_use == 0} {
+			foreach name [array names pathmap] {
+				if {[string length $name] < $minLength && [string match *$grpName* $name]} {
+					set minLength [string length $name]
+					set path_to_use $name
+				}
+			}
+		}
+		if {$path_to_use == 0} {
+			foreach name [array names pathmap] {
+				if {[string length $name] < $minLength && [string match *$name* $grpName]} {
+					set minLength [string length $name]
+					set path_to_use $name
+				}
+			}			
+		}
 
+		if {$path_to_use != 0} {
+			set new_name $grpName
+			puts $path_to_use
 			append new_name $app
 
 			group_create $new_name
 			puts $new_name
-			puts $pathmap($grpName)
 
 			after 1000
 
 			set lsGUIcurrentGroup $new_name
-			set lsGUIcurrentPathNumber $pathmap($grpName)
+			set lsGUIcurrentPathNumber $pathmap($path_to_use)
 			set lsGUIcurrentPositionNumber 0
 			set itklsGUIParamsBatch(addToGroup) 1
 			set itklsGUIParamsBatch(posList) $grpPoints
@@ -146,7 +177,7 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 
 			lsGUIupdatePath
 
-			itkLSDoBatch_screen $pathmap($grpName) $grpPoints $new_name
+			itkLSDoBatch_screen $pathmap($path_to_use) $grpPoints $new_name
 
 			guiSV_group_update_tree
 		}

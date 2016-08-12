@@ -3,4 +3,4 @@ EdgeMaps/
 tempdir/
 models/
 *.csv
-./*.txt
+*.txt

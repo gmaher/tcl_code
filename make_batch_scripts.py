@@ -36,4 +36,4 @@ print sys.argv
 for root,dir,files in os.walk(sys.argv[1]):
 	for f in files:
 		if ('-cm.mha' in f) and (not '_E' in f) and ('OSMSC' in f):
-			make_script(f.replace('.mha',''),root)
+			make_script(f.replace('.mha',''+str(sys.argv[3])),root)

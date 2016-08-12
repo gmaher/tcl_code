@@ -4,19 +4,16 @@ import matplotlib.pyplot as plt
 
 
 apps = ['_edge48',
-'_image48',
-'_edge96',
-'_image96']
+'_image',
+'_edge96']
 
 colors = {'_edge48':'red',
-'_image48':'blue',
-'_edge96':'green',
- '_image96':'black'}
+'_image':'blue',
+'_edge96':'green'}
 
 markers = {'_edge48':'o',
-'_image48':'v',
-'_edge96':'D',
-'_image96':'|'}
+'_image':'v',
+'_edge96':'x'}
 
 
 df = pd.read_csv('all_errors.csv')

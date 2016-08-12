@@ -3,6 +3,12 @@ import numpy as np
 import os
 from shapely.geometry import Polygon
 from math import sqrt, pi
+import sys
+
+if len(sys.argv) < 2:
+    print("usage:")
+    print("python ", sys.argv[0], "<folder to search for groups>")
+    exit()
 
 def get_group_from_file(fn):
 	group = {}
@@ -72,17 +78,18 @@ def calculate_errors(image,path,groups,groups_edges, err_name):
 
 data = []
 cols=["image","path","group","radius"]
-apps = ['_edge48',
-'_image48',
-'_edge96',
-'_image96']
+apps = ['_image',
+'_edge48',
+'_edge96']
 
-for root, dirs, files in os.walk('.'):
-	if '/groups' in root:
-		#print root
-		#print root.split('/')[2]
-		#print files
-		img = root.split('/')[2]
+for root, dirs, files in os.walk(sys.argv[1]):
+	if 'groups' in root:
+		split_path = root.split('/')
+		print split_path
+		for s in split_path:
+			if "OSMSC" in s:
+				img = s
+
 		data.append((root,img,files))
 
 #loop over directories, calculate errors and store in dataframe
