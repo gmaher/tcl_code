@@ -427,7 +427,7 @@ def makeEdgeMap(inputfile, netFile, caffeModel, osize=48, olap=12):
     #if not os.path.exists(outputdir): os.makedirs(outputdir)
     #outputname=os.path.join(outputdir,imgbname+'.mha')
     
-    outputname = inputfile.replace('.mha','_E'+str(osize)+'_'+str(olap)'.mha')
+    outputname = inputfile.replace('.mha','_E'+str(osize)+'_'+str(olap)+'.mha')
 
     print("Writing file:",outputname)
     sitk.WriteImage(itkE,outputname)
