@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 import sys
 
-def makeEdgeMap(inputfile, netFile, caffeModel, olap=48):
+def makeEdgeMap(inputfile, netFile, caffeModel, osize=48, olap=12):
     # coding: utf-8
 
     # In[1]:
@@ -121,8 +121,8 @@ def makeEdgeMap(inputfile, netFile, caffeModel, olap=48):
     #caffeModel='/home/gabriel/projects/caffe-sv/models/I2INet3DMed/I2INet3DMed.caffemodel'
     #name = "OSMSC001"
     #output_size = npa([96,96,48],dtype=int)[::-1]
-    output_size = npa([olap,olap,olap],dtype=int)[::-1]
-    overlap = output_size/npa([12,12,12],dtype=int)[::-1]
+    output_size = npa([osize,osize,osize],dtype=int)[::-1]
+    overlap = output_size/npa([olap,olap,olap],dtype=int)[::-1]
 
 
     jobid = os.environ['SLURM_JOB_ID']
@@ -427,24 +427,26 @@ def makeEdgeMap(inputfile, netFile, caffeModel, olap=48):
     #if not os.path.exists(outputdir): os.makedirs(outputdir)
     #outputname=os.path.join(outputdir,imgbname+'.mha')
     
-    outputname = inputfile.replace('.mha','_E'+str(olap)+'.mha')
+    outputname = inputfile.replace('.mha','_E'+str(osize)+'_'+str(olap)'.mha')
 
     print("Writing file:",outputname)
     sitk.WriteImage(itkE,outputname)
 
 
-if len(sys.argv) < 4:
+if len(sys.argv) < 5:
     print("usage:")
-    print("python ", sys.argv[0], "<netfile path> <caffemodel path> <overlap>")
+    print("python ", sys.argv[0], "<netfile path> <caffemodel path> <osize> <olap>")
     exit()
 
 netFile = sys.argv[1]
 caffeModel = sys.argv[2]
-supplied_overlap = sys.argv[3]
+supplied_osize = sys.argv[3]
+supplied_olap = sys.argv[4]
 
 print ("netFile: ", netFile)
 print ("caffeModel: ", caffeModel)
-print ("overlap: ", supplied_overlap)
+print ("osize: ", supplied_osize)
+print ("olap: ", supplied_olap)
 files = os.listdir('.')
 
 for file in files:
@@ -452,5 +454,5 @@ for file in files:
     if ('-cm.mha' in file) and (not '_E' in file):
         inputfile = './'+file
         print("start: ", inputfile)
-        makeEdgeMap(inputfile, netFile, caffeModel, supplied_overlap)
+        makeEdgeMap(inputfile, netFile, caffeModel, supplied_osize, supplied_olap)
         print("end: ", inputfile)

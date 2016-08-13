@@ -5,15 +5,15 @@ proc runEdgeAnalysis {} {
 
 
 
-	set imgs [readFromFile "./images.txt"]
+	set imgs [readFromFile "/home/gabriel/projects/tcl_code/dir_for_seg/images.txt"]
 
-	set edge48 [readFromFile "./edge48.txt"]
+	set edge48 [readFromFile "/home/gabriel/projects/tcl_code/dir_for_seg/edge48.txt"]
 
-	set edge96 [readFromFile "./edge96.txt"]
+	set edge96 [readFromFile "/home/gabriel/projects/tcl_code/dir_for_seg/edge96.txt"]
 
-	set grps [readFromFile "./groups.txt"]
+	set grps [readFromFile "/home/gabriel/projects/tcl_code/dir_for_seg/groups.txt"]
 
-	set paths [readFromFile "./paths.txt"]
+	set paths [readFromFile "/home/gabriel/projects/tcl_code/dir_for_seg/paths.txt"]
 
 	set a [llength $imgs]
 	set b [llength $edge48]

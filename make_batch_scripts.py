@@ -5,9 +5,9 @@ import sys
 #Input argument 2: folder to store batch scripts
 #input argument 3: overlap to use
 
-if len(sys.argv) < 4:
+if len(sys.argv) < 5:
 	print "usage:"
-	print "python ", sys.argv[0], "<vascular data dir> <batch script dir> <overlap>"
+	print "python ", sys.argv[0], "<vascular data dir> <batch script dir> <osize> <olap>"
 	exit()
 
 script_path = '../batch_scripts/'
@@ -23,7 +23,7 @@ cd ''' + path + '''
 pwd
 echo "START"
 #rm -rf tempdir
-python /home/gdmaher/tcl_code/I2INet3DMed.py /home/gdmaher/I2INet3DMed/I2INet3DMed.prototxt /home/gdmaher/I2INet3DMed/I2INet3DMed.caffemodel '''+str(sys.argv[3])+'''
+python /home/gdmaher/tcl_code/I2INet3DMed.py /home/gdmaher/I2INet3DMed/I2INet3DMed.prototxt /home/gdmaher/I2INet3DMed/I2INet3DMed.caffemodel '''+str(sys.argv[3])+''' '''+str(sys.argv[4])+'''
 #cp -rf /scratch/$USER/$SLURM_JOB_ID/* /home/gdmaher/copy
 echo "DONE"'''
 
@@ -36,4 +36,4 @@ print sys.argv
 for root,dir,files in os.walk(sys.argv[1]):
 	for f in files:
 		if ('-cm.mha' in f) and (not '_E' in f) and ('OSMSC' in f):
-			make_script(f.replace('.mha',''+str(sys.argv[3])),root)
+			make_script(f.replace('.mha',''+str(sys.argv[3])+'_'+str(sys.argv[4])),root)
