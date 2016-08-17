@@ -21,6 +21,10 @@
 2. Copy code from `seg_acc_test.tcl` and paste it in the simvascular console
 3. Run the command `runEdgeAnalysis`
 
+## Compute group errors and store in CSV
+
+`python groups_toCSV.py <vascular data repository>`
+
 ## make plots
 
 `python make_plots.py`
