@@ -83,7 +83,7 @@ apps = ['_image',
 '_edge96']
 
 for root, dirs, files in os.walk(sys.argv[1]):
-	if 'groups' in root:
+	if 'groups-cm' in root:
 		split_path = root.split('/')
 		print split_path
 		for s in split_path:
