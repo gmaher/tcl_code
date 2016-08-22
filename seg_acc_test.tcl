@@ -3,17 +3,18 @@ proc runEdgeAnalysis {} {
 	global gOptions
 	set gOptions(resliceDims) {150 150}
 
+	set dir /home/gabriel/projects/tcl_code/dir_for_seg
+	#set dir /home/gabriel/projects/tcl_code
 
+	set imgs [readFromFile $dir/images.txt]
 
-	set imgs [readFromFile "./images.txt"]
+	set edge48 [readFromFile $dir/edge48.txt]
 
-	set edge48 [readFromFile "./edge48.txt"]
+	set edge96 [readFromFile $dir/edge96.txt]
 
-	set edge96 [readFromFile "./edge96.txt"]
+	set grps [readFromFile $dir/groups.txt]
 
-	set grps [readFromFile "./groups.txt"]
-
-	set paths [readFromFile "./paths.txt"]
+	set paths [readFromFile $dir/paths.txt]
 
 	set a [llength $imgs]
 	set b [llength $edge48]
@@ -31,9 +32,15 @@ proc runEdgeAnalysis {} {
 		puts $e96
 		puts $grp
 		puts $path
-		testSegAcc $img $e48 $path $grp 0 "_image" 2.5 1.5 0.9 0.9
-		testSegAcc $img $e48 $path $grp 1 "_edge48" 2.5 1.5 0.9 0.9
-		testSegAcc $img $e96 $path $grp 1 "_edge96" 2.5 1.5 0.9 0.9
+
+		if {[checkEdgeGroupExists $grp]} {
+			puts "found existing edge/image groups, continuing"
+			continue
+		}
+
+		testSegAcc $img $e48 $path $grp 0 "_image" 2.5 1.5 0.3 0.9
+		testSegAcc $img $e48 $path $grp 1 "_edge48" 2.5 1.5 0.3 0.9
+		testSegAcc $img $e96 $path $grp 1 "_edge96" 2.5 1.5 0.3 0.9
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 0.9 0.9 
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05" 0.5 1.5 0.9 0.9
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl01_r015_ku25" 0.1 1.5 0.15 2.5 
@@ -295,4 +302,17 @@ proc readFromFile {fp} {
 	set out [split $data "\n"]
 
 	return $out
+}
+
+proc checkEdgeGroupExists {grp_dir} {
+	set files [glob $grp_dir/*]
+
+	foreach file $files {
+		if {[string match *edge48* $file] || [string match *edge96* $file] ||
+			[string match *image* $file]} {
+			return 1
+		}
+	}
+
+	return 0
 } 
