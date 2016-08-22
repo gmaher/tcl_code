@@ -19,37 +19,6 @@ markers = {'_edge48':'o',
 
 df = pd.read_csv('all_errors.csv')
 
-# plt.scatter(x=np.log(df['radius']), y=np.log(df['error_edge']), label='edge_error')
-# plt.legend()
-# plt.xlabel('log(radius)')
-# plt.ylabel('log(edge_error)')
-# plt.show()
-
-# plt.scatter(x=np.log(df['radius']), y=np.log(df['error_image']), label='image_error')
-# plt.legend()
-# plt.xlabel('log(radius)')
-# plt.ylabel('log(edge_error)')
-# plt.show()
-
-# df['error_image'].hist(bins=20, label='image error')
-# plt.legend()
-# plt.show()
-
-# df['error_edge'].hist(bins=20, label='edge error')
-# plt.legend()
-# plt.show()
-
-# df['error_image_bl05'].hist(bins=20, label='image bl05 error')
-# plt.legend()
-# plt.show()
-
-# df['error_edge_bl05'].hist(bins=20, label='edge bl05 error')
-# plt.legend()
-# plt.show()
-#df = df.loc[df['image'] == 'OSMSC0001']
-#df_aorta = df.loc[(df['path'] == 'aorta') | (df['path']=='Aorta') | (df['path']=="AORTA")]
-
-
 df_rca = df.loc[(df['path'] == 'RCA') | (df['path']=='LCA')]
 
 AORTAind = [(("aorta" in s) | ("Aorta" in s) | ("AORTA" in s) ) for s in df['path']]
