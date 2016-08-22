@@ -8,7 +8,8 @@ touch images.txt groups.txt paths.txt edge48.txt edge96.txt
 for dir in $1*; do
 	num_images="$(find $dir -name "*OSMSC*-cm.mha" | wc -l)"
 
-	num_groups="$(find $dir -name "*groups-cm" -type d | wc -l)"
+	#num_groups="$(find $dir -name "*groups-cm" -type d | wc -l)"
+	num_groups="$(find $dir -name "*groups" -type d | wc -l)"
 
 	num_paths="$(find $dir -name "*.paths" | wc -l)"
 
@@ -20,15 +21,16 @@ for dir in $1*; do
 	groups_done="$(ls -R $dir | grep "_edge96*" | wc -l)"
 
 	echo $dir
-	echo $groups_done
+	echo $num_images $num_groups $num_paths $num_edge_48 $num_edge_96 $groups_done
 
 	if ([ "$num_images" == "1" ] && [ "$num_groups" == "1" ]  &&
 	 [ "$num_paths" == "1" ] && [ "$num_edge_48" == "1" ] && [ "$num_edge_96" == "1" ] &&
-	 [ "$groups_done" -ne "0" ]);
+	 [ "$groups_done" == "0" ]);
 		then
 			#echo "$num_images, $num_groups, $num_paths, $num_edge_48, $num_edge_96"
 			find $dir -name "*OSMSC*-cm.mha" >> images.txt
-			find $dir -name "*groups-cm" -type d >> groups.txt
+			#find $dir -name "*groups-cm" -type d >> groups.txt
+			find $dir -name "*groups" -type d >> groups.txt
 			find $dir -name "*.paths" >> paths.txt
 			find $dir -name "*-cm_E48.mha" >> edge48.txt
 			find $dir -name "*-cm_E96.mha" >> edge96.txt

@@ -45,19 +45,34 @@ df = pd.read_csv('all_errors.csv')
 # df['error_edge_bl05'].hist(bins=20, label='edge bl05 error')
 # plt.legend()
 # plt.show()
-
-thresh_errs = {}
-for app in apps:
-	thresh_errs[app] = []
-
-ts = np.arange(0,1.1,0.1)
-for t in ts:
+#df = df.loc[df['image'] == 'OSMSC0001']
+df_aorta = df.loc[(df['path'] == 'aorta') | (df['path']=='Aorta') | (df['path']=="AORTA")]
+df_rca = df.loc[(df['path'] == 'RCA') | (df['path']=='LCA')]
+ 
+def make_thresh(df, val):
+	thresh_errs = {}
 	for app in apps:
-		frac = float(np.sum(df['error'+app]<=t))/len(df['error'+app])
-		thresh_errs[app].append(frac)
+		thresh_errs[app] = []
+
+	ts = np.arange(0,1+val,val)
+	for t in ts:
+		for app in apps:
+			frac = float(np.sum(df['error'+app]<=t))/len(df['error'+app])
+			thresh_errs[app].append(frac)
+
+	return (thresh_errs, ts)
+
+thresh_aorta, ts_aorta = make_thresh(df_aorta,0.025)
+thresh_rca, ts_rca = make_thresh(df_rca, 0.025)
 
 for app in apps:
-	plt.plot(ts,thresh_errs[app], color = colors[app], marker=markers[app], markersize=8, label=app, linewidth=2)
+	plt.plot(ts_aorta,thresh_aorta[app], color = colors[app], marker=markers[app], markersize=8, label=app, linewidth=2)
+
+plt.legend(apps, loc='upper left')
+plt.show()
+
+for app in apps:
+	plt.plot(ts_rca,thresh_rca[app], color = colors[app], marker=markers[app], markersize=8, label=app, linewidth=2)
 
 plt.legend(apps, loc='upper left')
 plt.show()
