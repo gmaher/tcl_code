@@ -4,3 +4,4 @@ tempdir/
 models/
 *.csv
 *.txt
+*.html
