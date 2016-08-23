@@ -48,7 +48,7 @@ def get_filename(d):
 		if 'groups-cm' in root:
 			return root
 
-def project2d(group):
+def get_vec_shift(group):
 	'''
 	takes a list of 3d point tuples that lie on a plane
 	and converts them to 2d points
@@ -60,7 +60,7 @@ def project2d(group):
 	group.append(group[0])
 	l = len(group)
 	p1 = group[0]
-	p2 = group[int(np.floor(float(l)/2))]
+	p2 = group[int(np.floor(float(l)/4))]
 
 	A = np.zeros((3,2))
 	A[:,0] = p1[:]
@@ -70,6 +70,11 @@ def project2d(group):
 
 	q,r = np.linalg.qr(A)
 
+	return (q,mu)
+
+def project_group(group, q, mu):
+	group = [np.asarray(p) for p in group]
+	group.append(group[0])
 	group_centered = [(p-mu.T)[0] for p in group]
 	
 	twod_group = [p.dot(q) for p in group_centered]
@@ -87,9 +92,11 @@ for mem in members:
 	group_image = get_group_from_file(fn+'_image')[mem['group']]
 	group_edge = get_group_from_file(fn+'_edge96')[mem['group']]
 	
-	x,y = project2d(group)
-	x_image, y_image = project2d(group_image)
-	x_edge, y_edge = project2d(group_edge)
+	q, mu = get_vec_shift(group)
+
+	x,y = project_group(group, q, mu)
+	x_image, y_image = project_group(group_image, q, mu)
+	x_edge, y_edge = project_group(group_edge, q, mu)
 
 	trace = go.Scatter(
 	x = x,
