@@ -43,7 +43,7 @@ def make_thresh(df, val):
 thresh_aorta, ts_aorta = make_thresh(df_aorta,0.025)
 thresh_rca, ts_rca = make_thresh(df_rca, 0.025)
 thresh_pa, ts_pa = make_thresh(df_pa, 0.025)
-
+thresh, ts = make_thresh(df,0.025)
 graphs = []
 
 for app in apps:
@@ -78,5 +78,15 @@ for app in apps:
 
 	graphs.append(trace)
 
+for app in apps:
+	#plt.plot(ts_rca,thresh_rca[app], color = colors[app], marker=markers[app], markersize=8, label=app, linewidth=2)
+	trace = go.Scatter(
+		x = ts,
+		y = thresh[app],
+		mode = 'lines+markers',
+		name = 'full'+app
+		)
+
+	graphs.append(trace)
 py.offline.plot(graphs, filename="plot.html")
 
