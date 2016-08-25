@@ -119,5 +119,10 @@ for mem in members:
 	name = 'group_edge'
 	)
 
+	layout = go.Layout(
+		title = mem['path']+', error= '+str(mem['error_edge96'])
+		)
 
-	py.offline.plot([trace, trace_image, trace_edge], filename="./plots/plot"+mem['path']+".html")
+	fig = go.Figure(data=[trace, trace_image, trace_edge], layout=layout)
+
+	py.offline.plot(fig, filename="./plots/plot"+mem['path']+".html")

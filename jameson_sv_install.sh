@@ -84,6 +84,7 @@ tar -xf  tcl8.6.6-src.tar.gz
 cd tcl8.6.6/unix
 ./configure
 make -j4
+sudo make install
 cd ../..
 
 ##################################
@@ -94,8 +95,9 @@ wget downloads.sourceforge.net/project/tcl/Tcl/8.6.6/tk8.6.6-src.tar.gz
 #Tars into folder tk8.6.6
 tar -xf tk8.6.6-src.tar.gz
 cd tk8.6.6/unix
-./configure
+./configure --with-tcl="${1}tcl8.6.6/unix"
 make -j4
+sudo make install
 cd ../..
 
 #################################
@@ -135,4 +137,5 @@ cd ..
 mkdir sv_build
 cd sv_build
 cmake ${SV_CMAKE_ARGS} ../SimVascular/Code
+make -j4
 
