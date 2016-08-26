@@ -90,8 +90,8 @@ cd ../..
 ##################################
 #get TK
 ##################################
-wget downloads.sourceforge.net/project/tcl/Tcl/8.6.6/tk8.6.6-src.tar.gz
-
+#wget downloads.sourceforge.net/project/tcl/Tcl/8.6.6/tk8.6.6-src.tar.gz
+wget ftp://ftp.tcl.tk/pub/tcl/tcl8_6/tk8.6.6-src.tar.gz
 #Tars into folder tk8.6.6
 tar -xf tk8.6.6-src.tar.gz
 cd tk8.6.6/unix
@@ -117,9 +117,9 @@ cd ../..
 ##################################
 #get ITK
 ##################################
-wget downloads.sourceforge.net/project/itk/itk/4.9/InsightToolkit-4.9.1.tar.gz \
-&& tar -xf InsightToolkit-4.9.1.tar.gz
-mv InsightToolkit-4.9.1 ITK4.9
+wget https://github.com/InsightSoftwareConsortium/ITK/archive/v4.9.1.tar.gz \
+&& tar -xf v4.9.1.tar.gz
+mv ITK-4.9.1 ITK4.9
 cd ITK4.9
 mkdir build
 cd build
