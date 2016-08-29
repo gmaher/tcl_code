@@ -177,6 +177,16 @@ proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
 
 		if {[info exists pathmap($grpName)]} {
 			
+			set pathid $pathmap($grpName)
+			set numPathPts $gPathPoints($pathid,numSplinePts)
+			set grpEnd [llength $grpPoints]
+			set maxGrpPt [lindex $grpPoints [expr $grpEnd-1]]
+
+			if {$maxGrpPt > [expr $numPathPts]} {
+				puts "path and group do not have same number of points, continuing"
+				continue
+			}
+
 			seg_writeSliceTiff $pathmap($grpName) $grpPoints volume_image $img_dir/$grpName
 			seg_writeSliceTiff $pathmap($grpName) $grpPoints $itklsGUIParams(edgeImage) $edge_dir/$estring/$grpName
 
