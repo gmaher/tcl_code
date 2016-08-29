@@ -1,52 +1,196 @@
-proc runEdgeAnalysis {} {
+proc runEdgeAnalysis {vasc_dir edge_code img_string edge_string} {
+	#Runs batch level set for every model in the vascular data repository
+	#that satisfies certain conditions. Groups are computed both without and
+	#with an edgemap
+	#
+	#args:
+	#	@a vasc_dir, string, path to the vascular_data repository folder
+	#
+	#	@a edge_code, string,  pattern to look for in
+	#	edgemap file names. e.g. if OSMSC0001-cm_E96.mha is the edgemap
+	#	filename then a suitable code would be _E96.mha
+	#
+	#	@a img_string, string, string to append to groups generated using
+	#	levelset without an edgemap
+	#
+	# 	@a edge_string, string, string to append to groups generated using
+	#	edgemap
+	#
+	#preconditions:
+	#	*@a edge_code only mathces one file in each directory in the vascular
+	#	data repository
 
 	global gOptions
 	set gOptions(resliceDims) {150 150}
 
-	set dir /home/gabriel/projects/tcl_code/dir_for_seg
-	#set dir /home/gabriel/projects/tcl_code
+	set dirs [glob -types {d} $vasc_dir/OSMSC*]
 
-	set imgs [readFromFile $dir/images.txt]
+	foreach dir $dirs {
+		set edge [glob -nocomplain $dir/*$edge_code]
+		set path [glob -nocomplain $dir/*/*.paths]
+		set grp [glob -nocomplain $dir/*/*_groups-cm]
+		set img [glob -nocomplain $dir/*OSMSC*-cm.mha]
 
-	set edge48 [readFromFile $dir/edge48.txt]
+		puts "$img $edge $path $grp"
 
-	set edge96 [readFromFile $dir/edge96.txt]
+		if {[llength $grp] != 1 || [llength $path] != 1 || [llength $edge] != 1 ||
+			[llength $img] != 1} {
+				puts "More than 1 file or folder (or no file or folder) matches regular expressions, continuing"
+				continue
+		}
 
-	set grps [readFromFile $dir/groups.txt]
-
-	set paths [readFromFile $dir/paths.txt]
-
-	set a [llength $imgs]
-	set b [llength $edge48]
-	set c [llength $edge96]
-	set d [llength $grps]
-	set e [llength $paths]
-
-	if { $a != $b || $a != $c || $a != $d || $a != $e } {
-		error {Length of input files is unequal}
-	}
-
-	foreach img $imgs e48 $edge48 e96 $edge96 grp $grps path $paths {
-		puts $img
-		puts $e48
-		puts $e96
-		puts $grp
-		puts $path
-
-		if {[checkEdgeGroupExists $grp]} {
+		if {[checkEdgeGroupExists $grp $edge_code]} {
 			puts "found existing edge/image groups, continuing"
 			continue
 		}
 
-		testSegAcc $img $e48 $path $grp 0 "_image" 2.5 1.5 0.3 0.9
-		testSegAcc $img $e48 $path $grp 1 "_edge48" 2.5 1.5 0.3 0.9
-		testSegAcc $img $e96 $path $grp 1 "_edge96" 2.5 1.5 0.3 0.9
+		testSegAcc $img $edge $path $grp 0 $img_string 2.5 1.5 0.3 0.9
+		testSegAcc $img $edge $path $grp 1 $edge_string 2.5 1.5 0.3 0.9
+
+		#take screenshots
+		takeScreenshots $img $edge $path $grp $dir
+	}
+
+
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 0.9 0.9 
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05" 0.5 1.5 0.9 0.9
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl01_r015_ku25" 0.1 1.5 0.15 2.5 
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl01_r015_ku25" 0.1 1.5 0.15 2.5
+}
+
+proc runScreenshots {vasc_dir edge_code estring} {
+	#Runs batch level set for every model in the vascular data repository
+	#that satisfies certain conditions. Groups are computed both without and
+	#with an edgemap
+	#
+	#args:
+	#	@a vasc_dir, string, path to the vascular_data repository folder
+	#
+	#	@a edge_code, string,  pattern to look for in
+	#	edgemap file names. e.g. if OSMSC0001-cm_E96.mha is the edgemap
+	#	filename then a suitable code would be _E96.mha
+	#
+	#	@a estring, string, string to append to directory containing edgemap
+	# 	screenshots
+
+	global gOptions
+	set gOptions(resliceDims) {150 150}
+
+	set dirs [glob -types {d} $vasc_dir/OSMSC*]
+
+	foreach dir $dirs {
+		set edge [glob -nocomplain $dir/*$edge_code]
+		set path [glob -nocomplain $dir/*/*.paths]
+		set grp [glob -nocomplain $dir/*/*_groups-cm]
+		set img [glob -nocomplain $dir/*OSMSC*-cm.mha]
+
+		puts "$img $edge $path $grp"
+
+		if {[llength $grp] != 1 || [llength $path] != 1 || [llength $edge] != 1 ||
+			[llength $img] != 1} {
+				puts "More than 1 file or folder (or no file or folder) matches regular expressions, continuing"
+				continue
+		}
+
+		takeScreenshots $img $edge $path $grp $dir $estring
 	}
- 
+}
+
+proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
+	
+	set edge_dir $dir/screens/edge
+	set img_dir $dir/screens/img
+
+	#load image (hard coded for now)
+	global gImageVol
+	#set gImageVol(xml_filename) "/home/gabriel/projects/sample_data/image_data/vti/sample_data-cm.vti"
+	#set gImageVol(mha_filename) $imgName
+
+	if {[string match *.mha* $imgName]} {
+		set gImageVol(mha_filename) $imgName
+	} else {
+		set gImageVol(xml_filename) $imgName
+	}
+
+
+	seg_LoadEdgeImageMha $edgeName
+
+	createPREOPloadsaveLoadVol
+
+	#load paths
+	global gFilenames
+	set gFilenames(path_file) $pathName
+	guiFNMloadHandPaths
+
+	#load groups
+	set gFilenames(groups_dir) $grpName
+	createPREOPgrpLoadGroups
+	guiSV_group_update_tree
+
+	after 1000
+
+	#get path names
+	global gPathPoints
+	set pathids {}
+	set pathnames {}
+
+	foreach i [array names gPathPoints] {
+		set ab [split $i ,]
+		set a [lindex $ab 0]
+		set b [lindex $ab 1]
+		if {$b == "name"} {
+			set pathids [lappend pathids $a]
+			set pathnames [lappend pathnames $gPathPoints($i)]
+			set pathmap($gPathPoints($i)) $a
+		}
+	}
+
+	#pathids now contains all pathids
+	#pathnames now contains all path names
+	#pathmap maps from pathnames to ids
+	puts $pathids
+	puts $pathnames
+	puts [array names pathmap]
+
+	after 1000
+
+	global lsGUIcurrentGroup
+	global lsGUIcurrentPathNumber
+	global lsGUIcurrentPositionNumber
+	global itklsGUIParamsBatch
+	global itklsGUIParams
+	global symbolicName
+
+
+	set itklsGUIParams(2DEdgeImage) "LSEdge"
+	set itklsGUIParams(useEdgeImage) "disp"
+
+
+	foreach grpName [group_names] {
+
+		#get the points in the existing group
+		set grpPoints {}
+		foreach obj [group_get $grpName] {
+			set grpPoints [lappend grpPoints [group_itemid $grpName $obj]]
+		}
+		puts $grpPoints
+
+		if {[info exists pathmap($grpName)]} {
+			
+			seg_writeSliceTiff $pathmap($grpName) $grpPoints volume_image $img_dir/$grpName
+			seg_writeSliceTiff $pathmap($grpName) $grpPoints $itklsGUIParams(edgeImage) $edge_dir/$estring/$grpName
+
+		} 
+
+
+	}
+
+	#delete groups so they don't carry over to next image
+	foreach grp [group_names] {
+		group_delete $grp
+	}
+
+	guiSV_group_update_tree
 }
 
 proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad kupp} {
@@ -68,12 +212,10 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 
 	#load paths
 	global gFilenames
-	#set gFilenames(path_file) "/home/gabriel/research/marsden/tutorial.paths"
 	set gFilenames(path_file) $pathName
 	guiFNMloadHandPaths
 
 	#load groups
-	#set gFilenames(groups_dir) "/home/gabriel/research/marsden/"
 	set gFilenames(groups_dir) $grpName
 	createPREOPgrpLoadGroups
 	guiSV_group_update_tree
@@ -122,7 +264,7 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 	foreach grpName [group_names] {
 
 		if {[string match *edge48* $grpName] || [string match *edge96* $grpName] ||
-			[string match *image* $grpName]} {
+			[string match *image* $grpName] || [string match *$app* $grpName]} {
 			continue
 		}
 		#get the points in the existing group
@@ -304,12 +446,11 @@ proc readFromFile {fp} {
 	return $out
 }
 
-proc checkEdgeGroupExists {grp_dir} {
+proc checkEdgeGroupExists {grp_dir edge_code} {
 	set files [glob $grp_dir/*]
 
 	foreach file $files {
-		if {[string match *edge48* $file] || [string match *edge96* $file] ||
-			[string match *image* $file]} {
+		if {[string match *$edge_code* $file]} {
 			return 1
 		}
 	}
