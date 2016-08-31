@@ -297,22 +297,22 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 		if {[info exists pathmap($grpName)]} {
 			set path_to_use $grpName
 		} 
-		if {$path_to_use == 0} {
-			foreach name [array names pathmap] {
-				if {[string length $name] < $minLength && [string match *$grpName* $name]} {
-					set minLength [string length $name]
-					set path_to_use $name
-				}
-			}
-		}
-		if {$path_to_use == 0} {
-			foreach name [array names pathmap] {
-				if {[string length $name] < $minLength && [string match *$name* $grpName]} {
-					set minLength [string length $name]
-					set path_to_use $name
-				}
-			}			
-		}
+		# if {$path_to_use == 0} {
+		# 	foreach name [array names pathmap] {
+		# 		if {[string length $name] < $minLength && [string match *$grpName* $name]} {
+		# 			set minLength [string length $name]
+		# 			set path_to_use $name
+		# 		}
+		# 	}
+		# }
+		# if {$path_to_use == 0} {
+		# 	foreach name [array names pathmap] {
+		# 		if {[string length $name] < $minLength && [string match *$name* $grpName]} {
+		# 			set minLength [string length $name]
+		# 			set path_to_use $name
+		# 		}
+		# 	}			
+		# }
 
 		if {$path_to_use != 0} {
 			set new_name $grpName
