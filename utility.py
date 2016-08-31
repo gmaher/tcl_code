@@ -5,6 +5,8 @@ from shapely.geometry import Polygon
 from math import sqrt, pi
 import plotly as py
 import plotly.graph_objs as go
+from plotly import tools
+from PIL import Image
 
 def get_groups_dir(vasc_dir, imgname):
 	'''
@@ -98,7 +100,53 @@ def project_group(group, q, mu):
 	
 	return (x,y)
 
-def plot_data_plotly(X, Y, legend, title, mode="lines+markers",
+def make_traces(X,Y,legend, mode="lines+markers"):
+	'''
+	helper function to make traces out of data for plotly plotting
+	args:
+		@a: X - list of X data
+		@a: Y - list of Y data
+		@a: legend - list of strings
+		@a: title - string for the title of the plot
+		@a: mode - plotly line style to use
+	'''
+	traces = []
+
+	for x,y, leg in zip(X,Y,legend):
+
+		trace = go.Scatter(
+		x = x,
+		y = y,
+		mode = mode,
+		name = leg
+		)
+
+		traces.append(trace)
+
+	return traces
+
+def make_image_trace(fn, bounds=[-1, 1, -1, 1]):
+	'''
+	make a plotly heatmap of a grayscale image
+
+	args:
+		@a: fn - filename (path) of image to plot
+		@a: bounds - list with 4 elements indicating the
+		x and y bounds on which to map the image
+	'''
+	im = Image.open(fn)
+
+	imarray = np.array(im)
+
+	trace=go.Heatmap(
+		z=imarray,
+		x=np.linspace(bounds[0],bounds[1],imarray.shape[0]),
+		y=np.linspace(bounds[2],bounds[3],imarray.shape[1]),
+		colorscale=[[0, 'rgb(0,0,0)'],[1, 'rgb(255,255,255)']])
+
+	return trace
+
+def plot_data_plotly(X, Y, legend, title='plot', mode="lines+markers",
 	fn='./plots/plot.html'):
 	'''
 	Utility function to plot sets of X,Y data in a plotly plot
@@ -111,25 +159,58 @@ def plot_data_plotly(X, Y, legend, title, mode="lines+markers",
 		@a: mode - plotly line style to use
 		@a: fn: - filename to save the plot as
 	'''
-	traces = []
 
-	for x,y, leg in zip(X,Y,legend):
-		print x
-		print y
-		print leg
-		trace = go.Scatter(
-		x = x,
-		y = y,
-		mode = mode,
-		name = leg
-		)
-
-		traces.append(trace)
+	traces = make_traces(X,Y,legend,mode)
 
 	layout = go.Layout(
 		title = title
 		)
 
 	fig = go.Figure(data=traces, layout=layout)
+
+	py.offline.plot(fig, filename=fn)
+
+def plot_data_subfigures(Xlist, Ylist, legends, subtitles, rows, cols,
+	size='600', title='plot', fn='./plots/subfigure.html'):
+	'''
+	TODO: Get subplots to share same colors
+	TODO: Enable background image plotting
+		more generally how to separate trace creation from plotting
+
+	utility function to plot multiple sets of data in
+	different subfigures
+
+	args:
+		@a: Xlist - list of lists of X data 
+		@a: Ylist - list of lists of Y data
+		@a: legends - list of lists of legends
+		@a: rows - number of rows in subfigure grid
+		@a: cols - number of columns in subfigure grid
+		@a: size - dimension of plot window
+		@a: title - title string
+		@a: fn - path to save plot
+	'''
+
+	fig = tools.make_subplots(rows=rows, cols=cols, subplot_titles=subtitles)
+
+	stop_ind = len(Xlist)
+	ind = 0
+	for i in range(1,rows+1):
+		for j in range(1,cols+1):
+			ind = (i-1)*cols + (j-1)
+
+			if ind == stop_ind:
+				break
+
+			traces = make_traces(Xlist[ind], Ylist[ind], legends[ind])
+
+			for trace in traces:
+
+				fig.append_trace(trace,i,j)
+
+		if ind == stop_ind:
+			break
+
+	fig['layout'].update(height=size, width=size, title=title)
 
 	py.offline.plot(fig, filename=fn)

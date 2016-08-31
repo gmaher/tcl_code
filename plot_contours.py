@@ -6,7 +6,8 @@ import os
 from shapely.geometry import Polygon
 from math import sqrt, pi
 import sys
-
+import plotly as py
+import plotly.graph_objs as go
 
 '''
 Looks for a number of random groups in each error range and plots their contours
@@ -37,7 +38,10 @@ for i in range(0,len(errs)-1):
 	members.append(d.iloc[ind,:])
 
 
-
+Xs = []
+Ys = []
+legends = []
+titles = []
 for mem in members:
 	print mem
 	fn = get_groups_dir(sys.argv[1], mem['image'])
@@ -53,8 +57,24 @@ for mem in members:
 	x_image, y_image = project_group(group_image, q, mu)
 	x_edge, y_edge = project_group(group_edge, q, mu)
 
-	plot_data_plotly([x,x_image,x_edge],
-		[y,y_image,y_edge],
-		['user','image','edge'],
-		title=mem['path']+', error= '+str(mem['error_edge96']),
-		fn="./plots/plot"+mem['path']+".html")
+	Xs.append([x,x_image,x_edge])
+	Ys.append([y,y_image,y_edge])
+	legends.append(['user','image','edge'])
+	titles.append(mem['path']+', error= '+str(mem['error_edge96']))
+	# plot_data_plotly([x,x_image,x_edge],
+	# 	[y,y_image,y_edge],
+	# 	['user','image','edge'],
+	# 	title=mem['path']+', error= '+str(mem['error_edge96']),
+	# 	fn="./plots/plot"+mem['path']+".html")
+
+plot_data_subfigures(Xs,Ys,legends, titles,rows=3,cols=2, size=1000)
+
+
+trace = make_image_trace('/home/marsdenlab/datasets/vascular_data/OSMSC0004/screens/edge/_E96_4/celiac/3/23/pot',
+	bounds=[-7.3,7.3,-7.3,7.3])
+traces = make_traces([x,x_image,x_edge],
+	[y,y_image,y_edge],
+	['user','image','edge'])
+
+traces.append(trace)
+py.offline.plot(traces)
