@@ -1,3 +1,44 @@
+proc runEdgeOnFiles {imgs edges paths groups img_string edge_string} {
+	#Runs batch level set for models in a list of files
+	#
+	#args:
+	#	@a: imgs - list of img pathnames
+	#
+	#	@a edges - list of edge maps
+	#
+	#	@a paths - list of path files
+	#
+	# 	@a grps - list of group folders
+	#
+	#	@a img_string, string, string to append to groups generated using
+	#	levelset without an edgemap
+	#
+	# 	@a edge_string, string, string to append to groups generated using
+	#	edgemap
+	#preconditions:
+	#	*@a all files have the same number of lines
+
+	global gOptions
+	set gOptions(resliceDims) {150 150}
+
+	set imgs [readFromFile $imgs] 
+	set edges [readFromFile $edges]
+	set paths [readFromFile $paths]
+	set groups [readFromFile $groups]
+
+	foreach I $imgs E $edges P $paths G $groups {
+		puts "$I\n $E\n $P\n $G\n"
+
+		if {[checkEdgeGroupExists $G $edge_string]} {
+			puts "found existing edge/image groups, continuing"
+			continue
+		}
+
+		testSegAcc $I $E $P $G 0 $img_string 2.5 1.5 0.3 0.9
+		testSegAcc $I $E $P $G 1 $edge_string 2.5 1.5 0.3 0.9
+	}	
+}
+
 proc runEdgeAnalysis {vasc_dir edge_code img_string edge_string} {
 	#Runs batch level set for every model in the vascular data repository
 	#that satisfies certain conditions. Groups are computed both without and
@@ -39,7 +80,7 @@ proc runEdgeAnalysis {vasc_dir edge_code img_string edge_string} {
 				continue
 		}
 
-		if {[checkEdgeGroupExists $grp $edge_code]} {
+		if {[checkEdgeGroupExists $grp $edge_string]} {
 			puts "found existing edge/image groups, continuing"
 			continue
 		}
@@ -321,8 +362,6 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 
 			group_create $new_name
 			puts $new_name
-
-			after 1000
 
 			set lsGUIcurrentGroup $new_name
 			set lsGUIcurrentPathNumber $pathmap($path_to_use)
