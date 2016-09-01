@@ -8,6 +8,26 @@ import plotly.graph_objs as go
 from plotly import tools
 from PIL import Image
 
+def query_file(folder, query_list):
+	'''
+	utility function to query a directory for a file
+	whose filepath contains a number of strings
+
+	note: slow if folder contains many subdirectories,
+	args:
+		@a folder - directory to search
+		@a query_list - list of strings that returned file should match
+	'''
+
+	for root, dirs, files in os.walk(folder):
+		for file in files:
+			match = all(q in (root+file) for q in query_list)
+
+			if match:
+				return os.path.join(root,file)
+
+	return None
+	
 def get_groups_dir(vasc_dir, imgname):
 	'''
 	Get the groups folder for a particular image in the

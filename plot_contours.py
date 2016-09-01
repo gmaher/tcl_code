@@ -68,9 +68,14 @@ for mem in members:
 	# 	fn="./plots/plot"+mem['path']+".html")
 
 plot_data_subfigures(Xs,Ys,legends, titles,rows=3,cols=2, size=1000)
+print mem
+imstr = query_file(sys.argv[1]+mem['image'],
+	[str(int(mem['group'])), mem['path'], 'edge', 'edge96', 'pot'
+	])
 
+print imstr
 
-trace = make_image_trace('/home/marsdenlab/datasets/vascular_data/OSMSC0004/screens/edge/_E96_4/celiac/3/23/pot',
+trace = make_image_trace(imstr,
 	bounds=[-7.3,7.3,-7.3,7.3])
 traces = make_traces([x,x_image,x_edge],
 	[y,y_image,y_edge],
