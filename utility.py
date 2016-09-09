@@ -6,7 +6,9 @@ from math import sqrt, pi
 import plotly as py
 import plotly.graph_objs as go
 from plotly import tools
+from plotly.tools import FigureFactory as FF
 from PIL import Image
+from skimage import measure
 
 def query_file(folder, query_list):
 	'''
@@ -253,7 +255,7 @@ def plot_data_subfigures(Xlist, Ylist, legends, subtitles, rows, cols,
 
 	py.offline.plot(fig, filename=fn)
 
-def scatter3d(imlist, minlist, maxlist):
+def scatter3d(imlist, minlist, maxlist, fn='./plots/scatter3d.html'):
 	'''
 	wrapper function for plotly's scatter3d
 
@@ -269,7 +271,9 @@ def scatter3d(imlist, minlist, maxlist):
 	traces = []
 
 	for im,mi,ma in zip(imlist,minlist,maxlist):
-		z,y,x = np.where((im >= mi) & (im < ma))
+		z,y,x = np.where((im >= mi) & (im <= ma))
+
+		print "Scatter num points {}".format(len(z))
 
 		trace = go.Scatter3d(
 			x=x,
@@ -284,4 +288,29 @@ def scatter3d(imlist, minlist, maxlist):
 
 		traces.append(trace)
 
-	py.offline.plot(traces)
+	py.offline.plot(traces, filename=fn)
+
+def isoSurface3d(image, level=1, fn='./plots/isosurf3d.html'):
+	'''
+	wrapper function for plotly's isosurface 3d plots
+
+	args:
+		@a image: 3d array of numbers
+
+		@a level: level at which to make an isocontour
+
+		@a fn: string, filename to save plot as
+	'''
+
+	vertices, simplices = measure.marching_cubes(image, level)
+
+	x,y,z = zip(*vertices)
+
+	fig = FF.create_trisurf(
+		x=x,
+		y=y,
+		z=z,
+		simplices=simplices
+	)
+
+	py.offline.plot(fig, filename=fn)
