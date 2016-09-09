@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 import plotly as py
 import plotly.graph_objs as go
 
-apps = ['_edge48',
+apps = [
 '_image',
 '_edge96']
 
-colors = {'_edge48':'red',
+colors = {
 '_image':'blue',
 '_edge96':'green'}
 
-markers = {'_edge48':'o',
+markers = {
 '_image':'v',
 '_edge96':'x'}
 
@@ -88,5 +88,46 @@ for app in apps:
 		)
 
 	graphs.append(trace)
-py.offline.plot(graphs, filename="plot.html")
+
+layout = go.Layout(
+	title='Cumulative error distribution',
+	xaxis=dict(
+		title='error'
+		),
+	yaxis=dict(
+		title='Fraction of groups below error'
+		),
+	shapes=[{
+	'type' : 'line',
+	'x0' : 0.2,
+	'x1' : 0.2,
+	'y0' : 0,
+	'y1' : 1,
+	'line' : {
+		'color':'red',
+		'width': 2,
+		'dash': 'dashdot'
+	}
+	}],
+	annotations=[{
+	'x':0.25,
+	'y':0.5,
+	'text':'acceptable error threshold',
+	'showarrow':False
+	}],
+	font={
+	'size':20
+	}
+	)
+
+trace = go.Scatter(
+	x = 0.2*np.ones((10,1)),
+	y = np.arange(0,1,0.1),
+	mode = 'lines+markers',
+	name = 'acceptable error threshold'
+	)
+
+for i in range(0,8,2):
+	fig = go.Figure(data=graphs[i:i+2],layout=layout)
+	py.offline.plot(fig, filename="plot"+str(i)+".html")
 

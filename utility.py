@@ -27,7 +27,7 @@ def query_file(folder, query_list):
 				return os.path.join(root,file)
 
 	return None
-	
+
 def get_groups_dir(vasc_dir, imgname):
 	'''
 	Get the groups folder for a particular image in the
@@ -113,11 +113,11 @@ def project_group(group, q, mu):
 	group = [np.asarray(p) for p in group]
 	group.append(group[0])
 	group_centered = [(p-mu.T)[0] for p in group]
-	
+
 	twod_group = [p.dot(q) for p in group_centered]
 	x = [p[0] for p in group_centered]
 	y = [p[1] for p in group_centered]
-	
+
 	return (x,y)
 
 def make_traces(X,Y,legend, mode="lines+markers"):
@@ -201,7 +201,7 @@ def plot_data_subfigures(Xlist, Ylist, legends, subtitles, rows, cols,
 	different subfigures
 
 	args:
-		@a: Xlist - list of lists of X data 
+		@a: Xlist - list of lists of X data
 		@a: Ylist - list of lists of Y data
 		@a: legends - list of lists of legends
 		@a: rows - number of rows in subfigure grid
@@ -234,3 +234,36 @@ def plot_data_subfigures(Xlist, Ylist, legends, subtitles, rows, cols,
 	fig['layout'].update(height=size, width=size, title=title)
 
 	py.offline.plot(fig, filename=fn)
+
+def scatter3d(imlist, minlist, maxlist):
+	'''
+	wrapper function for plotly's scatter3d
+
+	args:
+		@a imlist: list of three dimensional image data
+
+		@a minlist: list of minimum pixel values to threshold
+		for a pixel to appear in the plot
+
+		@a maxlist: list of maximum pixel values to threshold
+		for a pixel to appear in the plot
+	'''
+	traces = []
+
+	for im,mi,ma in zip(imlist,minlist,maxlist):
+		z,y,x = np.where((im >= mi) & (im < ma))
+
+		trace = go.Scatter3d(
+			x=x,
+			y=y,
+			z=z,
+			mode='markers',
+			marker=dict(
+			    size=1,
+			    opacity=0.8
+			)
+		)
+
+		traces.append(trace)
+
+	py.offline.plot(traces)

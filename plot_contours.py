@@ -42,6 +42,7 @@ Xs = []
 Ys = []
 legends = []
 titles = []
+
 for mem in members:
 	print mem
 	fn = get_groups_dir(sys.argv[1], mem['image'])
@@ -57,17 +58,18 @@ for mem in members:
 	x_image, y_image = project_group(group_image, q, mu)
 	x_edge, y_edge = project_group(group_edge, q, mu)
 
+	plot_data_plotly([x,x_image,x_edge],
+		[y, y_image, y_edge],
+		['user','image','edge'],
+		mem['path']+', error= '+str(mem['error_edge96']),
+		fn='./plots/'+mem['path']+'.html')
+
 	Xs.append([x,x_image,x_edge])
 	Ys.append([y,y_image,y_edge])
 	legends.append(['user','image','edge'])
 	titles.append(mem['path']+', error= '+str(mem['error_edge96']))
-	# plot_data_plotly([x,x_image,x_edge],
-	# 	[y,y_image,y_edge],
-	# 	['user','image','edge'],
-	# 	title=mem['path']+', error= '+str(mem['error_edge96']),
-	# 	fn="./plots/plot"+mem['path']+".html")
 
-plot_data_subfigures(Xs,Ys,legends, titles,rows=3,cols=2, size=1000)
+plot_data_subfigures(Xs,Ys,legends+['acceptable error'], titles,rows=3,cols=2, size=1000)
 print mem
 imstr = query_file(sys.argv[1]+mem['image'],
 	[str(int(mem['group'])), mem['path'], 'edge', 'edge96', 'pot'
@@ -79,7 +81,7 @@ trace = make_image_trace(imstr,
 	bounds=[-7.3,7.3,-7.3,7.3])
 traces = make_traces([x,x_image,x_edge],
 	[y,y_image,y_edge],
-	['user','image','edge'])
+	['user','image','edge'], mode='lines')
 
 traces.append(trace)
 py.offline.plot(traces)
