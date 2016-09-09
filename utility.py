@@ -166,6 +166,24 @@ def make_image_trace(fn, bounds=[-1, 1, -1, 1]):
 
 	return trace
 
+def make_heat_trace(X, bounds=[-1, 1, -1, 1]):
+	'''
+	make a plotly heatmap of a grayscale image
+
+	args:
+		@a: X - data to plot must be 2d array
+		@a: bounds - list with 4 elements indicating the
+		x and y bounds on which to map the image
+	'''
+
+	trace=go.Heatmap(
+		z=X,
+		x=np.linspace(bounds[0],bounds[1],X.shape[0]),
+		y=np.linspace(bounds[2],bounds[3],X.shape[1]),
+		colorscale=[[0, 'rgb(0,0,0)'],[1, 'rgb(255,255,255)']])
+
+	return trace
+
 def plot_data_plotly(X, Y, legend, title='plot', mode="lines+markers",
 	fn='./plots/plot.html'):
 	'''

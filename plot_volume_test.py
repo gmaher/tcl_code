@@ -15,4 +15,7 @@ print imarray.shape
 print np.max(imarray)
 print np.std(imarray)
 
-utility.scatter3d([imarray],[1000],[1070])
+#utility.scatter3d([imarray],[1000],[1070])
+
+h = utility.make_heat_trace(imarray[250,:,:])
+py.offline.plot([h])
