@@ -186,6 +186,38 @@ def make_heat_trace(X, bounds=[-1, 1, -1, 1]):
 
 	return trace
 
+def heatmap(X, legend='image', title='heatmap', xaxis='x', yaxis='y',
+	bounds=[-1, 1, -1, 1], fn='./plots/heatmap.html'):
+	'''
+	Utility function to plot a 2d heatmap using plotly
+
+	args:
+		@a: X - 2d array with image data
+		@a: legend - string, legend to use
+		@a: title - string, title of the plot
+		@a: xaxis - string, name of the x axis
+		@a: yaxis - string, name of the yaxis
+		@a: bounds - list, len(list)==4, x and y bounds for the image
+		denotes the range to label the x and y axis with
+		@a: fn - string, filename to give the plot
+	'''
+
+	trace = make_heat_trace(X,bounds)
+
+	layout = go.Layout(
+		title = title,
+		xaxis = dict(
+			title = xaxis
+		),
+		yaxis = dict(
+			title = yaxis
+		)
+	)
+
+	fig = go.Figure(data=[trace], layout=layout)
+
+	py.offline.plot(fig, filename=fn)
+
 def plot_data_plotly(X, Y, legend, title='plot', mode="lines+markers",
 	fn='./plots/plot.html'):
 	'''

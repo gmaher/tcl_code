@@ -1,3 +1,0 @@
-./models/OSMSC0001/0001_0001/0001_0001-cm.paths
-./models/OSMSC0002/0002_0001/0002_0001-cm.paths
-./models/OSMSC0003/0003_0001/0003_0001-cm.paths

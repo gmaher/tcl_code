@@ -1,3 +1,0 @@
-./models/OSMSC0001/OSMSC0001-cm.mha
-./models/OSMSC0002/OSMSC0002-cm.mha
-./models/OSMSC0003/OSMSC0003-cm.mha
