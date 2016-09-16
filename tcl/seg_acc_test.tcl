@@ -1,4 +1,4 @@
-proc runEdgeOnFiles {imgs edges paths groups img_string edge_string} {
+proc runEdgeOnFiles {imgs edges paths groups img_string edge_string use_edge} {
 	#Runs batch level set for models in a list of files
 	#
 	#args:
@@ -8,20 +8,22 @@ proc runEdgeOnFiles {imgs edges paths groups img_string edge_string} {
 	#
 	#	@a paths - list of path files
 	#
-	# 	@a grps - list of group folders
+	# @a grps - list of group folders
 	#
 	#	@a img_string, string, string to append to groups generated using
 	#	levelset without an edgemap
 	#
-	# 	@a edge_string, string, string to append to groups generated using
+	# @a edge_string, string, string to append to groups generated using
 	#	edgemap
+	# @a use_edge, int, 0 or 1 whether to use the edgemap or not
+	#
 	#preconditions:
 	#	*@a all files have the same number of lines
 
 	global gOptions
 	set gOptions(resliceDims) {150 150}
 
-	set imgs [readFromFile $imgs] 
+	set imgs [readFromFile $imgs]
 	set edges [readFromFile $edges]
 	set paths [readFromFile $paths]
 	set groups [readFromFile $groups]
@@ -34,9 +36,8 @@ proc runEdgeOnFiles {imgs edges paths groups img_string edge_string} {
 			continue
 		}
 
-		testSegAcc $I $E $P $G 0 $img_string 2.5 1.5 0.3 0.9
-		testSegAcc $I $E $P $G 1 $edge_string 2.5 1.5 0.3 0.9
-	}	
+		testSegAcc $I $E $P $G $use_edge $edge_string 2.5 1.5 0.3 0.9
+	}
 }
 
 proc runEdgeAnalysis {vasc_dir edge_code img_string edge_string} {
@@ -93,9 +94,9 @@ proc runEdgeAnalysis {vasc_dir edge_code img_string edge_string} {
 	}
 
 
-		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 0.9 0.9 
+		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl05" 0.5 1.5 0.9 0.9
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl05" 0.5 1.5 0.9 0.9
-		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl01_r015_ku25" 0.1 1.5 0.15 2.5 
+		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 0 "_edge_bl01_r015_ku25" 0.1 1.5 0.15 2.5
 		#testSegAcc $imgs($index) $edges($index) $paths($index) $grps($index) 1 "_image_bl01_r015_ku25" 0.1 1.5 0.15 2.5
 }
 
@@ -138,7 +139,7 @@ proc runScreenshots {vasc_dir edge_code estring} {
 }
 
 proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
-	
+
 	set edge_dir $dir/screens/edge
 	set img_dir $dir/screens/img
 
@@ -217,7 +218,7 @@ proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
 		puts $grpPoints
 
 		if {[info exists pathmap($grpName)]} {
-			
+
 			set pathid $pathmap($grpName)
 			set numPathPts $gPathPoints($pathid,numSplinePts)
 			set grpEnd [llength $grpPoints]
@@ -231,7 +232,7 @@ proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
 			seg_writeSliceTiff $pathmap($grpName) $grpPoints volume_image $img_dir/$grpName
 			seg_writeSliceTiff $pathmap($grpName) $grpPoints $itklsGUIParams(edgeImage) $edge_dir/$estring/$grpName
 
-		} 
+		}
 
 
 	}
@@ -326,7 +327,7 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 		puts $grpPoints
 
 		#See if there is a path that contains the group name
-		#if there is then that's probaly the path we are 
+		#if there is then that's probaly the path we are
 		#looking for
 		#if there are multiple matches take the shortest one
 
@@ -337,7 +338,7 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 		set minLength 1000
 		if {[info exists pathmap($grpName)]} {
 			set path_to_use $grpName
-		} 
+		}
 		# if {$path_to_use == 0} {
 		# 	foreach name [array names pathmap] {
 		# 		if {[string length $name] < $minLength && [string match *$grpName* $name]} {
@@ -352,7 +353,7 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 		# 			set minLength [string length $name]
 		# 			set path_to_use $name
 		# 		}
-		# 	}			
+		# 	}
 		# }
 
 		if {$path_to_use != 0} {
@@ -413,7 +414,7 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 #runs group_create $name and guiSV_group_update_tree (this creates a group)
 
 ##ADDING TO GROUP/RUNNING LEVELSET
-#lsGUIaddToGroup{"levelset"} looks at lsGUIcurrentPositionNumber, 
+#lsGUIaddToGroup{"levelset"} looks at lsGUIcurrentPositionNumber,
 #lsGUIcurrentPathNumber, lsGUIcurrentGroup
 #levelset runs separately from add to group
 
@@ -434,7 +435,7 @@ proc itkLSDoBatch_screen {pathId posList groupName} {
 	set orgGroup $lsGUIcurrentGroup
 	set lsGUIcurrentPathNumber $pathId
 	set lsGUIcurrentGroup $groupName
-	
+
 	global itklsGUIParamsBatch
 	set addToGroup $itklsGUIParamsBatch(addToGroup)
 	set smooth $itklsGUIParamsBatch(smooth)
@@ -444,7 +445,7 @@ proc itkLSDoBatch_screen {pathId posList groupName} {
 	set notDoneList {}
 	for {set idx 0} {$idx < [llength $posList]} {incr idx 1} {
 		set lsGUIcurrentGroup $groupName
-		
+
 		set posId [lindex $posList $idx]
 		global lsGUIcurrentPositionNumber
 		set lsGUIcurrentPositionNumber $posId
@@ -468,10 +469,10 @@ proc itkLSDoBatch_screen {pathId posList groupName} {
 		}
 		catch {repos_delete -obj tmp/pd}
 
-	
+
 		if { $addToGrp == "1" } {
 			lsGUIaddToGroup levelset
-		}	
+		}
 		after 1
 
 		#vis_renWriteJPEG lsRenWinPot_ren1 ./screens/$groupName.$pathId.$posId
@@ -505,4 +506,4 @@ proc checkEdgeGroupExists {grp_dir edge_code} {
 	}
 
 	return 0
-} 
+}
