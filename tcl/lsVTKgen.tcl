@@ -45,7 +45,7 @@ proc generate_truth_groups {img path grp} {
       lsGUIMake2DImages $pathid $point
       set ls_fn ${imgname}.${grp}.${point}.ls.truth.vtp
       set mag_fn ${imgname}.${grp}.${point}.mag.truth.vts
-      set pot_fn ${imgname}.${grp}.${point}.pot_truth.vts
+      set pot_fn ${imgname}.${grp}.${point}.pot.truth.vts
 
       repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/thr/selected -type ascii
       repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
@@ -56,7 +56,7 @@ proc generate_truth_groups {img path grp} {
 
 }
 
-proc generate_edge_groups {img path grp edge edgeString} {
+proc generate_edge_groups {img path grp {edge 0} {edgeString image}} {
   # Function that takes in image, path, group and edge file paths
   # loops over every group for which there is a corresponding path
   # computes level set at each group member location
@@ -69,6 +69,68 @@ proc generate_edge_groups {img path grp edge edgeString} {
   #   @a grp: string, the path to the group folder to load
   #   @a edge: string, the path to the edge map to load
   #   @a edgeString: string, code to append to the outputted files
+
+  puts "loading files"
+  global gImageVol
+  global gFilenames
+  load_files $img $path $grp $edge
+
+  global itklsGUIParams
+
+  if {$edge ne 0} {
+		set itklsGUIParams(2DEdgeImage) "userEdge"
+		set itklsGUIParams(useEdgeImage) "disp"
+	} else {
+		set itklsGUIParams(useEdgeImage) 0
+	}
+
+  puts "loading pathmap"
+  global pathmap
+  get_path_map
+
+  puts "getting image name"
+  set imgname [get_image_name $img]
+
+  #Also need to set some global parameters for level set
+  global lsGUIcurrentPositionNumber
+	global lsGUIcurrentPathNumber
+	global lsGUIcurrentGroup
+	global gOptions
+	global gPathPoints
+  global itklsGUIParams
+
+  set itklsGUIParams(phyRadius) 0.3
+  ####################################################
+  # Start running level set
+  ####################################################
+  puts "starting group loop"
+  foreach grp [array names pathmap] {
+    set pathid $pathmap($grp)
+    group_restorePreopSegs $grp
+
+    global grpPoints
+    get_group_points $grp
+
+    puts "starting point loop"
+    foreach point $grpPoints {
+      puts "$imgname $grp $point"
+
+      set lsGUIcurrentPathNumber $pathid
+      set lsGUIcurrentGroup $grp
+      set lsGUIcurrentPositionNumber $point
+
+      itkLSOnPos $pathid $point
+
+      set ls_fn ${imgname}.${grp}.${point}.ls.${edgeString}.vtp
+      set mag_fn ${imgname}.${grp}.${point}.mag.${edgeString}.vts
+      set pot_fn ${imgname}.${grp}.${point}.pot.${edgeString}.vts
+
+      repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/ls -type ascii
+      repos_writeVtkStructuredPoints -file $mag_fn -obj /img/$pathid/$point/mag -type ascii
+      repos_writeVtkStructuredPoints -file $pot_fn -obj /img/$pathid/$point/pot -type ascii
+
+    }
+  }
 }
 
 proc get_image_name {fn} {
