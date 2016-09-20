@@ -1,18 +1,45 @@
+proc runGroupsToVTKonFiles {imgs edges paths groups edge_string use_edge} {
+	#Runs batch level set for models in a list of files
+	#
+	#args:
+	#	@a: imgs - list of img pathnames
+	#	@a edges - list of edge maps
+	#	@a paths - list of path files
+	# @a grps - list of group folders
+	#	@a img_string, string, string to append to groups generated using
+	#	levelset without an edgemap
+	# @a edge_string, string, string to append to groups generated using
+	#	edgemap
+	# @a use_edge, int, 0 or 1 whether to use the edgemap or not
+	#
+	#preconditions:
+	#	*@a all files have the same number of lines
+
+	global gOptions
+	set gOptions(resliceDims) {150 150}
+
+	set imgs [readFromFile $imgs]
+	set edges [readFromFile $edges]
+	set paths [readFromFile $paths]
+	set groups [readFromFile $groups]
+
+	foreach I $imgs E $edges P $paths G $groups {
+		puts "$I\n $E\n $P\n $G\n"
+
+
+	}
+}
+
 proc runEdgeOnFiles {imgs edges paths groups img_string edge_string use_edge} {
 	#Runs batch level set for models in a list of files
 	#
 	#args:
 	#	@a: imgs - list of img pathnames
-	#
 	#	@a edges - list of edge maps
-	#
 	#	@a paths - list of path files
-	#
 	# @a grps - list of group folders
-	#
 	#	@a img_string, string, string to append to groups generated using
 	#	levelset without an edgemap
-	#
 	# @a edge_string, string, string to append to groups generated using
 	#	edgemap
 	# @a use_edge, int, 0 or 1 whether to use the edgemap or not
@@ -47,14 +74,11 @@ proc runEdgeAnalysis {vasc_dir edge_code img_string edge_string} {
 	#
 	#args:
 	#	@a vasc_dir, string, path to the vascular_data repository folder
-	#
 	#	@a edge_code, string,  pattern to look for in
 	#	edgemap file names. e.g. if OSMSC0001-cm_E96.mha is the edgemap
 	#	filename then a suitable code would be _E96.mha
-	#
 	#	@a img_string, string, string to append to groups generated using
 	#	levelset without an edgemap
-	#
 	# 	@a edge_string, string, string to append to groups generated using
 	#	edgemap
 	#
@@ -107,11 +131,9 @@ proc runScreenshots {vasc_dir edge_code estring} {
 	#
 	#args:
 	#	@a vasc_dir, string, path to the vascular_data repository folder
-	#
 	#	@a edge_code, string,  pattern to look for in
 	#	edgemap file names. e.g. if OSMSC0001-cm_E96.mha is the edgemap
 	#	filename then a suitable code would be _E96.mha
-	#
 	#	@a estring, string, string to append to directory containing edgemap
 	# 	screenshots
 
@@ -138,22 +160,14 @@ proc runScreenshots {vasc_dir edge_code estring} {
 	}
 }
 
-proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
-
-	set edge_dir $dir/screens/edge
-	set img_dir $dir/screens/img
-
-	#load image (hard coded for now)
+proc load_svfiles {imgName pathName grpName} {
 	global gImageVol
-	#set gImageVol(xml_filename) "/home/gabriel/projects/sample_data/image_data/vti/sample_data-cm.vti"
-	#set gImageVol(mha_filename) $imgName
 
 	if {[string match *.mha* $imgName]} {
 		set gImageVol(mha_filename) $imgName
 	} else {
 		set gImageVol(xml_filename) $imgName
 	}
-
 
 	seg_LoadEdgeImageMha $edgeName
 
@@ -168,6 +182,31 @@ proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
 	set gFilenames(groups_dir) $grpName
 	createPREOPgrpLoadGroups
 	guiSV_group_update_tree
+}
+
+proc groupsToVTK {imgName edgeName pathName grpName} {
+	global gImageVol
+	global gFilenames
+	load_svfiles imgName pathName grpName
+
+	if {$use_edge == 1} {
+		seg_LoadEdgeImageMha $edgeName
+	}
+	createPREOPloadsaveLoadVol
+
+	foreach grpName [group_names] {
+
+	}
+}
+
+proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
+
+	set edge_dir $dir/screens/edge
+	set img_dir $dir/screens/img
+
+	global gImageVol
+	global gFilenames
+	load_svfiles imgName pathName grpName
 
 	after 1000
 
@@ -246,33 +285,15 @@ proc takeScreenshots {imgName edgeName pathName grpName dir estring} {
 }
 
 proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad kupp} {
-	#load image (hard coded for now)
-	global gImageVol
-	#set gImageVol(xml_filename) "/home/gabriel/projects/sample_data/image_data/vti/sample_data-cm.vti"
-	#set gImageVol(mha_filename) $imgName
 
-	if {[string match *.mha* $imgName]} {
-		set gImageVol(mha_filename) $imgName
-	} else {
-		set gImageVol(xml_filename) $imgName
-	}
+	global gImageVol
+	global gFilenames
+	load_svfiles imgName pathName grpName
 
 	if {$use_edge == 1} {
 		seg_LoadEdgeImageMha $edgeName
 	}
 	createPREOPloadsaveLoadVol
-
-	#load paths
-	global gFilenames
-	set gFilenames(path_file) $pathName
-	guiFNMloadHandPaths
-
-	#load groups
-	set gFilenames(groups_dir) $grpName
-	createPREOPgrpLoadGroups
-	guiSV_group_update_tree
-
-	after 1000
 
 	#get path names
 	global gPathPoints
@@ -296,8 +317,6 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 	puts $pathids
 	puts $pathnames
 	puts [array names pathmap]
-
-	after 1000
 
 	global lsGUIcurrentGroup
 	global lsGUIcurrentPathNumber
@@ -326,11 +345,6 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 		}
 		puts $grpPoints
 
-		#See if there is a path that contains the group name
-		#if there is then that's probaly the path we are
-		#looking for
-		#if there are multiple matches take the shortest one
-
 		#check that a corresponding path exists
 		#if so run the level set on all the points
 		#store the result in a new group
@@ -339,22 +353,6 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 		if {[info exists pathmap($grpName)]} {
 			set path_to_use $grpName
 		}
-		# if {$path_to_use == 0} {
-		# 	foreach name [array names pathmap] {
-		# 		if {[string length $name] < $minLength && [string match *$grpName* $name]} {
-		# 			set minLength [string length $name]
-		# 			set path_to_use $name
-		# 		}
-		# 	}
-		# }
-		# if {$path_to_use == 0} {
-		# 	foreach name [array names pathmap] {
-		# 		if {[string length $name] < $minLength && [string match *$name* $grpName]} {
-		# 			set minLength [string length $name]
-		# 			set path_to_use $name
-		# 		}
-		# 	}
-		# }
 
 		if {$path_to_use != 0} {
 			set new_name $grpName
@@ -392,34 +390,6 @@ proc testSegAcc {imgName edgeName pathName grpName use_edge app blur1 blur2 rad 
 
 	guiSV_group_update_tree
 }
-
-#NOTES:
-#guiCVloadVTI
-#guiCVloadMha -> sets global gImageVol(mha_filename) to image filename
-#guiPPloadPaths -> sets global gImageVol(path_file) to path filename, calls guiFNMloadHandPaths
-#guiSV_group_load_groups -> sets directory, calls guiSV_group_update_tree, can also get group names
-# by doing [group_names]
-# can get group ids by doing [group_iditems groupName {}]
-#guiSV_model_load_model
-#guiFNMloadHandPaths -> calls guiSV_path_update_tree
-#gPathPoints: global variable that contains labels (pathID, pointID) and (pathID, "name") and (int, splintPts)
-#the path data can be accessed via gPathPoint(pathId,pointId)
-#lsGUIaddToGroup {type}, set type = "levelset"
-#createPREOPgrpLoadGroups
-#guiSV_group_save_groups: saves groups by calling
-#createPREOPgrpSaveGroups, saves every group in group_names by calling
-#group_saveProfiles
-
-#Button binds to guiSV_group_new_group (use this to create group?)
-#runs group_create $name and guiSV_group_update_tree (this creates a group)
-
-##ADDING TO GROUP/RUNNING LEVELSET
-#lsGUIaddToGroup{"levelset"} looks at lsGUIcurrentPositionNumber,
-#lsGUIcurrentPathNumber, lsGUIcurrentGroup
-#levelset runs separately from add to group
-
-#For batch level set
-#need phyRadius set and need to update path start and end points
 
 proc itkLSDoBatch_screen {pathId posList groupName} {
 
