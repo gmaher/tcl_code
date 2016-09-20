@@ -9,6 +9,8 @@ from plotly import tools
 from plotly.tools import FigureFactory as FF
 from PIL import Image
 from skimage import measure
+from vtk import vtkImageExport
+from vtk.util import numpy_support
 
 def query_file(folder, query_list):
 	'''
@@ -121,6 +123,66 @@ def project_group(group, q, mu):
 	y = [p[1] for p in group_centered]
 
 	return (x,y)
+
+def VTKSPtoNumpy(vol):
+	'''
+	Utility function to convert a VTK structured points (SP) object to a numpy array
+	the exporting is done via the vtkImageExport object which copies the data
+	from the supplied SP object into an empty pointer or array
+
+	C/C++ can interpret a python string as a pointer/array
+
+	This function was shamelessly copied from
+	http://public.kitware.com/pipermail/vtkusers/2002-September/013412.html
+	args:
+		@a vol: vtk.vtkStructuredPoints object
+	'''
+	exporter = vtkImageExport()
+	exporter.SetInputData(vol)
+	dims = exporter.GetDataDimensions()
+	if (exporter.GetDataScalarType() == 3):
+		dtype = UnsignedInt8
+	if (exporter.GetDataScalarType() == 5):
+		type = Int16
+	if (exporter.GetDataScalarType() == 10):
+			type = float
+	a = np.zeros(reduce(np.multiply,dims),type)
+	s = a.tostring()
+	exporter.SetExportVoidPointer(s)
+	exporter.Export()
+	a = np.reshape(np.fromstring(s,type),(dims[2],dims[0],dims[1]))
+	return a
+
+def VTKPDPointstoNumpy(pd):
+	'''
+	function to convert the points data of a vtk polydata object to a numpy array
+
+	args:
+		@a pd: vtk.vtkPolyData object
+	'''
+	return numpy_support.vtk_to_numpy(pd.GetPoints().GetData())
+
+def areaOverlapError(truth, edge):
+	'''
+	Function to calculate the area of overlap error between two contours
+
+	args:
+		@a truth: numpy array, shape=(num points,2)
+		@a edge: same as truth
+	'''
+	truth_tups = zip(truth[:,0],truth[:,1])
+	edge_tups = zip(edge[:,0],edge[:,1])
+
+	t = Polygon(truth_tups)
+	e = Polygon(edge_tups)
+
+	Aunion = e.union(t).area
+	Aintersection = e.intersection(t).area
+
+	return 1.0-float(Aintersection)/Aunion
+#######################################################
+# Plotly stuff
+#######################################################
 
 def make_traces(X,Y,legend, mode="lines+markers"):
 	'''
