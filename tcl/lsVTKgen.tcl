@@ -43,9 +43,9 @@ proc generate_truth_groups {img path grp} {
     foreach point $grpPoints {
       puts "$imgname $grp $point"
       lsGUIMake2DImages $pathid $point
-      set ls_fn ${imgname}.${grp}.${point}.ls.truth.vtp
-      set mag_fn ${imgname}.${grp}.${point}.mag.truth.vts
-      set pot_fn ${imgname}.${grp}.${point}.pot.truth.vts
+      set ls_fn ${imgname}.${grp}.${point}.truth.ls.vtp
+      set mag_fn ${imgname}.${grp}.${point}.truth.mag.vts
+      set pot_fn ${imgname}.${grp}.${point}.truth.pot.vts
 
       repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/thr/selected -type ascii
       repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
@@ -121,9 +121,9 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image}} {
 
       itkLSOnPos $pathid $point
 
-      set ls_fn ${imgname}.${grp}.${point}.ls.${edgeString}.vtp
-      set mag_fn ${imgname}.${grp}.${point}.mag.${edgeString}.vts
-      set pot_fn ${imgname}.${grp}.${point}.pot.${edgeString}.vts
+      set ls_fn ${imgname}.${grp}.${point}.${edgeString}.ls.vtp
+      set mag_fn ${imgname}.${grp}.${point}.${edgeString}.mag.vts
+      set pot_fn ${imgname}.${grp}.${point}.${edgeString}.pot.vts
 
       repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/ls -type ascii
       repos_writeVtkStructuredPoints -file $mag_fn -obj /img/$pathid/$point/mag -type ascii

@@ -157,10 +157,35 @@ def VTKPDPointstoNumpy(pd):
 	'''
 	function to convert the points data of a vtk polydata object to a numpy array
 
+	first construct the connectivity matrix so that we can get the
+	points in the right order
 	args:
 		@a pd: vtk.vtkPolyData object
 	'''
+	ncells = pd.GetNumberOfCells()
 	return numpy_support.vtk_to_numpy(pd.GetPoints().GetData())
+
+def getPDConnectivity(pd):
+	'''
+	Uses the cells in a vtkPolyData object to get the point connectivity
+
+	args:
+		@a pd: vtk.vtkPolyData object
+	'''
+	C = {}
+
+	for i in range(0,pd.GetNumberOfCells()):
+		cell = pd.GetCell(i)
+		p1 = int(cell.GetPointId(0))
+		p2 = int(cell.GetPointId(1))
+		if not C.has_key(p1):
+			C[p1] = []
+		if not C.has_key(p2):
+			C[p2] = []
+		C[p1].append(p2)
+		C[p2].append(p1)
+
+	return C
 
 def areaOverlapError(truth, edge):
 	'''
@@ -180,6 +205,7 @@ def areaOverlapError(truth, edge):
 	Aintersection = e.intersection(t).area
 
 	return 1.0-float(Aintersection)/Aunion
+
 #######################################################
 # Plotly stuff
 #######################################################
