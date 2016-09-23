@@ -24,6 +24,12 @@ def read_pd(reader, fpath):
     reader.Update()
     return reader.GetOutput()
 
+def reorder_and_convert(pd):
+    C = getPDConnectivity(pd)
+    O = getNodeOrdering(C)
+    pd_np = VTKPDPointstoNumpy(pd)
+    return pd_np[O,:]
+
 for file in files:
     #print file
     if 'truth.ls' in file:
@@ -44,17 +50,11 @@ for file in files:
 
             if os.path.isfile(fp_code):
                 pd_truth = read_pd(reader,fp)
-                Ctruth = getPDConnectivity(pd_truth)
-                Otruth = getNodeOrdering(Ctruth)
-                pd_truth_np = VTKPDPointstoNumpy(pd_truth)
-                pd_truth_np = pd_truth_np[Otruth,:]
+                pd_truth_np = reorder_and_convert(pd_truth)
 
                 pd_edge = read_pd(reader,fp_code)
                 if validSurface(pd_edge):
-                    Cedge = getPDConnectivity(pd_edge)
-                    Oedge = getNodeOrdering(Cedge)
-                    pd_edge_np = VTKPDPointstoNumpy(pd_edge)
-                    pd_edge_np = pd_edge_np[Oedge,:]
+                    pd_edge_np = reorder_and_convert(pd_edge)
                     dentry['overlap_error'] =\
                         areaOverlapError(pd_truth_np, pd_edge_np)
                 else:

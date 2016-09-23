@@ -11,7 +11,7 @@ from PIL import Image
 from skimage import measure
 from vtk import vtkImageExport
 from vtk.util import numpy_support
-
+import vtk
 def query_file(folder, query_list):
 	'''
 	utility function to query a directory for a file
@@ -138,7 +138,7 @@ def validSurface(pd):
 		return False
 	else:
 		return True
-		
+
 def VTKSPtoNumpy(vol):
 	'''
 	Utility function to convert a VTK structured points (SP) object to a numpy array
@@ -157,27 +157,71 @@ def VTKSPtoNumpy(vol):
 	dims = exporter.GetDataDimensions()
 	if (exporter.GetDataScalarType() == 3):
 		dtype = UnsignedInt8
+	if (exporter.GetDataScalarType() == 4):
+		dtype = np.short
 	if (exporter.GetDataScalarType() == 5):
-		type = Int16
+		dtype = Int16
 	if (exporter.GetDataScalarType() == 10):
-			type = float
-	a = np.zeros(reduce(np.multiply,dims),type)
+		dtype = np.float32
+	a = np.zeros(reduce(np.multiply,dims),dtype)
 	s = a.tostring()
 	exporter.SetExportVoidPointer(s)
 	exporter.Export()
-	a = np.reshape(np.fromstring(s,type),(dims[2],dims[0],dims[1]))
+	a = np.reshape(np.fromstring(s,dtype),(dims[2],dims[0],dims[1]))
 	return a
+
+def VTKSPtoNumpyFromFile(fn):
+	'''
+	reads a .sp file into a numpy array
+
+	args:
+		@a fn - string, filename of .sp file to read
+	'''
+	reader = vtk.vtkStructuredPointsReader()
+	reader.SetFileName(fn)
+	reader.Update()
+	sp = reader.GetOutput()
+	return VTKSPtoNumpy(sp)
 
 def VTKPDPointstoNumpy(pd):
 	'''
 	function to convert the points data of a vtk polydata object to a numpy array
 
-	first construct the connectivity matrix so that we can get the
-	points in the right order
 	args:
 		@a pd: vtk.vtkPolyData object
 	'''
 	return numpy_support.vtk_to_numpy(pd.GetPoints().GetData())
+
+def VTKPDReadAndReorder(fn):
+	'''
+	reads a polydata file, reorders the nodes and returns a numpy array
+
+	args:
+		@a fn: string, .vtp file to read
+	'''
+	reader = vtk.vtkPolyDataReader()
+	reader.SetFileName(fn)
+	reader.Update()
+	pd = reader.GetOutput()
+	if not validSurface(pd):
+		return None
+	else:
+		return reorder_and_convert(pd)
+
+def reorder_and_convert(pd):
+	'''
+	takes a polydata file, converts it to numpy and reorders the nodes
+
+	args:
+		@a pd: vtkPolyData object
+
+	conditions:
+		validSurface(pd) == True
+	'''
+	C = getPDConnectivity(pd)
+	O = getNodeOrdering(C)
+	pd_np = VTKPDPointstoNumpy(pd)
+	return pd_np[O,:]
 
 def getPDConnectivity(pd):
 	'''
@@ -226,6 +270,7 @@ def getNodeOrdering(C):
 			break
 
 	return ordering
+
 def areaOverlapError(truth, edge):
 	'''
 	Function to calculate the area of overlap error between two contours
@@ -297,7 +342,7 @@ def make_image_trace(fn, bounds=[-1, 1, -1, 1]):
 
 	return trace
 
-def make_heat_trace(X, bounds=[-1, 1, -1, 1]):
+def make_heat_trace(X, bounds=[-1, 1, -1, 1], showscale=False):
 	'''
 	make a plotly heatmap of a grayscale image
 
@@ -311,7 +356,8 @@ def make_heat_trace(X, bounds=[-1, 1, -1, 1]):
 		z=X,
 		x=np.linspace(bounds[0],bounds[1],X.shape[0]),
 		y=np.linspace(bounds[2],bounds[3],X.shape[1]),
-		colorscale=[[0, 'rgb(0,0,0)'],[1, 'rgb(255,255,255)']])
+		colorscale=[[0, 'rgb(0,0,0)'],[1, 'rgb(255,255,255)']],
+		showscale=showscale)
 
 	return trace
 
