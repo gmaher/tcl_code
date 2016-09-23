@@ -87,29 +87,31 @@ cd $1
 # git checkout changes_for_SV3
 # cd ..
 
-#########################################
-#Simvascular
-#########################################
-git clone https://github.com/lanhzwind/SimVascular.git
-cd SimVascular
-git checkout workingbranch
-cd ..
-
-#########################################
-#MITK
-#########################################
-git clone https://github.com/SimVascular/MITK.git
-cd MITK
-git checkout simvascular-patch-2016.03.0
-mkdir build
-cd build
-cmake -C ../../SV3CMakeOptions/init_mitk.cmake ..
-make -j4
-cd ../..
+# #########################################
+# #Simvascular
+# #########################################
+# git clone https://github.com/lanhzwind/SimVascular.git
+# cd SimVascular
+# git checkout workingbranch
+# cd ..
+#
+# #########################################
+# #MITK
+# #########################################
+# git clone https://github.com/SimVascular/MITK.git
+# cd MITK
+# git checkout simvascular-patch-2016.03.0
+# mkdir build
+# cd build
+# cmake -C ../../SV3CMakeOptions/init_mitk.cmake ..
+# make -j4
+# cd ../..
 
 # ##########################################
 # # Simvascular Actual build
 # ##########################################
-# mkdir sv3_build
-# cd sv3_build
-# cmake -C ../SV3CMakeOptions/init_
+#svcmds='-DBUILD_SV3:BOOL=ON -DCMAKE_PREFIX_PATH:PATH="/home/marsdenlab/Qt5.4.0/5.4/gcc_64" -DSV_USE_SYSTEM_GDCM:BOOL=ON -DGDCM_DIR:PATH="/home/marsdenlab/projects/SV3/GDCM_BUILD" -DSV_USE_SYSTEM_VTK:BOOL=ON -DVTK_DIR:PATH="/home/marsdenlab/projects/SV3/VTK/build" -DSV_USE_SYSTEM_ITK:BOOL=ON -DITK_DIR:PATH="/home/marsdenlab/projects/SV3/ITK/build" -DSV_USE_SYSTEM_CTK:BOOL=ON -DCTK_DIR:PATH="/home/marsdenlab/projects/SV3/CTK/build" -DSV_USE_SYSTEM_SimpleITK:BOOL=ON -DSimpleITK_DIR:PATH="/home/marsdenlab/projects/SV3/SimpleITK/SuperBuild/build/SimpleITK-build" -DSV_USE_SYSTEM_MITK:BOOL=ON -DMITK_DIR:PATH="/home/marsdenlab/projects/SV3/MITK/build" -DTCL_LIBRARY:FILEPATH="/usr/local/lib/libtcl8.6.so"'
+mkdir sv3_build
+cd sv3_build
+cmake -C ../SV3CMakeOptions/init_sv3.cmake ../SimVascular/Code
+make -j4
