@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import vtk
-from utility import areaOverlapError, VTKPDPointstoNumpy
+from utility import *
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('directory')
@@ -44,13 +44,24 @@ for file in files:
 
             if os.path.isfile(fp_code):
                 pd_truth = read_pd(reader,fp)
+                Ctruth = getPDConnectivity(pd_truth)
+                Otruth = getNodeOrdering(Ctruth)
                 pd_truth_np = VTKPDPointstoNumpy(pd_truth)
-                pd_edge = read_pd(reader,fp_code)
-                pd_edge_np = VTKPDPointstoNumpy(pd_edge)
+                pd_truth_np = pd_truth_np[Otruth,:]
 
-                dentry['overlap_error'] =\
-                    areaOverlapError(pd_truth_np, pd_edge_np)
+                pd_edge = read_pd(reader,fp_code)
+                if validSurface(pd_edge):
+                    Cedge = getPDConnectivity(pd_edge)
+                    Oedge = getNodeOrdering(Cedge)
+                    pd_edge_np = VTKPDPointstoNumpy(pd_edge)
+                    pd_edge_np = pd_edge_np[Oedge,:]
+                    dentry['overlap_error'] =\
+                        areaOverlapError(pd_truth_np, pd_edge_np)
+                else:
+                    dentry['overlap_error'] = 1.0
             else:
                 dentry['overlap_error'] = 1.0
 
             data.append(dentry)
+df = pd.DataFrame(data)
+df.to_csv('vtk_groups_errors.csv')

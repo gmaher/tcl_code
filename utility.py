@@ -124,6 +124,21 @@ def project_group(group, q, mu):
 
 	return (x,y)
 
+def validSurface(pd):
+	'''
+	check whether a given surface is valid, lines!=0 and numpoints == numlines
+
+	args:
+		@a pd: vtk polydata object
+	'''
+	Nlines = pd.GetNumberOfLines()
+	Npoints = pd.GetNumberOfPoints()
+
+	if (Nlines == 0) or (Npoints == 0) or (Nlines != Npoints):
+		return False
+	else:
+		return True
+		
 def VTKSPtoNumpy(vol):
 	'''
 	Utility function to convert a VTK structured points (SP) object to a numpy array
@@ -162,7 +177,6 @@ def VTKPDPointstoNumpy(pd):
 	args:
 		@a pd: vtk.vtkPolyData object
 	'''
-	ncells = pd.GetNumberOfCells()
 	return numpy_support.vtk_to_numpy(pd.GetPoints().GetData())
 
 def getPDConnectivity(pd):
@@ -173,11 +187,12 @@ def getPDConnectivity(pd):
 		@a pd: vtk.vtkPolyData object
 	'''
 	C = {}
-
-	for i in range(0,pd.GetNumberOfCells()):
-		cell = pd.GetCell(i)
-		p1 = int(cell.GetPointId(0))
-		p2 = int(cell.GetPointId(1))
+	N = pd.GetNumberOfLines()*3
+	line_data = pd.GetLines().GetData()
+	for i in range(0,N,3):
+		size = line_data.GetTuple(i)[0]
+		p1 = int(line_data.GetTuple(i+1)[0])
+		p2 = int(line_data.GetTuple(i+2)[0])
 		if not C.has_key(p1):
 			C[p1] = []
 		if not C.has_key(p2):
@@ -187,6 +202,30 @@ def getPDConnectivity(pd):
 
 	return C
 
+def getNodeOrdering(C):
+	'''
+	Gets the node ordering of a graph by depth-first searching a connectiviy matrix
+
+	args:
+		@a C: dictionary of lists, each entry maps a node id to its neighbors
+	'''
+	visited = {}
+	ordering = []
+	n = 0
+
+	while True:
+		visited[n] = 1
+		ordering.append(n)
+		for k in C[n]:
+			if not visited.has_key(k):
+				n = k
+				break
+			else:
+				n = 0
+		if n == 0:
+			break
+
+	return ordering
 def areaOverlapError(truth, edge):
 	'''
 	Function to calculate the area of overlap error between two contours
@@ -200,7 +239,9 @@ def areaOverlapError(truth, edge):
 
 	t = Polygon(truth_tups)
 	e = Polygon(edge_tups)
-
+	if not e.is_valid:
+		print "invalid geometry, error = 1.0"
+		return 1.0
 	Aunion = e.union(t).area
 	Aintersection = e.intersection(t).area
 
