@@ -4,58 +4,75 @@ import plotly as py
 import plotly.graph_objs as go
 from plotly import tools
 from plotly.tools import FigureFactory as FF
-
+import pandas as pd
 BOUNDS = [-2.5, 2.5, -2.5, 2.5]
+
+##########################################
+# Get large csv errors
+##########################################
+df = pd.read_csv('vtk_groups_errors.csv')
+df = df.loc[(df['code']=='edge96') & (df['overlap_error']>=0.75)]
+
 ##########################################
 # Get FileNames
 ##########################################
 groups_dir = '/home/marsdenlab/projects/I2INet/'
 code = 'edge96'
-pot_truth = groups_dir + 'OSMSC0006.aorta.100.truth.pot.vts'
-mag_truth = groups_dir + 'OSMSC0006.aorta.100.truth.mag.vts'
-ls_truth = groups_dir + 'OSMSC0006.aorta.100.truth.ls.vtp'
-pot_edge = groups_dir + 'OSMSC0006.aorta.100.{}.pot.vts'.format(code)
-mag_edge = groups_dir + 'OSMSC0006.aorta.100.{}.mag.vts'.format(code)
-ls_edge = groups_dir + 'OSMSC0006.aorta.100.{}.ls.vtp'.format(code)
-ls_image = groups_dir + 'OSMSC0006.aorta.100.{}.ls.vtp'.format('image')
 
-###########################################
-# Convert To Numpy
-###########################################
-np_ls_truth = VTKPDReadAndReorder(ls_truth)
-np_ls_edge = VTKPDReadAndReorder(ls_edge)
-np_ls_image = VTKPDReadAndReorder(ls_image)
+for i in range(0,len(df)):
+    d = df.iloc[i]
+    img = d['image']
+    path = d['path']
+    point = d['member']
+    begin_string = '{}.{}.{}'.format(img,path,point)
+    print begin_string
 
-np_pot_truth = VTKSPtoNumpyFromFile(pot_truth)
-np_mag_truth = VTKSPtoNumpyFromFile(mag_truth)
-np_pot_edge = VTKSPtoNumpyFromFile(pot_edge)
-np_mag_edge = VTKSPtoNumpyFromFile(mag_edge)
+    pot_truth = groups_dir + begin_string + '.truth.pot.vts'
+    mag_truth = groups_dir + begin_string + '.truth.mag.vts'
+    ls_truth = groups_dir + begin_string + '.truth.ls.vtp'
+    pot_edge = groups_dir + begin_string + '.{}.pot.vts'.format(code)
+    mag_edge = groups_dir + begin_string + '.{}.mag.vts'.format(code)
+    ls_edge = groups_dir + begin_string + '.{}.ls.vtp'.format(code)
+    ls_image = groups_dir + begin_string + '.{}.ls.vtp'.format('image')
 
-###########################################
-# Start figure construction
-###########################################
-pot_truth_trace = make_heat_trace(np_pot_truth[0], BOUNDS)
-mag_truth_trace = make_heat_trace(np_mag_truth[0], BOUNDS)
-pot_edge_trace = make_heat_trace(np_pot_edge[0], BOUNDS)
-mag_edge_trace = make_heat_trace(np_mag_edge[0], BOUNDS)
+    ###########################################
+    # Convert To Numpy
+    ###########################################
+    np_ls_truth = VTKPDReadAndReorder(ls_truth)
+    np_ls_edge = VTKPDReadAndReorder(ls_edge)
+    np_ls_image = VTKPDReadAndReorder(ls_image)
 
-ls_trace = make_traces(
-    [np_ls_truth[:,0], np_ls_image[:,0], np_ls_edge[:,0]],
-    [np_ls_truth[:,1], np_ls_image[:,1], np_ls_edge[:,1]],
-    ['user','image','edge'])
+    np_pot_truth = VTKSPtoNumpyFromFile(pot_truth)
+    np_mag_truth = VTKSPtoNumpyFromFile(mag_truth)
+    np_pot_edge = VTKSPtoNumpyFromFile(pot_edge)
+    np_mag_edge = VTKSPtoNumpyFromFile(mag_edge)
 
-fig = tools.make_subplots(rows=2,cols=3)
-fig.append_trace(pot_truth_trace,1,1)
-fig.append_trace(mag_truth_trace,1,2)
-fig.append_trace(pot_truth_trace,1,3)
+    ###########################################
+    # Start figure construction
+    ###########################################
+    pot_truth_trace = make_heat_trace(np_pot_truth[0], BOUNDS)
+    mag_truth_trace = make_heat_trace(np_mag_truth[0], BOUNDS)
+    pot_edge_trace = make_heat_trace(np_pot_edge[0], BOUNDS)
+    mag_edge_trace = make_heat_trace(np_mag_edge[0], BOUNDS)
 
-fig.append_trace(pot_edge_trace,2,1)
-fig.append_trace(mag_edge_trace,2,2)
-fig.append_trace(pot_edge_trace,2,3)
+    ls_trace = make_traces(
+        [np_ls_truth[:,0], np_ls_image[:,0], np_ls_edge[:,0]],
+        [np_ls_truth[:,1], np_ls_image[:,1], np_ls_edge[:,1]],
+        ['user','image','edge'])
 
-for t in ls_trace:
-    fig.append_trace(t,1,3)
-    fig.append_trace(t,2,3)
+    fig = tools.make_subplots(rows=2,cols=3)
+    fig.append_trace(pot_truth_trace,1,1)
+    fig.append_trace(mag_truth_trace,1,2)
+    fig.append_trace(pot_truth_trace,1,3)
 
-fig['layout'].update(height=1000, width=1200, title='plot')
-py.offline.plot(fig,filename='./plots/edgecompare.html')
+    fig.append_trace(pot_edge_trace,2,1)
+    fig.append_trace(mag_edge_trace,2,2)
+    fig.append_trace(pot_edge_trace,2,3)
+
+    for t in ls_trace:
+        fig.append_trace(t,1,3)
+        fig.append_trace(t,2,3)
+
+    fig['layout'].update(height=1000, width=1200,
+        title='{} edge error={}'.format(begin_string, d['overlap_error']))
+    py.offline.plot(fig,filename='./plots/edgecompare_{}.html'.format(begin_string))

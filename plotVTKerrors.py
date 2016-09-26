@@ -17,4 +17,4 @@ for code in codes:
     DX.append(ts)
 
 utility.plot_data_plotly(DX, threshes, codes,
-    title='cumulative error distribution OSMSC0006', fn='./plots/cum_error_osmsc006.html')
+    title='cumulative error distribution OSMSC0006', fn='./plots/cum_error_osmsc0006.html')

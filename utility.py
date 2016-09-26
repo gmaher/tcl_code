@@ -221,7 +221,7 @@ def VTKPDReadAndReorder(fn):
 	reader.Update()
 	pd = reader.GetOutput()
 	if not validSurface(pd):
-		return None
+		return np.zeros((1,2))
 	else:
 		return reorder_and_convert(pd)
 
