@@ -141,6 +141,21 @@ def cum_error_dist(errors, dx):
 
 	return (thresh_errs, ts)
 
+def get_codes(directory):
+	'''
+	searches through files in a directory for edge_codes
+	'''
+	files = os.listdir(directory)
+
+	codes = []
+	for f in files:
+		f_list = f.split('.')
+		code = f_list[3]
+		if (code not in codes) and (code != 'truth'):
+			codes.append(code)
+
+	return codes
+	
 def validSurface(pd):
 	'''
 	check whether a given surface is valid, lines!=0 and numpoints == numlines

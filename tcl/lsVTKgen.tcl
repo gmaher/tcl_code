@@ -3,9 +3,26 @@
 # Additionally the potential and gradient magnitude windows can be outputted.
 #
 #
-proc run {imgFileList pathFileList grpFileList } {
+proc run_kthr {kthr_list img path grp edge edgeString} {
+  #Runs group generation with and without edge map for different
+  #kthr values
 
+  global itklsGUIParams
+  foreach kthr $kthr_list {
+    set itklsGUIParams(kThr) $kthr
+    set edge_code ${edgeString}_kthr${kthr}
+    set img_code image_kthr${kthr}
+
+    #generate image groups
+    generate_edge_groups $img $path $grp 0 $img_code
+    close_files
+
+    #generate edge groups
+    generate_edge_groups $img $path $grp $edge $edge_code
+    close_files
+  }
 }
+
 proc generate_truth_groups {img path grp} {
   # Function that takes in image, path and group file paths
   # reorients the groups
