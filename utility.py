@@ -124,6 +124,23 @@ def project_group(group, q, mu):
 
 	return (x,y)
 
+def cum_error_dist(errors, dx):
+	'''
+	Computes the cumulative distribution of the error
+
+	args:
+		@a errs (list) - list of errors
+		@a dx (float) - interval at which to compute distribution
+	'''
+	thresh_errs = []
+
+	ts = np.arange(0,1+dx,dx)
+	for t in ts:
+		frac = float(np.sum(errors<=t))/len(errors)
+		thresh_errs.append(frac)
+
+	return (thresh_errs, ts)
+
 def validSurface(pd):
 	'''
 	check whether a given surface is valid, lines!=0 and numpoints == numlines

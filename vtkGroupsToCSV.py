@@ -9,7 +9,7 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument('directory')
 args = argparser.parse_args()
 
-codes = ['edge96']
+codes = ['edge96', 'image']
 
 dataDir = args.directory
 
