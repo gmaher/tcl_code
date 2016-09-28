@@ -65,3 +65,7 @@ heatmap(np_patch, fn='./plots/init.html')
 #####################################
 # Run GeodesicActiveContour level set
 #####################################
+gdac = sitk.GeodesicActiveContourLevelSetImageFilter()
+gdac_img = gdac.Execute(init_img, filt_patch, 0.02, 10.0, 1.0, 1.0, 1000, False)
+gdac_patch = sitk.GetArrayFromImage(gdac_img)
+heatmap(gdac_patch, fn='./plots/gdac.html')

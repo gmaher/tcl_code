@@ -110,7 +110,6 @@ cd $1
 # ##########################################
 # # Simvascular Actual build
 # ##########################################
-#svcmds='-DBUILD_SV3:BOOL=ON -DCMAKE_PREFIX_PATH:PATH="/home/marsdenlab/Qt5.4.0/5.4/gcc_64" -DSV_USE_SYSTEM_GDCM:BOOL=ON -DGDCM_DIR:PATH="/home/marsdenlab/projects/SV3/GDCM_BUILD" -DSV_USE_SYSTEM_VTK:BOOL=ON -DVTK_DIR:PATH="/home/marsdenlab/projects/SV3/VTK/build" -DSV_USE_SYSTEM_ITK:BOOL=ON -DITK_DIR:PATH="/home/marsdenlab/projects/SV3/ITK/build" -DSV_USE_SYSTEM_CTK:BOOL=ON -DCTK_DIR:PATH="/home/marsdenlab/projects/SV3/CTK/build" -DSV_USE_SYSTEM_SimpleITK:BOOL=ON -DSimpleITK_DIR:PATH="/home/marsdenlab/projects/SV3/SimpleITK/SuperBuild/build/SimpleITK-build" -DSV_USE_SYSTEM_MITK:BOOL=ON -DMITK_DIR:PATH="/home/marsdenlab/projects/SV3/MITK/build" -DTCL_LIBRARY:FILEPATH="/usr/local/lib/libtcl8.6.so"'
 mkdir sv3_build
 cd sv3_build
 cmake -C ../SV3CMakeOptions/init_sv3.cmake ../SimVascular/Code
