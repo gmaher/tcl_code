@@ -18,7 +18,8 @@ df = df.loc[(df['code']=='edge96') & (df['overlap_error']>=0.75)]
 ##########################################
 groups_dir = '/home/marsdenlab/projects/I2INet/'
 code = 'edge96'
-
+subtitles = ['image grad magnitude', 'image potential', 'contours',
+    'user edge', 'image potential', 'contours']
 for i in range(0,len(df)):
     d = df.iloc[i]
     img = d['image']
@@ -60,7 +61,7 @@ for i in range(0,len(df)):
         [np_ls_truth[:,1], np_ls_image[:,1], np_ls_edge[:,1]],
         ['user','image','edge'])
 
-    fig = tools.make_subplots(rows=2,cols=3)
+    fig = tools.make_subplots(rows=2,cols=3, subplot_titles=subtitles)
     fig.append_trace(pot_truth_trace,1,1)
     fig.append_trace(mag_truth_trace,1,2)
     fig.append_trace(pot_truth_trace,1,3)

@@ -155,7 +155,7 @@ def get_codes(directory):
 			codes.append(code)
 
 	return codes
-	
+
 def validSurface(pd):
 	'''
 	check whether a given surface is valid, lines!=0 and numpoints == numlines
@@ -426,7 +426,7 @@ def heatmap(X, legend='image', title='heatmap', xaxis='x', yaxis='y',
 	py.offline.plot(fig, filename=fn)
 
 def plot_data_plotly(X, Y, legend, title='plot', mode="lines+markers",
-	fn='./plots/plot.html'):
+	xlabel='x', ylabel='y', fn='./plots/plot.html'):
 	'''
 	Utility function to plot sets of X,Y data in a plotly plot
 
@@ -442,7 +442,13 @@ def plot_data_plotly(X, Y, legend, title='plot', mode="lines+markers",
 	traces = make_traces(X,Y,legend,mode)
 
 	layout = go.Layout(
-		title = title
+		title = title,
+		xaxis=dict(
+			title=xlabel
+			),
+		yaxis=dict(
+			title=ylabel
+			),
 		)
 
 	fig = go.Figure(data=traces, layout=layout)
