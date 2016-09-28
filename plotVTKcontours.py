@@ -7,6 +7,11 @@ from plotly.tools import FigureFactory as FF
 import pandas as pd
 BOUNDS = [-2.5, 2.5, -2.5, 2.5]
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('groups_dir')
+args = parser.parse_args()
+groups_dir = args.groups_dir
 ##########################################
 # Get large csv errors
 ##########################################
@@ -16,7 +21,7 @@ df = df.loc[(df['code']=='edge96') & (df['overlap_error']>=0.75)]
 ##########################################
 # Get FileNames
 ##########################################
-groups_dir = '/home/marsdenlab/projects/I2INet/'
+#groups_dir = '/home/marsdenlab/projects/I2INet/'
 code = 'edge96'
 subtitles = ['image grad magnitude', 'image potential', 'contours',
     'user edge', 'image potential', 'contours']
