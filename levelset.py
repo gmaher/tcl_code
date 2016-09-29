@@ -7,7 +7,7 @@ import plotly as py
 sliceid = 50
 impath = '/home/marsdenlab/Dropbox/vascular_data/OSMSC0006/OSMSC0006-cm.mha'
 
-xstart = 100
+xstart = 200
 ystart = 10
 dim = 64
 
@@ -28,7 +28,7 @@ print patch
 print type(patch)
 
 np_patch = sitk.GetArrayFromImage(patch)
-heatmap(np_patch, fn='./plots/patch.html')
+#heatmap(np_patch, fn='./plots/patch.html', title='image')
 
 ##########################
 # Compute feature image
@@ -37,8 +37,11 @@ gradMagFilter = sitk.GradientMagnitudeRecursiveGaussianImageFilter()
 gradMagFilter.SetSigma(sigma)
 filt_patch = gradMagFilter.Execute(patch)
 
+rescaleFilter = sitk.RescaleIntensityImageFilter()
+filt_patch = rescaleFilter.Execute(filt_patch, 0, 1)
+
 np_patch = sitk.GetArrayFromImage(filt_patch)
-heatmap(np_patch, fn='./plots/blur.html')
+heatmap(np_patch, fn='./plots/blur.html', title='gradmag')
 
 ###############################
 # Create initialization image
@@ -54,8 +57,9 @@ distance.InsideIsPositiveOff()
 distance.UseImageSpacingOn()
 
 dis_img = distance.Execute(seed_img)
+
 np_patch = sitk.GetArrayFromImage(dis_img)
-heatmap(np_patch, fn='./plots/distance.html')
+#heatmap(np_patch, fn='./plots/distance.html')
 
 init_img = sitk.BinaryThreshold(dis_img, -1000, 10)
 init_img = sitk.Cast(init_img, filt_patch.GetPixelIDValue())*-1+0.5
@@ -66,6 +70,10 @@ heatmap(np_patch, fn='./plots/init.html')
 # Run GeodesicActiveContour level set
 #####################################
 gdac = sitk.GeodesicActiveContourLevelSetImageFilter()
-gdac_img = gdac.Execute(init_img, filt_patch, 0.02, 10.0, 1.0, 1.0, 1000, False)
+gdac_img = gdac.Execute(init_img, filt_patch, 0.002, -2.0, 1.0, 1.0, 1000, False)
+
+print gdac.GetElapsedIterations()
+print gdac.GetRMSChange()
+
 gdac_patch = sitk.GetArrayFromImage(gdac_img)
-heatmap(gdac_patch, fn='./plots/gdac.html')
+heatmap(gdac_patch, fn='./plots/gdac.html', title='levelset')

@@ -1,3 +1,34 @@
+proc runGroupsToVTKonFiles {imgs paths groups} {
+	#Runs batch level set for models in a list of files
+	#
+	#args:
+	#	@a: imgs - list of img pathnames
+	#	@a edges - list of edge maps
+	#	@a paths - list of path files
+	# @a grps - list of group folders
+	#	@a img_string, string, string to append to groups generated using
+	#	levelset without an edgemap
+	# @a edge_string, string, string to append to groups generated using
+	#	edgemap
+	# @a use_edge, int, 0 or 1 whether to use the edgemap or not
+	#
+	#preconditions:
+	#	*@a all files have the same number of lines
+
+	#global gOptions
+	#set gOptions(resliceDims) {64 64}
+
+	set imgs [readFromFile $imgs]
+	set paths [readFromFile $paths]
+	set groups [readFromFile $groups]
+
+	foreach I $imgs P $paths G $groups {
+		puts "$I\n $P\n $G\n"
+    generate_truth_groups $I $P $G
+
+	}
+}
+
 # Code for generating level set segmentations for the cardiovascular
 # dataset, and for extracting the user generated groups as vtk contours.
 # Additionally the potential and gradient magnitude windows can be outputted.
@@ -50,26 +81,30 @@ proc generate_truth_groups {img path grp} {
 
   puts "starting group loop"
   foreach grp [array names pathmap] {
-    set pathid $pathmap($grp)
-    group_restorePreopSegs $grp
+		if {[group_exists $grp]} {
+			set pathid $pathmap($grp)
+	    group_restorePreopSegs $grp
 
-    global grpPoints
-    get_group_points $grp
+	    global grpPoints
+	    get_group_points $grp
 
-    puts "starting point loop"
-    foreach point $grpPoints {
-      puts "$imgname $grp $point"
-      lsGUIMake2DImages $pathid $point
-      set ls_fn ${imgname}.${grp}.${point}.truth.ls.vtp
-      set mag_fn ${imgname}.${grp}.${point}.truth.mag.vts
-      set pot_fn ${imgname}.${grp}.${point}.truth.pot.vts
-
-      repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/thr/selected -type ascii
-      repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
-      repos_writeVtkStructuredPoints -file $pot_fn -obj /tmp/lsGUI/pot -type ascii
-
-    }
+	    puts "starting point loop"
+	    foreach point $grpPoints {
+	      puts "$imgname $pathid $grp $point"
+	      lsGUIMake2DImages $pathid $point
+	      set ls_fn ${imgname}.${grp}.${point}.truth.ls.vtp
+	      set mag_fn ${imgname}.${grp}.${point}.truth.mag.vts
+	      set pot_fn ${imgname}.${grp}.${point}.truth.pot.vts
+				if {[repos_exists -obj /lsGUI/$pathid/$point/thr/selected]} {
+	      	repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/thr/selected -type ascii
+	      	repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
+	      	repos_writeVtkStructuredPoints -file $pot_fn -obj /tmp/lsGUI/pot -type ascii
+				}
+	    }
+		}
   }
+	puts "closing files"
+  close_files
 
 }
 
@@ -130,7 +165,7 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image}} {
 
     puts "starting point loop"
     foreach point $grpPoints {
-      puts "$imgname $grp $point"
+      puts "$imgname $grp $pathid $point"
 
       set lsGUIcurrentPathNumber $pathid
       set lsGUIcurrentGroup $grp
@@ -176,6 +211,9 @@ proc get_path_map {} {
   #Note requires calling global pathmap before calling this procedure
 	global gPathPoints
   global pathmap
+  array set pathmap {}
+  unset pathmap
+  array set pathmap {}
 	set pathids {}
 	set pathnames {}
 
@@ -223,4 +261,14 @@ proc close_files {} {
   }
 
   guiSV_group_update_tree
+}
+
+proc readFromFile {fp} {
+	set file [open $fp r]
+	set data [read $file]
+	close $file
+
+	set out [split $data "\n"]
+
+	return $out
 }
