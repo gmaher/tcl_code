@@ -81,6 +81,7 @@ proc generate_truth_groups {img path grp} {
 
   puts "starting group loop"
   foreach grp [array names pathmap] {
+		puts $grp
 		if {[group_exists $grp]} {
 			set pathid $pathmap($grp)
 	    group_restorePreopSegs $grp

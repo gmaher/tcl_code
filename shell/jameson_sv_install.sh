@@ -14,85 +14,85 @@ echo changing directory to $1
 
 cd $1
 
-#################################################
-# TCL/TK 8.6.6
-#################################################
-
-#TCL/TK paths
-#TCL_LIB="${1}tcl8.6.6/unix/libtcl8.6.so"
-TCL_LIB="/usr/local/lib/libtcl8.6.so"
-TCL_INCLUDE="${1}tcl8.6.6/generic"
-#TCL_BIN="${1}tcl8.6.6/unix/tclsh"
-TCL_BIN="/usr/local/bin/tclsh8.6"
-
-#TK_LIB="${1}tk8.6.6/unix/libtk8.6.so"
-TK_LIB="/usr/local/lib/libtk8.6.so"
-TK_INCLUDE="${1}tk8.6.6/generic"
-#TK_WISH="${1}tk8.6.6/unix/wish"
-TK_WISH="/usr/local/bin/wish8.6"
-
-##################################
-#Get TCL
-##################################
-wget http://heanet.dl.sourceforge.net/project/tcl/Tcl/8.6.6/tcl8.6.6-src.tar.gz
-
-#Tars into folder tcl8.6.6
-tar -xf  tcl8.6.6-src.tar.gz
-cd tcl8.6.6/unix
-./configure
-make -j4
-sudo make install
-cd ../..
-
-##################################
-#get TK
-##################################
-#wget downloads.sourceforge.net/project/tcl/Tcl/8.6.6/tk8.6.6-src.tar.gz
-wget ftp://ftp.tcl.tk/pub/tcl/tcl8_6/tk8.6.6-src.tar.gz
-#Tars into folder tk8.6.6
-tar -xf tk8.6.6-src.tar.gz
-cd tk8.6.6/unix
-./configure --with-tcl="${1}tcl8.6.6/unix"
-make -j4
-sudo make install
-cd ../..
-
-# ################################################
-# # TCL/TK 8.5.0
-# ################################################
+# #################################################
+# # TCL/TK 8.6.6
+# #################################################
 #
-# # #TCL/TK paths
-# TCL_LIB="${1}tcl8.5/unix/libtcl8.5.so"
-# TCL_INCLUDE="${1}tcl8.5/generic"
-# TCL_BIN="${1}tcl8.5/unix/tclsh"
+# #TCL/TK paths
+# #TCL_LIB="${1}tcl8.6.6/unix/libtcl8.6.so"
+# TCL_LIB="/usr/local/lib/libtcl8.6.so"
+# TCL_INCLUDE="${1}tcl8.6.6/generic"
+# #TCL_BIN="${1}tcl8.6.6/unix/tclsh"
+# TCL_BIN="/usr/local/bin/tclsh8.6"
 #
-# TK_LIB="${1}tk8.5/unix/libtk8.5.so"
-# TK_INCLUDE="${1}tk8.5/generic"
-# TK_WISH="${1}tk8.5/unix/wish"
+# #TK_LIB="${1}tk8.6.6/unix/libtk8.6.so"
+# TK_LIB="/usr/local/lib/libtk8.6.so"
+# TK_INCLUDE="${1}tk8.6.6/generic"
+# #TK_WISH="${1}tk8.6.6/unix/wish"
+# TK_WISH="/usr/local/bin/wish8.6"
 #
-# #TCL
-# wget https://github.com/tcltk/tcl/archive/core_8_5_0.tar.gz
-# tar -xf core_8_5_0.tar.gz
-# rm core_8_5_0.tar.gz
-# mv tcl-core_8_5_0/ tcl8.5
-# cd tcl8.5/unix
+# ##################################
+# #Get TCL
+# ##################################
+# wget http://heanet.dl.sourceforge.net/project/tcl/Tcl/8.6.6/tcl8.6.6-src.tar.gz
+#
+# #Tars into folder tcl8.6.6
+# tar -xf  tcl8.6.6-src.tar.gz
+# cd tcl8.6.6/unix
 # ./configure
 # make -j4
 # sudo make install
 # cd ../..
 #
-# #TK
-# wget https://github.com/tcltk/tk/archive/core_8_5_0.tar.gz
-# tar -xf core_8_5_0.tar.gz
-# rm core_8_5_0.tar.gz
-# mv tk-core_8_5_0 tk8.5
-# cd tk8.5/unix
-# ./configure
-#  make -j4
-#  sudo make install
-#  cd ../..
+# ##################################
+# #get TK
+# ##################################
+# #wget downloads.sourceforge.net/project/tcl/Tcl/8.6.6/tk8.6.6-src.tar.gz
+# wget ftp://ftp.tcl.tk/pub/tcl/tcl8_6/tk8.6.6-src.tar.gz
+# #Tars into folder tk8.6.6
+# tar -xf tk8.6.6-src.tar.gz
+# cd tk8.6.6/unix
+# ./configure --with-tcl="${1}tcl8.6.6/unix"
+# make -j4
+# sudo make install
+# cd ../..
 
-#########################
+################################################
+# TCL/TK 8.5.0
+################################################
+
+# #TCL/TK paths
+TCL_LIB="${1}tcl8_6/unix/libtcl8.6.so"
+TCL_INCLUDE="${1}tcl8_6/generic"
+TCL_BIN="${1}tcl8_6/unix/tclsh"
+
+TK_LIB="${1}tk8_6/unix/libtk8.6.so"
+TK_INCLUDE="${1}tk8_6/generic"
+TK_WISH="${1}tk8_6/unix/wish"
+
+#TCL
+wget https://github.com/tcltk/tcl/archive/core_8_6_5.tar.gz
+tar -xf core_8_6_5.tar.gz
+rm core_8_6_5.tar.gz
+mv tcl-core_8_6_5/ tcl8_6
+cd tcl8_6/unix
+./configure
+make -j4
+#sudo make install
+cd ../..
+
+#TK
+wget https://github.com/tcltk/tk/archive/core_8_6_5.tar.gz
+tar -xf core_8_6_5.tar.gz
+rm core_8_6_5.tar.gz
+mv tk-core_8_6_5 tk8_6
+cd tk8_6/unix
+./configure
+ make -j4
+ #sudo make install
+ cd ../..
+
+#########################cd /medi
 # Install rest
 #########################
 
