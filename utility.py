@@ -11,7 +11,9 @@ from PIL import Image
 from skimage import measure
 from vtk import vtkImageExport
 from vtk.util import numpy_support
+from skimage import measure
 import vtk
+
 def query_file(folder, query_list):
 	'''
 	utility function to query a directory for a file
@@ -175,7 +177,7 @@ def readVTKPD(fn):
 	pd_reader.Update()
 	pd = pd_reader.GetOutput()
 	return pd
-	
+
 def validSurface(pd):
 	'''
 	check whether a given surface is valid, lines!=0 and numpoints == numlines
@@ -347,6 +349,31 @@ def contourToSeg(contour, origin, dims, spacing):
 	        if poly.contains(p):
 	            seg[i,j] = 1
 	return seg
+
+def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5):
+	'''
+	converts a segmentation in numpy format to a contour (ordered list of points)
+
+	args:
+		@a segmentation: numpy array, shape=(xdims,ydims), binary segmentation image
+		@a origin: origin of the image
+		@a spacing: physical size of each pixel
+
+	notes:
+		itk spacing is in terms of (x,y) and skimage contour gives points as
+		(rows,columns) so the first column returned by skimage must be converted
+		using the y spacing and the second column using the x spacing
+	'''
+	points = measure.find_contours(segmentation, isovalue)
+	points = points[0]
+	contour = np.zeros((len(points),2))
+
+
+	for i in range(0,len(points)):
+		contour[i,0] = points[i,0]*spacing[1]+origin[1]
+		contour[i,1] = points[i,1]*spacing[0]+origin[0]
+
+	return contour
 
 def areaOverlapError(truth, edge):
 	'''

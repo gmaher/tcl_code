@@ -42,8 +42,8 @@ if plot:
         utility.heatmap(images[index],
         fn='./plots/mag{}.html'.format(i))
 
-segmentations = np.asarray(seg)
+segmentations = np.asarray(segmentations)
 images = np.asarray(images)
 
-np.save(groupsDir+'segmentations', segmentations)
-np.save(groupsDir+'images', images)
+np.save(groupsDir+'../segmentations', segmentations)
+np.save(groupsDir+'../images', images)
