@@ -3,37 +3,47 @@ import utility
 import vtk
 import argparse
 from shapely.geometry import Polygon, Point
+import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('groupsDir')
+parser.add_argument('--plot', action='store_true', default=False)
 args = parser.parse_args()
 groupsDir = args.groupsDir
+plot = args.plot
 
-mag = groupsDir + 'OSMSC0001.arch.56.truth.mag.vts'
-ls = groupsDir + 'OSMSC0001.arch.56.truth.ls.vtp'
+files = os.listdir(groupsDir)
+images = []
+segmentations = []
+for f in files:
+    if "truth.ls" in f:
+        mag = f.replace('truth.ls.vtp','truth.mag.vts')
+        ls = f
 
-contour = utility.VTKPDReadAndReorder(ls)
-poly = Polygon(contour)
+        contour = utility.VTKPDReadAndReorder(groupsDir+ls)
+        poly = Polygon(contour)
 
-sp_reader = vtk.vtkStructuredPointsReader()
-sp_reader.SetFileName(mag)
-sp_reader.Update()
-mag_sp = sp_reader.GetOutput()
+        mag_sp = utility.readVTKSP(groupsDir+mag)
 
-spacing = mag_sp.GetSpacing()
-origin = mag_sp.GetOrigin()
-dims = mag_sp.GetDimensions()
+        spacing = mag_sp.GetSpacing()
+        origin = mag_sp.GetOrigin()
+        dims = mag_sp.GetDimensions()
 
-seg = np.zeros((dims[0],dims[1]))
+        seg = utility.contourToSeg(contour, origin, dims, spacing)
+        mag_np = utility.VTKSPtoNumpy(mag_sp)[0]
 
-for j in range(0,dims[0]):
-    for i in range(0,dims[1]):
-        x = origin[0] + j*spacing[0]
-        y = origin[1] + i*spacing[1]
-        p = Point(x,y)
+        segmentations.append(seg)
+        images.append(mag_np)
 
-        if poly.contains(p):
-            seg[i,j] = 1
+if plot:
+    for i in range(0,5):
+        index = np.random.randint(len(segmentations))
+        utility.heatmap(segmentations[index], fn='./plots/seg{}.html'.format(i))
+        utility.heatmap(images[index],
+        fn='./plots/mag{}.html'.format(i))
 
-utility.heatmap(seg, fn='./plots/seg.html')
-utility.heatmap(utility.VTKSPtoNumpy(mag_sp)[0], fn='./plots/mag.html')
+segmentations = np.asarray(seg)
+images = np.asarray(images)
+
+np.save(groupsDir+'segmentations', segmentations)
+np.save(groupsDir+'images', images)

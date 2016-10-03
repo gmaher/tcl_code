@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, Point
 from math import sqrt, pi
 import plotly as py
 import plotly.graph_objs as go
@@ -156,6 +156,26 @@ def get_codes(directory):
 
 	return codes
 
+def readVTKSP(fn):
+	'''
+	reads a vtk structured points object from a file
+	'''
+	sp_reader = vtk.vtkStructuredPointsReader()
+	sp_reader.SetFileName(fn)
+	sp_reader.Update()
+	sp = sp_reader.GetOutput()
+	return sp
+
+def readVTKPD(fn):
+	'''
+	reads a vtk polydata object from a file
+	'''
+	pd_reader = vtk.vtkPolyDataReader()
+	pd_reader.SetFileName(fn)
+	pd_reader.Update()
+	pd = pd_reader.GetOutput()
+	return pd
+	
 def validSurface(pd):
 	'''
 	check whether a given surface is valid, lines!=0 and numpoints == numlines
@@ -302,6 +322,31 @@ def getNodeOrdering(C):
 			break
 
 	return ordering
+
+def contourToSeg(contour, origin, dims, spacing):
+	'''
+	Converts an ordered set of points to a segmentation
+	(i.e. fills the inside of the contour), uses the point in polygon method
+
+	args:
+		@a contour: numpy array, shape = (num points, 2), ordered list of points
+		forming a closed contour
+		@a origin: The origin of the image, corresponds to top left corner of image
+		@a dims: (xdims,ydims) dimensions of the image corresponding to the segmentation
+		@a spacing: the physical size of each pixel
+	'''
+	poly = Polygon(contour)
+	seg = np.zeros((dims[0],dims[1]))
+
+	for j in range(0,dims[0]):
+	    for i in range(0,dims[1]):
+	        x = origin[0] + j*spacing[0]
+	        y = origin[1] + i*spacing[1]
+	        p = Point(x,y)
+
+	        if poly.contains(p):
+	            seg[i,j] = 1
+	return seg
 
 def areaOverlapError(truth, edge):
 	'''
