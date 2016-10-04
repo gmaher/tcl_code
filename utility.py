@@ -12,6 +12,7 @@ from skimage import measure
 from vtk import vtkImageExport
 from vtk.util import numpy_support
 from skimage import measure
+from sklearn.metrics import confusion_matrix
 import vtk
 
 def query_file(folder, query_list):
@@ -396,6 +397,25 @@ def areaOverlapError(truth, edge):
 
 	return 1.0-float(Aintersection)/Aunion
 
+def confusionMatrix(ytrue,ypred, as_fraction=True):
+	'''
+	computes confusion matrix and (optionally) converts it to fractional form
+
+	args:
+		@a ytrue: vector of true labels
+		@a ypred: vector of predicted labels
+	'''
+	H = confusion_matrix(ytrue,ypred)
+
+	if not as_fraction:
+		return H
+	else:
+		H = H.astype(float)
+		totals = np.sum(H,axis=1)
+		totals = totals.reshape((-1,1))
+		H = H/totals
+		return np.around(H,2)
+
 #######################################################
 # Plotly stuff
 #######################################################
@@ -486,10 +506,12 @@ def heatmap(X, legend='image', title='heatmap', xaxis='x', yaxis='y',
 	layout = go.Layout(
 		title = title,
 		xaxis = dict(
-			title = xaxis
+			title = xaxis,
+			autorange=True
 		),
 		yaxis = dict(
-			title = yaxis
+			title = yaxis,
+			autorange=True
 		)
 	)
 
