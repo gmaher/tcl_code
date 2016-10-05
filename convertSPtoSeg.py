@@ -4,6 +4,7 @@ import vtk
 import argparse
 from shapely.geometry import Polygon, Point
 import os
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('groupsDir')
@@ -18,8 +19,9 @@ files = os.listdir(groupsDir)
 images = []
 segmentations = []
 meta_data = [[],[],[]]
+contours = []
 if convert:
-    for f in files:
+    for f in tqdm(files):
         if "truth.ls" in f:
             mag = f.replace('truth.ls.vtp','truth.mag.vts')
             ls = f
@@ -38,6 +40,7 @@ if convert:
 
             segmentations.append(seg)
             images.append(mag_np)
+            contours.append(contour)
             meta_data[0].append(spacing)
             meta_data[1].append(origin)
             meta_data[2].append(dims)
@@ -49,6 +52,7 @@ if convert:
     np.save(groupsDir+'../segmentations', segmentations)
     np.save(groupsDir+'../images', images)
     np.save(groupsDir+'../metadata', meta_data)
+    np.save(groupsDir+'../contours', contours)
 
 else:
     images = np.load(groupsDir+'../images.npy')

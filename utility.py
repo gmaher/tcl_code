@@ -215,7 +215,7 @@ def VTKSPtoNumpy(vol):
 	if (exporter.GetDataScalarType() == 4):
 		dtype = np.short
 	if (exporter.GetDataScalarType() == 5):
-		dtype = Int16
+		dtype = np.int16
 	if (exporter.GetDataScalarType() == 10):
 		dtype = np.float32
 	a = np.zeros(reduce(np.multiply,dims),dtype)
@@ -227,7 +227,7 @@ def VTKSPtoNumpy(vol):
 
 def VTKSPtoNumpyFromFile(fn):
 	'''
-	reads a .sp file into a numpy array
+	reads a .vts file into a numpy array
 
 	args:
 		@a fn - string, filename of .sp file to read
@@ -365,10 +365,22 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		(rows,columns) so the first column returned by skimage must be converted
 		using the y spacing and the second column using the x spacing
 	'''
-	points = measure.find_contours(segmentation, isovalue)
-	points = points[0]
-	contour = np.zeros((len(points),2))
+	contours = measure.find_contours(segmentation, isovalue)
+	index = 0
+	if len(contours) > 1:
+		xdims,ydims = segmentation.shape
+		xcenter = xdims/2
+		ycenter = ydims/2
+		dist = 1000
+		for i in range(0,len(contours)):
+			center = np.mean(contours[i],axis=0)
+			new_dist = np.sqrt((xcenter-center[1])**2 + (ycenter-center[0])**2)
+			if new_dist < dist:
+				dist = new_dist
+				index = i
 
+	points = contours[index]
+	contour = np.zeros((len(points),2))
 
 	for i in range(0,len(points)):
 		contour[i,0] = points[i,0]*spacing[1]+origin[1]
@@ -413,7 +425,7 @@ def confusionMatrix(ytrue,ypred, as_fraction=True):
 		H = H.astype(float)
 		totals = np.sum(H,axis=1)
 		totals = totals.reshape((-1,1))
-		H = H/totals
+		H = H/(totals+1e-6)
 		return np.around(H,2)
 
 #######################################################
