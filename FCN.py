@@ -44,25 +44,11 @@ Pmin = np.amin(images)
 print "Images stats\n N={}, Width={}, Height={}, Max={}, Min={}".format(
     N,Pw,Ph,Pmax,Pmin)
 
-maxs = np.amax(images, axis=(1,2))
-maxs = maxs[:,0]
-mins = np.amin(images,axis=(1,2))
-mins = mins[:,0]
-
-images_norm = np.zeros((N,Pw,Ph,1))
-for i in range(0,N):
-    images_norm[i,:] = (images[i]-mins[i])/(maxs[i]-mins[i]+1e-6)
+images_norm = utility.normalize_images(images)
 
 #train test split
-inds = np.random.permutation(N)
-split_index = int(0.75*N)
-train_inds = inds[:split_index]
-test_inds = inds[split_index:]
-
-X_train = images_norm[train_inds]
-X_test = images_norm[test_inds]
-Y_train = segs[train_inds]
-Y_test = segs[test_inds]
+X_train, Y_train, X_test, Y_test, inds, train_inds, test_inds = \
+    utility.train_test_split(images_norm, segs,0.75)
 
 ##############################
 # Neural network construction
@@ -113,6 +99,8 @@ class_weight = {0:1.0,1:10}
 FCN.fit(X_train, Y_train, batch_size=32, nb_epoch=10,
 validation_data=(X_test,Y_test))
 
+FCN.save('./models/FCN.h5')
+
 ###############################
 # confusion matrix
 ###############################
@@ -143,34 +131,3 @@ for i in range(0,5):
     utility.heatmap(seg_pred, fn='./plots/segpred{}.html'.format(i))
     utility.heatmap(seg_true, fn='./plots/segtrue{}.html'.format(i))
     time.sleep(1)
-
-##################################
-# Calculate area of overlap error
-##################################
-meta_test = meta[:,test_inds,:]
-contours_test = contours[test_inds]
-
-Y_pred = Y_pred.reshape((-1,64,64))
-err_list = []
-ts_list = []
-isos = []
-for iso in np.arange(0.1,1,0.1):
-    isos.append(str(iso))
-    errs = []
-    for i in tqdm(range(0,len(Y_pred))):
-        y = Y_pred[i]
-        spacing, origin, dims = meta_test[:,i,:]
-        y_true = contours_test[i]
-
-        y = (y-np.amin(y))/(np.amax(y)-np.amin(y))
-
-        y_contour_pred = utility.segToContour(y, origin, spacing,iso)
-
-        e = utility.areaOverlapError(y_true, y_contour_pred)
-        errs.append(e)
-
-    cum_err, ts = utility.cum_error_dist(errs,0.025)
-    err_list.append(cum_err)
-    ts_list.append(ts)
-
-utility.plot_data_plotly(ts_list, err_list, isos)

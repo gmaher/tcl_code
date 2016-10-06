@@ -2,6 +2,7 @@ import plotly as py
 import plotly.graph_objs as go
 from plotly import tools
 from plotly.tools import FigureFactory as FF
+import numpy as np
 
 #TODO: how to incorporate layout/plot property setting e.g. line thickness?
 #TODO: legend groups how do they work?
@@ -65,4 +66,14 @@ class Figure:
 			    opacity=0.8
 			)
 		)
+        self.fig.append_trace(trace,row,col)
+
+    def add_heatmap(self,data, bounds=[-1, 1, -1, 1], showscale=False, row=1, col=1):
+    	trace=go.Heatmap(
+    		z=data,
+    		x=np.linspace(bounds[0],bounds[1],data.shape[0]),
+    		y=np.linspace(bounds[2],bounds[3],data.shape[1]),
+    		colorscale=[[0, 'rgb(0,0,0)'],[1, 'rgb(255,255,255)']],
+    		showscale=showscale)
+
         self.fig.append_trace(trace,row,col)

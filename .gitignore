@@ -5,3 +5,4 @@ models/
 *.csv
 *.txt
 *.html
+*.h5

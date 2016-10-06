@@ -127,6 +127,45 @@ def project_group(group, q, mu):
 
 	return (x,y)
 
+def normalize_images(images):
+	'''
+	Max/min normalizes a set of images
+
+	args:
+		@a images shape = (N,W,H,C) where C is number of channels
+	'''
+	N, Pw, Ph, C = images.shape
+	images_norm = np.zeros((N,Pw,Ph,C))
+
+	maxs = np.amax(images, axis=(1,2,3))
+	mins = np.amin(images,axis=(1,2,3))
+
+	for i in range(0,N):
+	    images_norm[i,:] = (images[i]-mins[i])/(maxs[i]-mins[i]+1e-6)
+	return images_norm
+
+def train_test_split(X,Y,split):
+	"""
+	Splits data into train and test subsets and returns split indices
+
+	args:
+		@a X - numpy array shape = (N,...)
+		@a Y - Numpy array shape = (N,...)
+		@a split - split ratio, denotes percentage of data to keep in training set
+	"""
+	N = X.shape[0]
+	inds = np.random.permutation(N)
+	split_index = int(split*N)
+	train_inds = inds[:split_index]
+	test_inds = inds[split_index:]
+
+	X_train = X[train_inds]
+	X_test = X[test_inds]
+	Y_train = Y[train_inds]
+	Y_test = Y[test_inds]
+
+	return X_train, Y_train, X_test, Y_test, inds, train_inds, test_inds
+
 def cum_error_dist(errors, dx):
 	'''
 	Computes the cumulative distribution of the error
@@ -366,27 +405,44 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		using the y spacing and the second column using the x spacing
 	'''
 	contours = measure.find_contours(segmentation, isovalue)
-	index = 0
-	if len(contours) > 1:
-		xdims,ydims = segmentation.shape
-		xcenter = xdims/2
-		ycenter = ydims/2
-		dist = 1000
-		for i in range(0,len(contours)):
-			center = np.mean(contours[i],axis=0)
-			new_dist = np.sqrt((xcenter-center[1])**2 + (ycenter-center[0])**2)
-			if new_dist < dist:
-				dist = new_dist
-				index = i
+	#index = 0
+	# if len(contours) > 1:
+	# 	xdims,ydims = segmentation.shape
+	# 	xcenter = xdims/2
+	# 	ycenter = ydims/2
+	# 	dist = 1000
+	# 	for i in range(0,len(contours)):
+	# 		center = np.mean(contours[i],axis=0)
+	# 		new_dist = np.sqrt((xcenter-center[1])**2 + (ycenter-center[0])**2)
+	# 		if new_dist < dist:
+	# 			dist = new_dist
+	# 			index = i
+	returned_contours = []
+	for c in contours:
+		points = c
+		contour = np.zeros((len(points),2))
 
-	points = contours[index]
-	contour = np.zeros((len(points),2))
+		for i in range(0,len(points)):
+			contour[i,0] = points[i,0]*spacing[1]+origin[1]
+			contour[i,1] = points[i,1]*spacing[0]+origin[0]
 
-	for i in range(0,len(points)):
-		contour[i,0] = points[i,0]*spacing[1]+origin[1]
-		contour[i,1] = points[i,1]*spacing[0]+origin[0]
+		returned_contours.append(contour)
+	return returned_contours
 
-	return contour
+def listSegToContours(segmentations, origins, spacings, isovalue=0.5):
+	'''
+	converts a list of segmentations to a list of lists of contours
+
+	args:
+		@a segmentations: list of segmentations shape = (N,W,H)
+		@a origins: list of origins shape = (N,3)
+		@a spacings: list of spacings shape = (N,3)
+	'''
+	contours = []
+	for i in range(0,len(segmentations)):
+		c = segToContour(segmentations[i], origins[i], spacings[i], isovalue)
+		contours.append(c)
+	return contours
 
 def areaOverlapError(truth, edge):
 	'''
@@ -409,6 +465,34 @@ def areaOverlapError(truth, edge):
 
 	return 1.0-float(Aintersection)/Aunion
 
+def listAreaOverlapError(Y_pred,Y_truth):
+	'''
+	computes the area overlap error for a list of contours and reference contours
+
+	args:
+		@a Y_pred, list of lists of contours (numpy arrays shape = (N,2))
+		@a Y_truth, dimensions same as Y_pred
+	'''
+	errs = []
+	for i in range(0,len(Y_pred)):
+
+	    y_true = Y_truth[i]
+
+	    contour_pred = Y_pred[i]
+
+	    if len(contour_pred) == 0:
+	        e = 1.0
+	    else:
+	        y_contour_pred = contour_pred[0]
+
+	        if len(y_contour_pred) <= 2:
+	            e = 1.0
+	        else:
+	            e = areaOverlapError(y_true, y_contour_pred)
+
+	    errs.append(e)
+	return errs
+	
 def confusionMatrix(ytrue,ypred, as_fraction=True):
 	'''
 	computes confusion matrix and (optionally) converts it to fractional form
