@@ -20,6 +20,7 @@ images = []
 segmentations = []
 meta_data = [[],[],[]]
 contours = []
+names = open(groupsDir+'../names.txt','w')
 if convert:
     for f in tqdm(files):
         if "truth.ls" in f:
@@ -44,7 +45,7 @@ if convert:
             meta_data[0].append(spacing)
             meta_data[1].append(origin)
             meta_data[2].append(dims)
-
+            names.write(f+'\n')
     segmentations = np.asarray(segmentations)
     images = np.asarray(images)
     meta_data = np.asarray(meta_data)
@@ -53,6 +54,7 @@ if convert:
     np.save(groupsDir+'../images', images)
     np.save(groupsDir+'../metadata', meta_data)
     np.save(groupsDir+'../contours', contours)
+    names.close()
 
 else:
     images = np.load(groupsDir+'../images.npy')

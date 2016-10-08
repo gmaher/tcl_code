@@ -12,14 +12,15 @@ class Figure:
     """
     Utility class to act as a wrapper around plotting libraries.
     """
-    def __init__(self, rows, cols, title="", height=1000, width=1000):
+    def __init__(self, rows, cols, title="", subtitles=[], height=1000, width=1000):
         """
         Initialization.
         """
         self.rows = rows
         self.cols = cols
 
-        self.fig = tools.make_subplots(rows=rows,cols=cols)
+        self.fig = tools.make_subplots(rows=rows,cols=cols,
+            subplot_titles=subtitles)
         self.fig['layout'].update(height=height,width=width, title=title)
 
     def plot(self,filename='plot.html'):

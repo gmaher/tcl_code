@@ -71,7 +71,7 @@ errs = utility.listAreaOverlapError(predicted_contours, contours_test)
 for i in range(0,len(errs)):
     if errs[i] > 0.5:
         bad_error_inds.append(i)
-        
+
 cum_err, ts = utility.cum_error_dist(errs,0.025)
 err_list.append(cum_err)
 ts_list.append(ts)
@@ -81,7 +81,15 @@ utility.plot_data_plotly(ts_list, err_list, [str(iso)])
 #investigate bad_errors
 Nplots = 20
 Y_test = Y_test.reshape((-1,Pw,Ph))
-fig = util_plot.Figure(Nplots,4, height=250*Nplots, width=2000)
+
+subtitles = []
+f = open(dataDir+'names.txt')
+f = f.readlines()
+for j in range(1,Nplots+1):
+    subtitles = subtitles + [f[test_inds[j]]]*4
+
+fig = util_plot.Figure(Nplots,4, subtitles=subtitles, height=250*Nplots, width=2000)
+
 for j in range(1,Nplots+1):
     i = bad_error_inds[j]
     img = images[test_inds[i]].reshape((Pw,Ph))

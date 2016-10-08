@@ -109,7 +109,7 @@ proc generate_truth_groups {img path grp} {
 
 }
 
-proc generate_edge_groups {img path grp {edge 0} {edgeString image}} {
+proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "userEdge"}} {
   # Function that takes in image, path, group and edge file paths
   # loops over every group for which there is a corresponding path
   # computes level set at each group member location
@@ -131,7 +131,7 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image}} {
   global itklsGUIParams
 
   if {$edge ne 0} {
-		set itklsGUIParams(2DEdgeImage) "userEdge"
+		set itklsGUIParams(2DEdgeImage) $edgeType
 		set itklsGUIParams(useEdgeImage) "disp"
 	} else {
 		set itklsGUIParams(useEdgeImage) 0
