@@ -382,8 +382,8 @@ def contourToSeg(contour, origin, dims, spacing):
 
 	for j in range(0,dims[0]):
 	    for i in range(0,dims[1]):
-	        x = origin[0] + j*spacing[0]
-	        y = origin[1] + i*spacing[1]
+	        x = origin[0] + (j-0.5)*spacing[0]
+	        y = origin[1] + (i-0.5)*spacing[1]
 	        p = Point(x,y)
 
 	        if poly.contains(p):
@@ -492,7 +492,7 @@ def listAreaOverlapError(Y_pred,Y_truth):
 
 	    errs.append(e)
 	return errs
-	
+
 def confusionMatrix(ytrue,ypred, as_fraction=True):
 	'''
 	computes confusion matrix and (optionally) converts it to fractional form

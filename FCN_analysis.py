@@ -86,7 +86,8 @@ subtitles = []
 f = open(dataDir+'names.txt')
 f = f.readlines()
 for j in range(1,Nplots+1):
-    subtitles = subtitles + [f[test_inds[j]]]*4
+    i = bad_error_inds[j]
+    subtitles = subtitles + [f[test_inds[i]]]*4
 
 fig = util_plot.Figure(Nplots,4, subtitles=subtitles, height=250*Nplots, width=2000)
 
