@@ -21,6 +21,9 @@ segmentations = []
 meta_data = [[],[],[]]
 contours = []
 names = open(groupsDir+'../names.txt','w')
+
+eccentricity_limit = 0.2
+
 if convert:
     for f in tqdm(files):
         if "truth.ls" in f:
@@ -28,6 +31,10 @@ if convert:
             ls = f
 
             contour = utility.VTKPDReadAndReorder(groupsDir+ls)
+
+            if utility.eccentricity(contour) < eccentricity_limit:
+                continue
+
             poly = Polygon(contour)
 
             mag_sp = utility.readVTKSP(groupsDir+mag)
@@ -72,7 +79,7 @@ if plot:
         origin = meta_data[1][index]
         dims = meta_data[2][index]
 
-        segCon = utility.segToContour(segmentations[index],
+        segCon = utility.segToContour(segmentations[index][0],
         origin,
         spacing)
 

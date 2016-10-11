@@ -57,6 +57,7 @@ meta_test = meta[:,test_inds,:]
 contours_test = contours[test_inds]
 
 Y_pred = Y_pred.reshape((-1,Pw,Ph))
+Y_pred = utility.threshold(Y_pred,0.55)
 err_list = []
 ts_list = []
 iso = 0.55
@@ -87,9 +88,9 @@ f = open(dataDir+'names.txt')
 f = f.readlines()
 for j in range(1,Nplots+1):
     i = bad_error_inds[j]
-    subtitles = subtitles + [f[test_inds[i]]]*4
+    subtitles = subtitles + [f[test_inds[i]]]*5
 
-fig = util_plot.Figure(Nplots,4, subtitles=subtitles, height=250*Nplots, width=2000)
+fig = util_plot.Figure(Nplots,5, subtitles=subtitles, height=250*Nplots, width=2000)
 
 for j in range(1,Nplots+1):
     i = bad_error_inds[j]
@@ -101,8 +102,8 @@ for j in range(1,Nplots+1):
     c_truth = contours_test[i]
 
     #get bounds
-    spacing, origin, dims = meta[:,test_inds[j],:]
-    dims = dims-1
+    spacing, origin, dims = meta[:,test_inds[i],:]
+    dims = dims
     bounds = [origin[0], origin[0]+dims[0]*spacing[0],
         origin[1], origin[1]+dims[1]*spacing[1]]
 
@@ -116,10 +117,15 @@ for j in range(1,Nplots+1):
     fig.add_scatter2d(c_truth[:,0], c_truth[:,1], 'truth', row=j, col=3)
     fig.add_scatter2d(c_truth[:,0], c_truth[:,1], 'truth', row=j, col=4)
 
+    #plot contours on image
+    fig.add_heatmap(img_norm, bounds, row=j, col=5)
+    fig.add_scatter2d(c_truth[:,0], c_truth[:,1], 'truth', row=j, col=5)
+
     #plot predicted contours
     for k in range(0,len(c_pred)):
         c = c_pred[k]
         fig.add_scatter2d(c[:,0], c[:,1], 'predicted{}'.format(k), row=j, col=3)
         fig.add_scatter2d(c[:,0], c[:,1], 'predicted{}'.format(k), row=j, col=4)
+        fig.add_scatter2d(c[:,0], c[:,1], 'predicted{}'.format(k), row=j, col=5)
 
 fig.plot()

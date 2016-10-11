@@ -56,7 +56,7 @@ X_train, Y_train, X_test, Y_test, inds, train_inds, test_inds = \
 Nfilters = 64
 Wfilter = 3
 lr = 1e-3
-threshold = 0.03
+threshold = 0.3
 
 opt = Adam(lr=lr)
 
@@ -106,9 +106,7 @@ FCN.save('./models/FCN.h5')
 ###############################
 Y_pred = FCN.predict(X_test)
 Y_pred_flat = np.ravel(Y_pred)
-Y_pred_flat = np.rint(Y_pred_flat)
-#Y_pred_flat[Y_pred_flat < threshold] = 0
-#Y_pred_flat[Y_pred_flat >= threshold] = 1
+Y_pred_flat = utility.threshold(Y_pred_flat,0.3)
 
 Y_true_flat = np.ravel(Y_test)
 Conf_mat = utility.confusionMatrix(Y_true_flat, Y_pred_flat)

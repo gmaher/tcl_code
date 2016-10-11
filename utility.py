@@ -382,8 +382,8 @@ def contourToSeg(contour, origin, dims, spacing):
 
 	for j in range(0,dims[0]):
 	    for i in range(0,dims[1]):
-	        x = origin[0] + (j-0.5)*spacing[0]
-	        y = origin[1] + (i-0.5)*spacing[1]
+	        x = origin[0] + (j+0.5)*spacing[0]
+	        y = origin[1] + (i+0.5)*spacing[1]
 	        p = Point(x,y)
 
 	        if poly.contains(p):
@@ -423,8 +423,8 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		contour = np.zeros((len(points),2))
 
 		for i in range(0,len(points)):
-			contour[i,0] = points[i,0]*spacing[1]+origin[1]
-			contour[i,1] = points[i,1]*spacing[0]+origin[0]
+			contour[i,1] = (points[i,0]+0.5)*spacing[1]+origin[1]
+			contour[i,0] = (points[i,1]+0.5)*spacing[0]+origin[0]
 
 		returned_contours.append(contour)
 	return returned_contours
@@ -443,6 +443,33 @@ def listSegToContours(segmentations, origins, spacings, isovalue=0.5):
 		c = segToContour(segmentations[i], origins[i], spacings[i], isovalue)
 		contours.append(c)
 	return contours
+
+def eccentricity(contour):
+	'''
+	calculates the ratio between minor and major axis of contour
+
+	args:
+		@a contour: list of points, shape = (N,2)
+	'''
+	origin = np.mean(contour,axis=0)
+	xcomp = contour[:,0]-origin[0]
+	ycomp = contour[:,1]-origin[1]
+	dists = np.sqrt(xcomp**2 + ycomp**2)
+	dmax = np.max(dists)
+	dmin = np.min(dists)
+	return dmin/dmax
+def threshold(x,value):
+	'''
+	sets all values below value to 0 and above to 1
+
+	args:
+		@a x: the array to threshold
+		@a value: the cutoff value
+	'''
+	inds = x < value
+	x[x < value] = 0
+	x[x >= value] = 1
+	return x
 
 def areaOverlapError(truth, edge):
 	'''
