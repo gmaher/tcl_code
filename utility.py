@@ -198,6 +198,34 @@ def get_codes(directory):
 
 	return codes
 
+def get_data(dataDir, reshape=True):
+	'''
+	Function to read 2d reslice data
+
+	args:
+		@a dataDir: (string) directory containing images.npy, segmentations.npy
+		metadata.npy, contours.npy and names.txt
+	'''
+	imString = dataDir + 'images.npy'
+	segString = dataDir + 'segmentations.npy'
+	metaString = dataDir + 'metadata.npy'
+	contourString = dataDir + 'contours.npy'
+
+	images = np.load(imString)
+	images = images.astype(float)
+	segs = np.load(segString)
+	meta = np.load(metaString)
+	contours = np.load(contourString)
+	f = open(dataDir+'names.txt')
+	f = f.readlines()
+	N, Pw, Ph = images.shape
+
+	if reshape:
+		images = images.reshape((N,Pw,Ph,1))
+		segs = segs.reshape((N,Pw,Ph,1))	
+
+	return images,segs,contours,meta,f
+
 def readVTKSP(fn):
 	'''
 	reads a vtk structured points object from a file
