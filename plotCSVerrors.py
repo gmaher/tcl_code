@@ -5,6 +5,9 @@ import plotly.graph_objs as go
 import utility
 
 df = pd.read_csv('vtk_groups_errors.csv')
+df_models = pd.read_csv('model_groups_errors.csv')
+df = pd.concat([df,df_models])
+
 codes = df['code'].unique()
 threshes = []
 dx = 0.05

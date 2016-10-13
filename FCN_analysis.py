@@ -66,9 +66,7 @@ predicted_contours = \
     utility.listSegToContours(Y_pred,meta_test[1,:,:], meta_test[0,:,:], iso)
 
 errs = utility.listAreaOverlapError(predicted_contours, contours_test)
-osmsc0006_errs = []
-aorta_errs = []
-pulm_errs = []
+
 for i in range(0,len(errs)):
     if errs[i] > 0.5:
         bad_error_inds.append(i)

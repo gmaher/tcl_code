@@ -69,6 +69,8 @@ d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same'
 d = BatchNormalization(mode=2)(d)
 d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
 d = BatchNormalization(mode=2)(d)
+d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+d = BatchNormalization(mode=2)(d)
 d = Convolution2D(1,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
 
 #mask layer
