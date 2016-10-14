@@ -4,6 +4,8 @@ echo "installing in ${1}"
 
 cd $1
 
+#NOTE: Need to add /home/marsdenlab/projects/SV3/sv3_build/Lib to LD_LIBRARY_PATH
+
 #########################################
 # Install dependencies
 #########################################
