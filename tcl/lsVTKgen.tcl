@@ -29,6 +29,34 @@ proc runGroupsToVTKonFiles {imgs paths groups} {
 	}
 }
 
+proc run_params {params img path grp edge edgeString imageString edgeType} {
+  #Runs group generation with and without edge map for different
+  #level set parameters
+	#params(0) = phyRadius
+	#params(1) = kLow
+	#params(2) = kThr
+	#params(3) = kUpp
+	#
+
+  global itklsGUIParams
+	set itklsGUIParams(phyRadius) [lindex $params 0]
+	set itklsGUIParams(kLow) [lindex $params 1]
+	set itklsGUIParams(kThr) [lindex $params 2]
+	set itklsGUIParams(kUpp) [lindex $params 3]
+
+  set edge_code $edgeString
+  set img_code $imageString
+
+  #generate image groups
+  generate_edge_groups $img $path $grp 0 $img_code
+  close_files
+
+  #generate edge groups
+  generate_edge_groups $img $path $grp $edge $edge_code $edgeType
+  close_files
+
+}
+
 # Code for generating level set segmentations for the cardiovascular
 # dataset, and for extracting the user generated groups as vtk contours.
 # Additionally the potential and gradient magnitude windows can be outputted.
@@ -152,7 +180,6 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "u
 	global gPathPoints
   global itklsGUIParams
 
-  set itklsGUIParams(phyRadius) 0.3
   ####################################################
   # Start running level set
   ####################################################
