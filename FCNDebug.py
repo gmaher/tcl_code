@@ -19,6 +19,7 @@ bounds = [origin[0], origin[0]+ 64*spacing[0],
     origin[1], origin[1]+64*spacing[1]]
 
 seg = utility.contourToSeg(contour,origin,[64,64],spacing)
+H,W = seg.shape
 contour_pred = utility.segToContour(seg, origin, spacing, 0.55)[0]
 
 ps = np.linspace(0,2*np.pi-0.1,50)
@@ -32,9 +33,17 @@ fig.add_scatter2d(contour[:,0],contour[:,1], legend='contour')
 fig.add_scatter2d(contour_pred[:,0],contour_pred[:,1], legend='contour_pred')
 fig.add_scatter2d(init_snake[:,0],init_snake[:,1], legend='snake init')
 fig.add_scatter2d(snake_contour[:,0],snake_contour[:,1], legend='contour_snake')
-fig.plot('plot1.html')
+fig.plot('./plots/plot1.html')
 
 fig2 = util_plot.Figure(1,1, height=500,width=500)
 fig2.add_heatmap(mag[0], bounds)
 fig2.add_scatter2d(contour[:,1],contour[:,0], legend='contour')
-fig2.plot('plot2.html')
+fig2.plot('./plots/plot2.html')
+
+#test OBG stuff
+obg = utility.segToOBG(seg.reshape((H,W,1)),4)
+fig2 = util_plot.Figure(1,3, height=500,width=500)
+fig2.add_heatmap(obg[:,:,0], row=1, col=1)
+fig2.add_heatmap(obg[:,:,1], row=1, col=2)
+fig2.add_heatmap(obg[:,:,2], row=1, col=3)
+fig2.plot('./plots/plotobg.html')

@@ -222,7 +222,7 @@ def get_data(dataDir, reshape=True):
 
 	if reshape:
 		images = images.reshape((N,Pw,Ph,1))
-		segs = segs.reshape((N,Pw,Ph,1))	
+		segs = segs.reshape((N,Pw,Ph,1))
 
 	return images,segs,contours,meta,f
 
@@ -457,6 +457,54 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		returned_contours.append(contour)
 	return returned_contours
 
+def segToOBG(seg, border_width=4):
+	'''
+	Converts a binary segmentation to a background/object/border label image as in
+	"Object Boundary Guided Semantic Segmentation" by Huang et al
+
+	args:
+		@a seg: shape = (H,W,1), binary image pixels = 0 or 1
+		@a border_width, width that the border labels will be expanded to
+	'''
+	H,W,C = seg.shape
+	#empty array with 3 channels for background/object/border
+	out = np.zeros((H,W,3))
+	#initialize all pixels as background
+	out[:,:,0] = 1
+	row_mask = np.asarray([-1,-1,-1,0,0,1,1,1])
+	col_mask = np.asarray([-1,0,1,-1,1,-1,0,1])
+	boundary_inds = []
+	for i in range(0,H):
+		for j in range(0,W):
+			if (i == 0) or (i == H-1) or (j == 0) or (j == W-1):
+				out[i,j,0] = 1
+				continue
+			if seg[i,j,0] == 1:
+				row_neighbors = row_mask+i
+				col_neighbors = col_mask+j
+				#if all neighbors are 1, then we are in the object
+				if np.sum(seg[row_neighbors,col_neighbors,0])==8:
+					out[i,j,1] = 1
+					out[i,j,0] = 0
+				#otherwise we are on the boundary
+				else:
+					out[i,j,2] = 1
+					out[i,j,0] = 0
+					boundary_inds.append((i,j))
+
+	#thicken boundary
+	for tup in boundary_inds:
+		i = tup[0]
+		j = tup[1]
+		for k in range(-border_width,border_width+1):
+			if (i+k != 0) or (i+k != H):
+				out[i+k,j,2] = 1
+				out[i+k,j,0:2] = 0
+			if (j+k != 0) or (j+k != W):
+				out[i,j+k,2] = 1
+				out[i,j+k,0:2] = 0
+	return out
+
 def listSegToContours(segmentations, origins, spacings, isovalue=0.5):
 	'''
 	converts a list of segmentations to a list of lists of contours
@@ -486,6 +534,7 @@ def eccentricity(contour):
 	dmax = np.max(dists)
 	dmin = np.min(dists)
 	return dmin/dmax
+
 def threshold(x,value):
 	'''
 	sets all values below value to 0 and above to 1
