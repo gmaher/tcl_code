@@ -124,4 +124,4 @@ for j in range(1,Nplots+1):
         fig.add_scatter2d(c[:,0], c[:,1], 'predicted{}'.format(k), row=j, col=3)
         #fig.add_scatter2d(c[:,0], c[:,1], 'predicted{}'.format(k), row=j, col=5)
 
-fig.plot()
+fig.plot('./plots/fcnanalysis.html')

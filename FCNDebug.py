@@ -42,7 +42,7 @@ fig2.plot('./plots/plot2.html')
 
 #test OBG stuff
 obg = utility.segToOBG(seg.reshape((H,W,1)),4)
-fig2 = util_plot.Figure(1,3, height=500,width=500)
+fig2 = util_plot.Figure(1,3, height=1000,width=1000)
 fig2.add_heatmap(obg[:,:,0], row=1, col=1)
 fig2.add_heatmap(obg[:,:,1], row=1, col=2)
 fig2.add_heatmap(obg[:,:,2], row=1, col=3)
