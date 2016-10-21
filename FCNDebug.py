@@ -5,7 +5,7 @@ import argparse
 from skimage import segmentation
 
 parser = argparse.ArgumentParser()
-parser.add_argument('file')
+parser.add_argument('file', nargs='?', default='OSMSC0001.arch.23')
 args = parser.parse_args()
 f = args.file
 
@@ -41,7 +41,7 @@ fig2.add_scatter2d(contour[:,1],contour[:,0], legend='contour')
 fig2.plot('./plots/plot2.html')
 
 #test OBG stuff
-obg = utility.segToOBG(seg.reshape((H,W,1)),4)
+obg = utility.segToOBG(seg.reshape((H,W,1)),1)
 fig2 = util_plot.Figure(1,3, height=1000,width=1000)
 fig2.add_heatmap(obg[:,:,0], row=1, col=1)
 fig2.add_heatmap(obg[:,:,1], row=1, col=2)

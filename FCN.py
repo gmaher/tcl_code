@@ -11,6 +11,8 @@ from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge,
 from keras.optimizers import Adam
 from tqdm import tqdm
 
+import util_data
+
 np.random.seed(0)
 ##########################
 # Parse args
@@ -20,31 +22,26 @@ parser.add_argument('dataDir')
 args = parser.parse_args()
 
 dataDir = args.dataDir
-imString = dataDir + 'images.npy'
-segString = dataDir + 'segmentations.npy'
-metaString = dataDir + 'metadata.npy'
-contourString = dataDir + 'contours.npy'
 
 ###########################
 # Load data and preprocess
 ###########################
-images = np.load(imString)
-images = images.astype(float)
-segs = np.load(segString)
-meta = np.load(metaString)
-contours = np.load(contourString)
+vascdata = util_data.VascData2D(dataDir)
 
-N, Pw, Ph = images.shape
+images = vascdata.images_tf
+segs = vascdata.segs_tf
+meta = vascdata.meta
+contours = vascdata.contours
 
-images = images.reshape((N,Pw,Ph,1))
-segs = segs.reshape((N,Pw,Ph,1))
+N, Pw, Ph, C = images.shape
+
 Pmax = np.amax(images)
 Pmin = np.amin(images)
 
 print "Images stats\n N={}, Width={}, Height={}, Max={}, Min={}".format(
     N,Pw,Ph,Pmax,Pmin)
 
-images_norm = utility.normalize_images(images)
+images_norm = vascdata.images_norm
 
 #train test split
 X_train, Y_train, X_test, Y_test, inds, train_inds, test_inds = \

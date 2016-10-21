@@ -457,7 +457,7 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		returned_contours.append(contour)
 	return returned_contours
 
-def segToOBG(seg, border_width=4):
+def segToOBG(seg, border_width=1):
 	'''
 	Converts a binary segmentation to a background/object/border label image as in
 	"Object Boundary Guided Semantic Segmentation" by Huang et al
@@ -497,10 +497,10 @@ def segToOBG(seg, border_width=4):
 		i = tup[0]
 		j = tup[1]
 		for k in range(-border_width,border_width+1):
-			if (i+k != 0) or (i+k != H):
+			if (i+k >= 0) and (i+k < H):
 				out[i+k,j,2] = 1
 				out[i+k,j,0:2] = 0
-			if (j+k != 0) or (j+k != W):
+			if (j+k >= 0) and (j+k < W):
 				out[i,j+k,2] = 1
 				out[i,j+k,0:2] = 0
 	return out
