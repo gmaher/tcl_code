@@ -57,44 +57,15 @@ threshold = 0.3
 
 opt = Adam(lr=lr)
 
-x = Input(shape=(Pw,Ph,1))
+FCN = utility.makeFCN((Ph,Pw,1), Nfilters, Wfilter, num_conv_1=3, num_conv_2=2,
+    output_channels=1, mask=True, dense_layers=1, dense_size=Pw)
 
-#main branch
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(x)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(1,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-
-#mask layer
-m = Flatten()(x)
-m = Dense(Pw, activation='relu')(m)
-m = Dense(Pw*Ph, activation='relu')(m)
-m = Reshape((Pw,Ph,1))(m)
-
-#merge
-d = merge([d,m], mode='mul')
-
-#finetune
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(1,Wfilter,Wfilter,activation='sigmoid', border_mode='same')(d)
-
-FCN = Model(x,d)
 FCN.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 #FCN.compile(optimizer=opt, loss='hinge', metrics=['accuracy'])
 
 ###############################
 # Training
 ###############################
-class_weight = {0:1.0,1:10}
 FCN.fit(X_train, Y_train, batch_size=32, nb_epoch=10,
 validation_data=(X_test,Y_test))
 

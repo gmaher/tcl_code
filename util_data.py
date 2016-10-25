@@ -1,5 +1,6 @@
 import utility
 import numpy as np
+from tqdm import tqdm
 class VascData2D:
 
     def __init__(self, dataDir):
@@ -39,8 +40,9 @@ class VascData2D:
         args:
             @a border_width (int) - boundary width to use
         '''
+        print 'creating OBG data'
         self.obg = np.zeros((self.data_dims[0],self.data_dims[1],
             self.data_dims[2],3))
 
-        for i in range(0,len(self.segs)):
+        for i in tqdm(range(0,len(self.segs))):
             self.obg[i,:] = utility.segToOBG(self.segs_tf[i],border_width)

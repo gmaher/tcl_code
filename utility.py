@@ -14,6 +14,8 @@ from vtk.util import numpy_support
 from skimage import measure
 from sklearn.metrics import confusion_matrix
 import vtk
+from keras.models import Model
+from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge, Reshape, Flatten
 
 def query_file(folder, query_list):
 	'''
@@ -363,6 +365,7 @@ def getPDConnectivity(pd):
 			C[p1] = []
 		if not C.has_key(p2):
 			C[p2] = []
+
 		C[p1].append(p2)
 		C[p2].append(p1)
 
@@ -616,6 +619,49 @@ def confusionMatrix(ytrue,ypred, as_fraction=True):
 		H = H/(totals+1e-6)
 		return np.around(H,2)
 
+def makeFCN(input_shape=(64,64,1), Nfilters=32, Wfilter=3,
+ 	num_conv_1=3, num_conv_2=3, output_channels=1, mask=True, dense_layers=1,
+	dense_size=64):
+	'''
+	Makes an FCN neural network
+	'''
+	x = Input(shape=input_shape)
+
+	#main branch
+	d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(x)
+	d = BatchNormalization(mode=2)(d)
+
+	for i in range(0,num_conv_1):
+		d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+		d = BatchNormalization(mode=2)(d)
+
+	d = Convolution2D(1,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+
+	#mask layer
+	if mask:
+		m = Flatten()(x)
+
+		for i in range(0,dense_layers):
+			m = Dense(dense_size, activation='relu')(m)
+
+		m = Dense(input_shape[0]*input_shape[1], activation='relu')(m)
+
+		m = Reshape(input_shape)(m)
+
+		#merge
+		d = merge([d,m], mode='mul')
+
+	#finetune
+	for i in range(0,num_conv_2):
+		d = BatchNormalization(mode=2)(d)
+		d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+
+	d = BatchNormalization(mode=2)(d)
+	d = Convolution2D(output_channels,
+		Wfilter,Wfilter,activation='sigmoid', border_mode='same')(d)
+
+	FCN = Model(x,d)
+	return FCN
 #######################################################
 # Plotly stuff
 #######################################################

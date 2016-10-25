@@ -34,11 +34,21 @@ run_kthr {1 2 3 5 10} /home/marsdenlab/datasets/vascular_data/OSMSC0006/OSMSC000
 edge96
 close_files
 
+set itklsGUIParams(maxIter1) 10
+set itklsGUIParams(maxIter2) 10000
+
 run_params {0.3 0.8 0.6 0.9} /home/marsdenlab/datasets/vascular_data/OSMSC0006/OSMSC0006-cm.mha \
 /home/marsdenlab/datasets/vascular_data/OSMSC0006/0006_0001/0006_0001-cm.paths \
 /home/marsdenlab/datasets/vascular_data/OSMSC0006/0006_0001/0006_0001_groups-cm \
 /home/marsdenlab/datasets/vascular_data/OSMSC0006/OSMSC0006-cm_E96.mha \
 edge96_r03klow08kthr06kupp09 image_r03klow08kthr06kupp09 userEdge
+close_files
+
+run_params {0.3 0.5 0.6 0.5} /home/marsdenlab/datasets/vascular_data/OSMSC0006/OSMSC0006-cm.mha \
+/home/marsdenlab/datasets/vascular_data/OSMSC0006/0006_0001/0006_0001-cm.paths \
+/home/marsdenlab/datasets/vascular_data/OSMSC0006/0006_0001/0006_0001_groups-cm \
+/home/marsdenlab/datasets/vascular_data/OSMSC0006/OSMSC0006-cm_E96.mha \
+edge96_r03klow05kthr06kupp05 image_r03klow05kthr06kupp05 userEdge
 close_files
 
 run_params {0.3 0.8 0.85 0.9} /home/marsdenlab/datasets/vascular_data/OSMSC0006/OSMSC0006-cm.mha \

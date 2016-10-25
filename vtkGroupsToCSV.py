@@ -55,8 +55,11 @@ for file in files:
                 pd_edge = read_pd(reader,fp_code)
                 if validSurface(pd_edge):
                     pd_edge_np = reorder_and_convert(pd_edge)
-                    dentry['overlap_error'] =\
-                        areaOverlapError(pd_truth_np, pd_edge_np)
+                    if len(pd_edge_np) >  2:
+                        dentry['overlap_error'] =\
+                            areaOverlapError(pd_truth_np, pd_edge_np)
+                    else:
+                        dentry['overlap_error'] = 1.0
                 else:
                     dentry['overlap_error'] = 1.0
             else:

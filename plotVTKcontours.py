@@ -10,19 +10,20 @@ BOUNDS = [-2.5, 2.5, -2.5, 2.5]
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('groups_dir')
+parser.add_argument('code')
 args = parser.parse_args()
 groups_dir = args.groups_dir
+code = args.code
 ##########################################
 # Get large csv errors
 ##########################################
 df = pd.read_csv('vtk_groups_errors.csv')
-df = df.loc[(df['code']=='edge96') & (df['overlap_error']>=0.75)]
+df = df.loc[(df['code']==code) & (df['overlap_error']>=0.75)]
 
 ##########################################
 # Get FileNames
 ##########################################
-#groups_dir = '/home/marsdenlab/projects/I2INet/'
-code = 'edge96'
+
 subtitles = ['image grad magnitude', 'image potential', 'contours',
     'user edge', 'image potential', 'contours']
 for i in range(0,len(df)):
