@@ -15,6 +15,7 @@ dataDir = args.dataDir
 models = args.models
 
 images,segs,contours,meta,f = utility.get_data(dataDir)
+np.random.seed(0)
 
 images_norm = utility.normalize_images(images)
 data = []
