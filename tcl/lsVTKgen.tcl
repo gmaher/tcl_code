@@ -22,10 +22,13 @@ proc runGroupsToVTKonFiles {imgs paths groups} {
 	set paths [readFromFile $paths]
 	set groups [readFromFile $groups]
 
+  global itklsGUIParams
+	set itklsGUIParams(phyRadius) 0.3
+
 	foreach I $imgs P $paths G $groups {
 		puts "$I\n $P\n $G\n"
     generate_truth_groups $I $P $G
-
+		generate_edge_groups $I $P $G
 	}
 }
 
@@ -185,32 +188,37 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "u
   ####################################################
   puts "starting group loop"
   foreach grp [array names pathmap] {
-    set pathid $pathmap($grp)
-    group_restorePreopSegs $grp
+		if {[group_exists $grp]} {
+	    set pathid $pathmap($grp)
+	    group_restorePreopSegs $grp
 
-    global grpPoints
-    get_group_points $grp
+	    global grpPoints
+	    get_group_points $grp
 
-    puts "starting point loop"
-    foreach point $grpPoints {
-      puts "$imgname $grp $pathid $point"
+	    puts "starting point loop"
+	    foreach point $grpPoints {
 
-      set lsGUIcurrentPathNumber $pathid
-      set lsGUIcurrentGroup $grp
-      set lsGUIcurrentPositionNumber $point
+	      puts "$imgname $grp $pathid $point"
 
-      itkLSOnPos $pathid $point
+	      set lsGUIcurrentPathNumber $pathid
+	      set lsGUIcurrentGroup $grp
+	      set lsGUIcurrentPositionNumber $point
 
-      set ls_fn ${imgname}.${grp}.${point}.${edgeString}.ls.vtp
-      set mag_fn ${imgname}.${grp}.${point}.${edgeString}.mag.vts
-      set pot_fn ${imgname}.${grp}.${point}.${edgeString}.pot.vts
+	      itkLSOnPos $pathid $point
 
-      repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/ls -type ascii
-      repos_writeVtkStructuredPoints -file $mag_fn -obj /img/$pathid/$point/mag -type ascii
-      repos_writeVtkStructuredPoints -file $pot_fn -obj /img/$pathid/$point/pot -type ascii
+	      set ls_fn ${imgname}.${grp}.${point}.${edgeString}.ls.vtp
+	      set mag_fn ${imgname}.${grp}.${point}.${edgeString}.mag.vts
+	      set pot_fn ${imgname}.${grp}.${point}.${edgeString}.pot.vts
 
-    }
+	      repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/ls -type ascii
+	      repos_writeVtkStructuredPoints -file $mag_fn -obj /img/$pathid/$point/mag -type ascii
+	      repos_writeVtkStructuredPoints -file $pot_fn -obj /img/$pathid/$point/pot -type ascii
+
+	    }
+		}
   }
+	puts "closing files"
+	close_files
 }
 
 proc get_image_name {fn} {
