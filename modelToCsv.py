@@ -51,4 +51,4 @@ for model in models:
         data.append(dentry)
 
 df = pd.DataFrame(data)
-df.to_csv('model_groups_errors.csv')
+df.to_csv(dataDir+'model_groups_errors.csv')

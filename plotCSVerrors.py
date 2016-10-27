@@ -3,9 +3,18 @@ import pandas as pd
 import plotly as py
 import plotly.graph_objs as go
 import utility
+import argparse
 
-df = pd.read_csv('vtk_groups_errors.csv')
-df_models = pd.read_csv('model_groups_errors.csv')
+parser = argparse.ArgumentParser()
+parser.add_argument('ls_csv')
+parser.add_argument('model_csv')
+args = parser.parse_args()
+
+ls_csv = args.ls_csv
+model_csv = args.model_csv
+
+df = pd.read_csv(ls_csv)
+df_models = pd.read_csv(model_csv)
 df = pd.concat([df,df_models])
 
 codes = df['code'].unique()

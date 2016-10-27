@@ -5,6 +5,7 @@ import os
 import vtk
 from utility import *
 
+
 argparser = argparse.ArgumentParser()
 argparser.add_argument('directory')
 args = argparser.parse_args()
@@ -67,4 +68,4 @@ for file in files:
 
             data.append(dentry)
 df = pd.DataFrame(data)
-df.to_csv('vtk_groups_errors.csv')
+df.to_csv(dataDir+'vtk_groups_errors.csv')

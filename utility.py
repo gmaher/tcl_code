@@ -193,10 +193,11 @@ def get_codes(directory):
 
 	codes = []
 	for f in files:
-		f_list = f.split('.')
-		code = f_list[3]
-		if (code not in codes) and (code != 'truth'):
-			codes.append(code)
+		if ('.vtp' in f):
+			f_list = f.split('.')
+			code = f_list[3]
+			if (code not in codes) and (code != 'truth'):
+				codes.append(code)
 
 	return codes
 
@@ -564,7 +565,7 @@ def areaOverlapError(truth, edge):
 
 	t = Polygon(truth_tups)
 	e = Polygon(edge_tups)
-	if not e.is_valid:
+	if not (e.is_valid and t.is_valid):
 		print "invalid geometry, error = 1.0"
 		return 1.0
 	Aunion = e.union(t).area
