@@ -8,12 +8,13 @@ from utility import *
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('directory')
+argparser.add_argument('--codes', nargs='+')
 args = argparser.parse_args()
 
 dataDir = args.directory
 
-codes = get_codes(dataDir)
-
+#codes = get_codes(dataDir)
+codes = args.codes
 files = os.listdir(dataDir)
 
 data = []

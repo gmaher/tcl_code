@@ -6,7 +6,7 @@ import time
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import confusion_matrix
 
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge, Reshape, Flatten
 from keras.optimizers import Adam
 from tqdm import tqdm
@@ -50,18 +50,27 @@ X_train, Y_train, X_test, Y_test, inds, train_inds, test_inds = \
 ##############################
 # Neural network construction
 ##############################
-Nfilters = 64
+Nfilters = 32
 Wfilter = 3
 lr = 1e-3
 threshold = 0.3
 output_channels = 1
-dense_size = 64
+dense_size = 100
 opt = Adam(lr=lr)
 
 x = Input(shape=(Ph,Pw,1))
 
-#main branch
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(x)
+FCN = load_model('./models/FCN.h5')
+OBP_FCN = load_model('./models/OBP_FCN_output.h5')
+
+fcn_out = FCN(x)
+
+#compute OBG mask
+obp_out = OBP_FCN(x)
+
+d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(obp_out)
+d = BatchNormalization(mode=2)(d)
+d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
 d = BatchNormalization(mode=2)(d)
 d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
 d = BatchNormalization(mode=2)(d)
@@ -69,26 +78,13 @@ d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same'
 d = BatchNormalization(mode=2)(d)
 d = Convolution2D(output_channels,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
 
-#mask
-m = Flatten()(x)
-m = Dense(dense_size, activation='relu')(m)
-m = Dense(Ph*Pw, activation='relu')(m)
-m = Reshape((Ph,Pw,output_channels))(m)
+
 
 #merge
-d = merge([d,m], mode='mul')
-
-#finetune
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(output_channels,
-	Wfilter,Wfilter,activation='sigmoid', border_mode='same')(d)
-
-FCN = Model(x,d)
+d = merge([d,fcn_out], mode='mul')
 
 FCN.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-#FCN.compile(optimizer=opt, loss='hinge', metrics=['accuracy'])
+
 
 ###############################
 # Training
@@ -96,7 +92,7 @@ FCN.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 FCN.fit(X_train, Y_train, batch_size=32, nb_epoch=10,
 validation_data=(X_test,Y_test))
 
-FCN.save('./models/FCN.h5')
+FCN.save('./models/OBP_full.h5')
 
 ###############################
 # confusion matrix

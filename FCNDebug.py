@@ -3,6 +3,7 @@ import numpy as np
 import util_plot
 import argparse
 from skimage import segmentation
+from keras.models import Model, load_model
 
 parser = argparse.ArgumentParser()
 parser.add_argument('file', nargs='?', default='OSMSC0001.arch.23')
@@ -47,3 +48,15 @@ fig2.add_heatmap(obg[:,:,0], row=1, col=1)
 fig2.add_heatmap(obg[:,:,1], row=1, col=2)
 fig2.add_heatmap(obg[:,:,2], row=1, col=3)
 fig2.plot('./plots/plotobg.html')
+
+OBP_FCN = load_model('./models/OBP_FCN_output.h5')
+mag = mag.reshape((64,64,1))
+img_norm = utility.normalize_images(mag.reshape(1,
+    mag.shape[0],mag.shape[1],mag.shape[2]))
+y_obg = OBP_FCN.predict(img_norm)
+
+fig2 = util_plot.Figure(1,3, height=1000,width=1000)
+fig2.add_heatmap(y_obg[0,:,:,0], row=1, col=1)
+fig2.add_heatmap(y_obg[0,:,:,1], row=1, col=2)
+fig2.add_heatmap(y_obg[0,:,:,2], row=1, col=3)
+fig2.plot('./plots/plotobg_pred.html')

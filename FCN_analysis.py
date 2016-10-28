@@ -86,7 +86,7 @@ for j in range(1,Nplots+1):
     i = bad_error_inds[j]
     subtitles = subtitles + [f[test_inds[i]]]*3
 
-fig = util_plot.Figure(Nplots,3, subtitles=subtitles, height=250*Nplots, width=2000)
+fig = util_plot.Figure(Nplots,3, subtitles=subtitles, height=350*Nplots, width=1500)
 
 for j in range(1,Nplots+1):
     i = bad_error_inds[j]

@@ -26,8 +26,13 @@ for model in models:
 
     Y_pred = mod.predict(images_norm)
     N,W,H,C = Y_pred.shape
-    Y_pred = Y_pred.reshape((N,W,H))
-    Y_pred = utility.threshold(Y_pred, THRESHOLD)
+    if C == 1:
+        Y_pred = Y_pred.reshape((N,W,H))
+        Y_pred = utility.threshold(Y_pred, THRESHOLD)
+    if C == 3:
+        Y_pred = Y_pred.reshape((N,W,H,C))
+        Y_pred = Y_pred[:,:,:,1]
+        Y_pred = utility.threshold(Y_pred, THRESHOLD)
 
     contours_pred =\
         utility.listSegToContours(Y_pred,meta[1,:,:], meta[0,:,:],0.5)

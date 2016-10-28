@@ -80,6 +80,6 @@ for i in range(0,len(df)):
         fig.append_trace(t,1,3)
         fig.append_trace(t,2,3)
 
-    fig['layout'].update(height=1000, width=1200,
+    fig['layout'].update(height=600, width=800,
         title='{} edge error={}'.format(begin_string, d['overlap_error']))
     py.offline.plot(fig,filename='./plots/edgecompare_{}.html'.format(begin_string))

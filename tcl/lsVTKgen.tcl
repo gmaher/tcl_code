@@ -1,4 +1,4 @@
-proc runGroupsToVTKonFiles {imgs paths groups} {
+proc runGroupsToVTKonFiles {imgs paths groups edges} {
 	#Runs batch level set for models in a list of files
 	#
 	#args:
@@ -21,14 +21,17 @@ proc runGroupsToVTKonFiles {imgs paths groups} {
 	set imgs [readFromFile $imgs]
 	set paths [readFromFile $paths]
 	set groups [readFromFile $groups]
+	set edges [readFromFile $edges]
 
   global itklsGUIParams
 	set itklsGUIParams(phyRadius) 0.3
 
-	foreach I $imgs P $paths G $groups {
+	foreach I $imgs P $paths G $groups E $edges {
 		puts "$I\n $P\n $G\n"
-    generate_truth_groups $I $P $G
-		generate_edge_groups $I $P $G
+    #generate_truth_groups $I $P $G
+		#generate_edge_groups $I $P $G
+		#generate_edge_groups $I $P $G $E "edge96"
+		generate_edge_groups $I $P $G $E "edge96_LS" LSEdge
 	}
 }
 
