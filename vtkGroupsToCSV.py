@@ -15,6 +15,9 @@ dataDir = args.directory
 
 #codes = get_codes(dataDir)
 codes = args.codes
+if codes[0] == 'all':
+    codes = get_codes(dataDir)
+
 files = os.listdir(dataDir)
 
 data = []

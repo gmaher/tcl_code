@@ -49,7 +49,8 @@ def plot_segs(images, segs, n_ex=4, dim=(4,4), figsize=(10,10)):
 
     plt.tight_layout()
 
-def plot_contours(images, contours, extents, n_ex=4, dim=(4,4), figsize=(10,10)):
+def plot_contours(images, contours, extents, colors, labels,
+    n_ex=4, dim=(4,4), figsize=(10,10)):
     plt.figure(figsize=figsize)
     plot_count = 1
     for i in range(0,n_ex):
@@ -141,16 +142,53 @@ OBP_full_thresh,ts = utility.cum_error_dist(OBP_full_errs,DX)
 #############################
 # Visualize results
 #############################
+#Figure 1 segmentations
 plt.figure()
-plot_segs(X_test, [Y_test[:,:,:,0],FCN_seg, OBP_FCN_seg,
-    OBP_full_seg], n_ex=10, dim=(10,5),figsize=(10,10))
+Nplots = 4
+fig_seg, ax_seg = plt.subplots(Nplots,5)
+for i in range(0,Nplots):
+    ax_seg[i,0].imshow(X_test[i,:,:,0],cmap='gray')
+    ax_seg[i,0].set_title('Image')
+    ax_seg[i,1].imshow(Y_test[i,:,:,0],cmap='gray')
+    ax_seg[i,1].set_title('User segmentation')
+    ax_seg[i,2].imshow(FCN_seg[i,:,:],cmap='gray')
+    ax_seg[i,2].set_title('FCN')
+    ax_seg[i,3].imshow(OBP_FCN_seg[i,:,:],cmap='gray')
+    ax_seg[i,3].set_title('OBP_FCN')
+    ax_seg[i,4].imshow(OBP_full_seg[i,:,:],cmap='gray')
+    ax_seg[i,4].set_title('OBG_FCN')
+    [a.set_axis_off() for a in ax_seg[i, :]]
+    [a.set_axis_off() for a in ax_seg[:, i]]
+plt.axis('off')
+fig_seg.tight_layout()
 plt.savefig('./plots/segs.png')
 
+#Figure 2 contours
 plt.figure()
-plot_contours(X_test, [FCN_contour, OBP_FCN_contour, OBP_full_contour], extents_test,
-    n_ex=4, dim=(4,3))
+Nplots = 4
+fig_contour, ax_contour = plt.subplots(Nplots,3)
+plot_count = 0
+for i in range(0,Nplots):
+    if (FCN_contour[i] == [] or OBP_FCN_contour[i] == [] or OBP_full_contour[i] == []):
+        continue
+    fcn_contour = FCN_contour[i][0]
+    obp_fcn_contour = OBP_FCN_contour[i][0]
+    obg_fcn_contour = OBP_full_contour[i][0]
+
+    ax_contour[plot_count,0].imshow(X_test[i,:,:,0], extent=extents_test[i],cmap='gray')
+    ax_contour[plot_count,0].scatter(fcn_contour[:,0],fcn_contour[:,1], color='green',label='FCN')
+    ax_contour[plot_count,1].imshow(X_test[i,:,:,0], extent=extents_test[i],cmap='gray')
+    ax_contour[plot_count,1].scatter(obp_fcn_contour[:,0],obp_fcn_contour[:,1], color='red',label='OBP_FCN')
+    ax_contour[plot_count,2].imshow(X_test[i,:,:,0], extent=extents_test[i],cmap='gray')
+    ax_contour[plot_count,2].scatter(obg_fcn_contour[:,0],obg_fcn_contour[:,1], color='blue',label='OBG_FCN')
+    [a.set_axis_off() for a in ax_contour[plot_count, :]]
+    [a.set_axis_off() for a in ax_contour[:, plot_count]]
+    plot_count += 1
+plt.axis('off')
+fig_contour.tight_layout()
 plt.savefig('./plots/contours.png')
 
+#Figure 3, IOU
 plt.figure()
 plt.plot(ts,FCN_thresh, color='red', label='FCN', linewidth=2)
 plt.plot(ts,OBP_FCN_thresh, color='blue', label='OBP_FCN', linewidth=2)
@@ -159,3 +197,5 @@ plt.xlabel('IOU error')
 plt.ylabel('Fraction of contours below error')
 plt.legend()
 plt.savefig('./plots/IOU.png')
+
+#Figure 4 ROC

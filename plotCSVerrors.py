@@ -45,7 +45,7 @@ def make_plot(pathtype=None):
 
 make_plot()
 make_plot('aorta')
-make_plot('LCA')
+#make_plot('LCA')
 make_plot('RCA')
 make_plot('RPA')
 make_plot('LPA')
