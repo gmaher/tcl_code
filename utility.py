@@ -221,6 +221,7 @@ def get_data(dataDir, reshape=True):
 	contours = np.load(contourString)
 	f = open(dataDir+'names.txt')
 	f = f.readlines()
+	f = [s.replace('\n','') for s in f]
 	N, Pw, Ph = images.shape
 
 	if reshape:
@@ -551,6 +552,21 @@ def threshold(x,value):
 	x[x < value] = 0
 	x[x >= value] = 1
 	return x
+
+def get_extents(meta):
+	extents = []
+	C,N,W = meta.shape
+	for i in range(0,N):
+		spacing = meta[0,i,:]
+		origin = meta[1,i,:]
+		dims = meta[2,i,:]
+
+		left = origin[0]
+		right = origin[0]+dims[0]*spacing[0]
+		bottom = origin[0]
+		top = origin[0]+dims[0]*spacing[0]
+		extents.append([left,right,bottom,top])
+	return extents
 
 def areaOverlapError(truth, edge):
 	'''

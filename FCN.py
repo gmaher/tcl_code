@@ -10,6 +10,7 @@ from keras.models import Model
 from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge, Reshape, Flatten
 from keras.optimizers import Adam
 from tqdm import tqdm
+from models.FCN import FCN
 
 import util_data
 
@@ -56,52 +57,23 @@ lr = 1e-3
 threshold = 0.3
 output_channels = 1
 dense_size = 64
+nb_epoch=10
+batch_size=32
 opt = Adam(lr=lr)
 
-x = Input(shape=(Ph,Pw,1))
-
-#main branch
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(x)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(output_channels,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-
-#mask
-m = Flatten()(x)
-m = Dense(dense_size, activation='relu')(m)
-m = Dense(Ph*Pw, activation='relu')(m)
-m = Reshape((Ph,Pw,output_channels))(m)
-
-#merge
-d = merge([d,m], mode='mul')
-
-#finetune
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(output_channels,
-	Wfilter,Wfilter,activation='sigmoid', border_mode='same')(d)
-
-FCN = Model(x,d)
-
-FCN.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-#FCN.compile(optimizer=opt, loss='hinge', metrics=['accuracy'])
 
 ###############################
 # Training
 ###############################
-FCN.fit(X_train, Y_train, batch_size=32, nb_epoch=10,
-validation_data=(X_test,Y_test))
+net = FCN(Nfilters,dense_size,lr, threshold, nb_epoch, batch_size)
+net.fit(X_train, Y_train, validation_data=(X_test,Y_test))
 
-FCN.save('./models/FCN.h5')
+net.save('./models/FCN.h5')
 
 ###############################
 # confusion matrix
 ###############################
-Y_pred = FCN.predict(X_test)
+Y_pred = net.predict(X_test)
 Y_pred_flat = np.ravel(Y_pred)
 Y_pred_flat = utility.threshold(Y_pred_flat,0.3)
 
