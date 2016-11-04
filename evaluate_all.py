@@ -14,6 +14,7 @@ from models.FCN import FCN
 
 import util_data
 import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve
 
 np.random.seed(0)
 THRESHOLD = 0.4
@@ -100,6 +101,7 @@ Ntest = X_test.shape[0]
 meta_test = meta[:,test_inds,:]
 contours_test = contours[test_inds]
 extents_test = utility.get_extents(meta_test)
+ROC = {}
 ############################
 # Load Model 1 (FCN)
 ############################
@@ -110,6 +112,7 @@ FCN_contour = utility.listSegToContours(FCN_seg, meta_test[1,:,:],
     meta_test[0,:,:], ISOVALUE)
 FCN_errs = utility.listAreaOverlapError(FCN_contour, contours_test)
 FCN_thresh,ts = utility.cum_error_dist(FCN_errs,DX)
+ROC['FCN'] = roc_curve(np.ravel(Y_test),np.ravel(FCN_seg), pos_label=1)
 
 ###########################
 # Load Model 2 (OBP_FCN)
@@ -121,6 +124,7 @@ OBP_FCN_contour = utility.listSegToContours(OBP_FCN_seg, meta_test[1,:,:],
     meta_test[0,:,:], ISOVALUE)
 OBP_FCN_errs = utility.listAreaOverlapError(OBP_FCN_contour, contours_test)
 OBP_FCN_thresh,ts = utility.cum_error_dist(OBP_FCN_errs,DX)
+ROC['OBP_FCN'] = roc_curve(np.ravel(Y_test),np.ravel(OBP_FCN_seg), pos_label=1)
 
 #############################
 # Load Model 3 (OBP_FCN_full)
@@ -132,6 +136,8 @@ OBP_full_contour = utility.listSegToContours(OBP_full_seg, meta_test[1,:,:],
     meta_test[0,:,:], ISOVALUE)
 OBP_full_errs = utility.listAreaOverlapError(OBP_full_contour, contours_test)
 OBP_full_thresh,ts = utility.cum_error_dist(OBP_full_errs,DX)
+ROC['OBG_FCN'] = roc_curve(np.ravel(Y_test), np.ravel(OBP_full_seg),pos_label=1)
+
 #############################
 # Get Level set
 #############################
@@ -199,3 +205,11 @@ plt.legend()
 plt.savefig('./plots/IOU.png')
 
 #Figure 4 ROC
+plt.figure()
+plt.plot(ROC['FCN'][0],ROC['FCN'][1], color='red', label='FCN', linewidth=2)
+plt.plot(ROC['OBP_FCN'][0],ROC['OBP_FCN'][1], color='blue', label='OBP_FCN', linewidth=2)
+plt.plot(ROC['OBG_FCN'][0],ROC['OBG_FCN'][1], color='green', label='OBG_FCN', linewidth=2)
+plt.xlabel('False positive rate')
+plt.ylabel('True positive rate')
+plt.legend()
+plt.savefig('./plots/roc.png')
