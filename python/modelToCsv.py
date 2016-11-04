@@ -1,7 +1,7 @@
 from keras.models import Model, load_model
 import numpy as np
-import utility
-import util_plot
+import utility.utility as utility
+import utility.util_plot as util_plot
 import argparse
 from tqdm import tqdm
 import pandas as pd

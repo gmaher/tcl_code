@@ -1,5 +1,5 @@
 import numpy as np
-import util_plot
+import utility.util_plot as util_plot
 
 x1 = np.random.randn(100)
 x2 = np.random.randn(100)

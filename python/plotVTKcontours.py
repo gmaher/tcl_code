@@ -1,5 +1,5 @@
 import vtk
-from utility import *
+from utility.utility import *
 import plotly as py
 import plotly.graph_objs as go
 from plotly import tools

@@ -1,5 +1,5 @@
 import numpy as np
-import utility
+import utility.utility as utility
 import argparse
 import time
 
@@ -12,7 +12,7 @@ from keras.optimizers import Adam
 from tqdm import tqdm
 from models.FCN import FCN
 
-import util_data
+import utility.util_data as util_data
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve
 

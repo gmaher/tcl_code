@@ -1,6 +1,6 @@
-import utility
+import utility.utility as utility
 import numpy as np
-import util_plot
+import utility.util_plot as util_plot
 import argparse
 from skimage import segmentation
 from keras.models import Model, load_model

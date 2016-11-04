@@ -1,15 +1,16 @@
 import numpy as np
-import utility
+import utility.utility as utility
 import argparse
 import time
 
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import confusion_matrix
 
-from keras.models import Model, load_model
+from keras.models import Model
 from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge, Reshape, Flatten
 from keras.optimizers import Adam
 from tqdm import tqdm
+from models.FCN import FCN
 
 import util_data
 
@@ -50,54 +51,29 @@ X_train, Y_train, X_test, Y_test, inds, train_inds, test_inds = \
 ##############################
 # Neural network construction
 ##############################
-Nfilters = 32
+Nfilters = 64
 Wfilter = 3
 lr = 1e-3
 threshold = 0.3
 output_channels = 1
-dense_size = 100
+dense_size = 64
+nb_epoch=10
+batch_size=32
 opt = Adam(lr=lr)
-
-x = Input(shape=(Ph,Pw,1))
-
-FCN = load_model('./models/FCN.h5')
-OBP_FCN = load_model('./models/OBP_FCN_output.h5')
-
-fcn_out = FCN(x)
-
-#compute OBG mask
-obp_out = OBP_FCN(x)
-
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(obp_out)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-d = BatchNormalization(mode=2)(d)
-d = Convolution2D(output_channels,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
-
-
-
-#merge
-d = merge([d,fcn_out], mode='mul')
-
-FCN.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 
 
 ###############################
 # Training
 ###############################
-FCN.fit(X_train, Y_train, batch_size=32, nb_epoch=10,
-validation_data=(X_test,Y_test))
+net = FCN(Nfilters,dense_size,lr, threshold, nb_epoch, batch_size)
+net.fit(X_train, Y_train, validation_data=(X_test,Y_test))
 
-FCN.save('./models/OBP_full.h5')
+net.save('./models/FCN.h5')
 
 ###############################
 # confusion matrix
 ###############################
-Y_pred = FCN.predict(X_test)
+Y_pred = net.predict(X_test)
 Y_pred_flat = np.ravel(Y_pred)
 Y_pred_flat = utility.threshold(Y_pred_flat,0.3)
 

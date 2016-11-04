@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly as py
 import plotly.graph_objs as go
-import utility
+import utility.utility as utility
 import argparse
 
 parser = argparse.ArgumentParser()

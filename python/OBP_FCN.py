@@ -1,5 +1,5 @@
 import numpy as np
-import utility
+import utility.utility as utility
 import argparse
 
 from keras.models import Model
