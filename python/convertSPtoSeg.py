@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('groupsDir')
+parser.add_argument('outputDir')
 parser.add_argument('--convert', action='store_true', default=False)
 parser.add_argument('--plot', action='store_true', default=False)
 args = parser.parse_args()

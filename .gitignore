@@ -2,6 +2,7 @@ tempdir/
 EdgeMaps/
 tempdir/
 models/
+python/data/*
 *.csv
 *.txt
 *.html

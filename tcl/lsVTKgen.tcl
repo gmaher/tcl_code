@@ -28,10 +28,10 @@ proc runGroupsToVTKonFiles {imgs paths groups edges} {
 
 	foreach I $imgs P $paths G $groups E $edges {
 		puts "$I\n $P\n $G\n"
-    #generate_truth_groups $I $P $G
-		#generate_edge_groups $I $P $G
+    generate_truth_groups $I $P $G
+		generate_edge_groups $I $P $G
 		#generate_edge_groups $I $P $G $E "edge96"
-		generate_edge_groups $I $P $G $E "edge96_LS" LSEdge
+		#generate_edge_groups $I $P $G $E "edge96_LS" LSEdge
 	}
 }
 
