@@ -460,7 +460,10 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 			contour[i,0] = (points[i,1]+0.5)*spacing[0]+origin[0]
 
 		returned_contours.append(contour)
-	return returned_contours
+	if len(returned_contours) > 0:
+		return returned_contours[0]
+	else:
+		return []
 
 def segToOBG(seg, border_width=1):
 	'''
@@ -607,7 +610,7 @@ def listAreaOverlapError(Y_pred,Y_truth):
 	    if len(contour_pred) == 0:
 	        e = 1.0
 	    else:
-	        y_contour_pred = contour_pred[0]
+	        y_contour_pred = contour_pred
 
 	        if len(y_contour_pred) <= 2:
 	            e = 1.0
