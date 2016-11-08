@@ -5,18 +5,34 @@ import argparse
 from shapely.geometry import Polygon, Point
 import os
 from tqdm import tqdm
+import configparser
 
+#############################
+#Parse input arguments
+#############################
 parser = argparse.ArgumentParser()
 parser.add_argument('groupsDir')
-parser.add_argument('outputDir')
 parser.add_argument('--convert', action='store_true', default=False)
 parser.add_argument('--plot', action='store_true', default=False)
 args = parser.parse_args()
 groupsDir = args.groupsDir
-outputDir = args.outputDir
 plot = args.plot
 convert = args.convert
 
+#############################
+#Parse config params
+#############################
+config = configparser.ConfigParser()
+config.read('options.cfg')
+dirs = {}
+dirs['train'] = config['learn_params']['train_dir']
+dirs['val'] = config['learn_params']['val_dir']
+dirs['test'] = config['learn_params']['test_dir']
+split = float(config['learn_params']['split'])
+
+################################
+# Create variables to store data
+################################
 files = os.listdir(groupsDir)
 images = []
 segmentations = []
@@ -27,6 +43,26 @@ names = open(groupsDir+'../names.txt','w')
 
 eccentricity_limit = 0.2
 
+#################################
+# Make model train/val/test split
+#################################
+models = [f.split('.')[0] for f in files if 'OSMSC' in f]
+models = list(set(models))
+inds = np.random.permutation(len(models))
+cut = int(round(split*len(models)))
+
+split_models = {}
+split_models['test'] = [models[i] for i in inds[:cut]]
+split_models['val'] = [models[i] for i in inds[cut:2*cut]]
+split_models['train'] = [models[i] for i in inds[2*cut:]]
+
+split_inds = {}
+split_inds['train'] = []
+split_inds['val'] = []
+split_inds['test'] = []
+
+count = 0
+files = [f for f in files if 'truth.ls' in f]
 if convert:
     for f in tqdm(files):
         if "truth.ls" in f:
@@ -62,23 +98,46 @@ if convert:
             meta_data[1].append(origin)
             meta_data[2].append(dims)
             names.write(f+'\n')
+            #convert file to just file name
+            file_model = f.split('.')[0]
+            for k in split_models.keys():
+                if any(file_model in s for s in split_models[k]):
+                    split_inds[k].append(count)
+            count+=1
+
     segmentations = np.asarray(segmentations)
     images = np.asarray(images)
     meta_data = np.asarray(meta_data)
 
-    np.save(outputDir+'segmentations', segmentations)
-    np.save(outputDir+'images', images)
-    np.save(outputDir+'metadata', meta_data)
-    np.save(outputDir+'contours', contours)
-    np.save(outputDir+'ls_image', contours_ls)
+    for k in dirs.keys():
+        np.save(dirs[k]+'segmentations', segmentations[split_inds[k]])
+        np.save(dirs[k]+'images', images[split_inds[k]])
+        np.save(dirs[k]+'metadata', meta_data[:,split_inds[k],:])
+        np.save(dirs[k]+'contours', [contours[i] for i in split_inds[k]])
+        np.save(dirs[k]+'ls_image', [contours_ls[i] for i in split_inds[k]])
     names.close()
 
-else:
-    images = np.load(outputDir+'images.npy')
-    segmentations = np.load(outputDir+'segmentations.npy')
-    meta_data = np.load(outputDir+'metadata.npy')
-    contours = np.load(outputDir+'contours.npy')
-    contours_ls = np.load(outputDir+'ls_image.npy')
+    f = open('./data/train.txt','w')
+    for m in split_models['train']:
+        f.write(m+'\n')
+    f.close()
+
+    f = open('./data/val.txt','w')
+    for m in split_models['val']:
+        f.write(m+'\n')
+    f.close()
+
+    f = open('./data/test.txt','w')
+    for m in split_models['test']:
+        f.write(m+'\n')
+    f.close()
+#
+# else:
+#     images = np.load(outputDir+'images.npy')
+#     segmentations = np.load(outputDir+'segmentations.npy')
+#     meta_data = np.load(outputDir+'metadata.npy')
+#     contours = np.load(outputDir+'contours.npy')
+#     contours_ls = np.load(outputDir+'ls_image.npy')
 
 if plot:
     for i in range(0,1):

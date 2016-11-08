@@ -3,7 +3,9 @@ EdgeMaps/
 tempdir/
 models/
 python/data/*
+python/plots/*
 *.csv
 *.txt
 *.html
 *.h5
+*.png

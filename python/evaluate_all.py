@@ -16,6 +16,7 @@ import utility.util_data as util_data
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from sklearn.metrics import roc_curve
+import configparser
 
 np.random.seed(0)
 THRESHOLD = 0.4
@@ -59,11 +60,10 @@ def contour_plot(x_test, C, extent, labels, colors, filename):
 ##########################
 # Parse args
 ##########################
-parser = argparse.ArgumentParser()
-parser.add_argument('dataDir')
-args = parser.parse_args()
+config = configparser.ConfigParser()
+config.read('options.cfg')
 
-dataDir = args.dataDir
+dataDir = config['learn_params']['test_dir']
 
 ###########################
 # Load data and preprocess
@@ -75,18 +75,13 @@ N, Pw, Ph, C = vasc2d.images_tf.shape
 print "Images stats\n N={}, Width={}, Height={}".format(
     N,Pw,Ph)
 
-images_norm = vasc2d.images_norm
-segs = vasc2d.segs_tf
-
-#train test split
-X_train, Y_train, X_test, Y_test, inds, train_inds, test_inds = \
-    utility.train_test_split(images_norm, segs,0.75)
-
+X_test = vasc2d.images_norm
+Y_test = vasc2d.segs_tf
 Ntest = X_test.shape[0]
 
-meta_test = vasc2d.meta[:,test_inds,:]
-contours_test = vasc2d.contours[test_inds]
-ls_test = vasc2d.contours_ls[test_inds]
+meta_test = vasc2d.meta
+contours_test = vasc2d.contours
+
 
 extents_test = utility.get_extents(meta_test)
 ROC = {}
@@ -126,7 +121,12 @@ OBP_full_errs = utility.listAreaOverlapError(OBP_full_contour, contours_test)
 OBP_full_thresh,ts = utility.cum_error_dist(OBP_full_errs,DX)
 ROC['OBG_FCN'] = roc_curve(np.ravel(Y_test), np.ravel(OBP_full_seg),pos_label=1)
 
-
+#############################
+# Level set
+#############################
+ls_test = vasc2d.contours_ls
+ls_errs = utility.listAreaOverlapError(ls_test, contours_test)
+ls_thresh,ts = utility.cum_error_dist(ls_errs,DX)
 #############################
 # Visualize results
 #############################
@@ -160,9 +160,10 @@ contour_plot(X_test[0],contours_to_plot,extents_test[0],labels,colors,'./plots/c
 
 #Figure 3, IOU
 plt.figure()
-plt.plot(ts,FCN_thresh, color='red', label='FCN', linewidth=2)
-plt.plot(ts,OBP_FCN_thresh, color='blue', label='OBP_FCN', linewidth=2)
-plt.plot(ts,OBP_full_thresh, color='green', label='OBG_FCN', linewidth=2)
+plt.plot(ts,ls_thresh, color='red', label='level set', linewidth=2)
+plt.plot(ts,FCN_thresh, color='blue', label='FCN', linewidth=2)
+plt.plot(ts,OBP_FCN_thresh, color='yellow', label='OBP_FCN', linewidth=2)
+plt.plot(ts,OBP_full_thresh, color='magenta', label='OBG_FCN', linewidth=2)
 plt.xlabel('IOU error')
 plt.ylabel('Fraction of contours below error')
 plt.legend(loc='lower right')

@@ -28,8 +28,13 @@ proc runGroupsToVTKonFiles {imgs paths groups edges} {
 
 	foreach I $imgs P $paths G $groups E $edges {
 		puts "$I\n $P\n $G\n"
-    generate_truth_groups $I $P $G
-		generate_edge_groups $I $P $G
+		if [catch {
+				generate_truth_groups $I $P $G
+				generate_edge_groups $I $P $G}] {
+					close_files
+					continue
+				}
+
 		#generate_edge_groups $I $P $G $E "edge96"
 		#generate_edge_groups $I $P $G $E "edge96_LS" LSEdge
 	}
@@ -310,4 +315,25 @@ proc readFromFile {fp} {
 	set out [split $data "\n"]
 
 	return $out
+}
+
+proc checkGroupsInPathPoints {grp} {
+	global gPathPoints
+	set groupmembers [group_get $grp]
+	foreach guy $groupmembers {
+		puts $guy
+		if [catch {set pathId [repos_getLabel -obj $guy -key paste_pathId]}] {
+				set pathId [repos_getLabel -obj $guy -key pathId]
+			if {[info exists gPathPoints($pathId,numSplinePts)]}{
+				puts "exists"
+			}
+			else {
+				return 0
+			}
+		}
+		else {
+			return 0
+		}
+	}
+	return 1
 }
