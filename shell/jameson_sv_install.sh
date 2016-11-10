@@ -14,6 +14,20 @@ echo changing directory to $1
 
 cd $1
 
+#################################
+# Get some external dependencies
+#################################
+sudo apt-get install cmake
+sudo apt-get install cmake-curses-gui
+sudo apt-get install cmake-gui
+sudo apt-get install gcc-multilib build-essential g++ gfortran
+sudo apt-get install libmpich2-dev
+sudo apt-get install dcmtk
+sudo apt-get install libgdcm-tools
+sudo apt-get install libglu1-mesa-dev libxt-dev libgl1-mesa-dev
+sudo apt-get install glib2.0-dev
+conda install -c https://conda.anaconda.org/simpleitk SimpleITK
+
 # #################################################
 # # TCL/TK 8.6.6
 # #################################################
@@ -78,7 +92,7 @@ mv tcl-core_8_6_5/ tcl8_6
 cd tcl8_6/unix
 ./configure
 make -j4
-#sudo make install
+sudo make install
 cd ../..
 
 #TK
@@ -89,7 +103,7 @@ mv tk-core_8_6_5 tk8_6
 cd tk8_6/unix
 ./configure
  make -j4
- #sudo make install
+ sudo make install
  cd ../..
 
 #########################cd /medi
@@ -134,19 +148,7 @@ SV_CMAKE_ARGS+="-DTK_INCLUDE_PATH=${TK_INCLUDE} -DTK_WISH=${TK_WISH}"
 #echo ITK_CMAKE_ARGS ${ITK_CMAKE_ARGS}
 #echo SV_CMAKE_ARGS ${SV_CMAKE_ARGS}
 
-#################################
-# Get some external dependencies
-#################################
-sudo apt-get install cmake
-sudo apt-get install cmake-curses-gui
-sudo apt-get install cmake-gui
-sudo apt-get install gcc-multilib build-essential g++ gfortran
-sudo apt-get install libmpich2-dev
-sudo apt-get install dcmtk
-sudo apt-get install libgdcm-tools
-sudo apt-get install libglu1-mesa-dev libxt-dev libgl1-mesa-dev
-sudo apt-get install glib2.0-dev
-conda install -c https://conda.anaconda.org/simpleitk SimpleITK
+
 
 #################################
 #get VTK
