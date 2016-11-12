@@ -62,7 +62,7 @@ split_inds['val'] = []
 split_inds['test'] = []
 
 count = 0
-files = [f for f in files if 'truth.ls' in f]
+files = [f for f in files if 'truth.ls' in f and (not "OSMSC0159" in f)]
 if convert:
     for f in tqdm(files):
         if "truth.ls" in f:
