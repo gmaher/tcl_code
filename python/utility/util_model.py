@@ -46,7 +46,7 @@ def FCN(input_shape=(64,64,1), Nfilters=32, Wfilter=3,num_conv_1=3, num_conv_2=3
     FCN = Model(x,d)
 
     if obg:
-        d_out = Reshape(input_shape[0]*input_shape[1],output_channels)
+        d_out = Reshape((input_shape[0]*input_shape[1],output_channels))(d)
         FCN_categorical = Model(x,d_out)
         return FCN,FCN_categorical
     else:
@@ -71,7 +71,7 @@ def OBG_FCN(FCN,OBP_FCN,input_shape=(64,64,1), Nfilters=32, Wfilter=3, output_ch
 
     #merge
     d = merge([d,fcn_out], mode='mul')
-    OBG_FCN = model(x,d)
+    OBG_FCN = Model(x,d)
     return OBG_FCN
 
 def hed_keras(input_shape=(64,64,1)):
@@ -126,4 +126,25 @@ def hed_keras(input_shape=(64,64,1)):
     out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='new-score-weighting')(out)
     model = Model(inp,[out,out1,out2,out3,out4,out5])
 
+    return model
+
+def hed_dense(hed,input_shape=(64,64,1),dense_size=4096):
+    x = Input(shape=input_shape)
+
+    out_list = hed(x)
+    # o_list = []
+    # for i in range(0,5):
+    #     o = Reshape((input_shape[0]*input_shape[1],))(out_list[i+1])
+    #     o = Dense(dense_size, activation='relu')(o)
+    #     o = Dense(input_shape[0]*input_shape[1], activation='relu')(o)
+    #     o = Reshape(input_shape)(o)
+    #     o_list.append(o)
+
+    out = merge(out_list,mode='concat', concat_axis=3)
+    o = Flatten()(out)
+    o = Dense(dense_size, activation='relu')(o)
+    o = Dense(input_shape[0]*input_shape[1], activation='relu')(o)
+    o = Reshape(input_shape)(o)
+    out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same')(o)
+    model = Model(x, out)
     return model

@@ -75,7 +75,7 @@ transfer_caffe_weights(m,net)
 transfer_caffe_weights(m_vasc,net)
 
 m.save('./models/hed_bsds_keras.h5')
-m.save('./models/hed_bsds_vasc.h5')
+m_vasc.save('./models/hed_bsds_vasc.h5')
 ######################################
 # Generate input and compare networks
 ######################################

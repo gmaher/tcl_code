@@ -4,6 +4,7 @@ tempdir/
 models/
 python/data/*
 python/plots/*
+python/predictions/*
 *.csv
 *.txt
 *.html
