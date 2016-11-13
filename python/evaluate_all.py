@@ -10,7 +10,6 @@ from keras.models import Model, load_model
 from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge, Reshape, Flatten
 from keras.optimizers import Adam
 from tqdm import tqdm
-from models.FCN import FCN
 
 import utility.util_data as util_data
 import matplotlib.pyplot as plt
@@ -60,8 +59,7 @@ def contour_plot(x_test, C, extent, labels, colors, filename):
 ##########################
 # Parse args
 ##########################
-config = configparser.ConfigParser()
-config.read('options.cfg')
+config = utility.parse_config('options.cfg')
 
 dataDir = config['learn_params']['test_dir']
 

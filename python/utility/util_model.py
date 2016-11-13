@@ -4,6 +4,76 @@ from keras.layers import Reshape, Flatten, UpSampling2D
 from keras.layers import MaxPooling2D, Activation
 from keras.optimizers import Adam
 
+def FCN(input_shape=(64,64,1), Nfilters=32, Wfilter=3,num_conv_1=3, num_conv_2=3,output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False):
+    '''
+    Makes an FCN neural network
+    '''
+    x = Input(shape=input_shape)
+
+    #main branch
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(x)
+    d = BatchNormalization(mode=2)(d)
+
+    for i in range(0,num_conv_1):
+        d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+        d = BatchNormalization(mode=2)(d)
+
+    d = Convolution2D(1,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+
+    #mask layer
+    if mask:
+    	m = Flatten()(x)
+
+    	for i in range(0,dense_layers):
+    		m = Dense(dense_size, activation='relu')(m)
+
+    	m = Dense(input_shape[0]*input_shape[1], activation='relu')(m)
+
+    	m = Reshape(input_shape)(m)
+
+    	#merge
+    	d = merge([d,m], mode='mul')
+
+    #finetune
+    for i in range(0,num_conv_2):
+        d = BatchNormalization(mode=2)(d)
+        d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+
+    d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(output_channels,
+    Wfilter,Wfilter,activation='sigmoid', border_mode='same')(d)
+
+    FCN = Model(x,d)
+
+    if obg:
+        d_out = Reshape(input_shape[0]*input_shape[1],output_channels)
+        FCN_categorical = Model(x,d_out)
+        return FCN,FCN_categorical
+    else:
+        return FCN
+
+def OBG_FCN(FCN,OBP_FCN,input_shape=(64,64,1), Nfilters=32, Wfilter=3, output_channels=1):
+    x = Input(shape=input_shape)
+
+    fcn_out = FCN(x)
+
+    obp_out = OBP_FCN(x)
+
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(obp_out)
+    d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+    d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+    d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+    d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(output_channels,Wfilter,Wfilter,activation='relu', border_mode='same')(d)
+
+    #merge
+    d = merge([d,fcn_out], mode='mul')
+    OBG_FCN = model(x,d)
+    return OBG_FCN
+
 def hed_keras(input_shape=(64,64,1)):
     inp = Input(shape=input_shape)
 

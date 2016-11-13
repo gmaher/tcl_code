@@ -16,6 +16,15 @@ from sklearn.metrics import confusion_matrix
 import vtk
 from keras.models import Model
 from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge, Reshape, Flatten
+import configparser
+from keras.optimizers import Adam
+import util_data
+
+def parse_config(fn):
+	config = configparser.ConfigParser()
+	config.read(fn)
+
+	return config
 
 def query_file(folder, query_list):
 	'''
@@ -682,6 +691,33 @@ def makeFCN(input_shape=(64,64,1), Nfilters=32, Wfilter=3,
 
 	FCN = Model(x,d)
 	return FCN
+
+def train(model, lr, batch_size, nb_epoch, vascdata, vascdata_val, obg=False, obg_w=1):
+	"""Trains a model on 2d vascular data (optionally with boundary data)
+	"""
+	opt = Adam(lr=lr)
+	N,Pw,Ph,C = vascdata.images_norm.shape
+
+	X_train = vascdata.images_norm
+	X_test = vascdata_val.images_norm
+
+	if not obg:
+		Y_train = vascdata.segs_tf
+		Y_test = vascdata_val.segs_tf
+		model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+		model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+		 validation_data=(X_test,Y_test))
+	else:
+		Y_train = vascdata.obg
+		Y_test = vascdata_val.obg
+
+		Y_train = Y_train.reshape((Y_train.shape[0],Pw*Ph,3))
+		Y_test = Y_test.reshape((Y_test.shape[0],Pw*Ph,3))
+		model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+		model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+		 validation_data=(X_test,Y_test))
+
+	return model
 #######################################################
 # Plotly stuff
 #######################################################

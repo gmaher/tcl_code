@@ -1,46 +1,23 @@
 import numpy as np
 import utility.utility as utility
-import argparse
 
 from keras.models import Model
 from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge, Reshape, Flatten
 from keras.optimizers import Adam
 from tqdm import tqdm
 
-import util_data
-import util_plot
-
+from utility import util_data
+from utility import util_plot
+from utility import util_model
 np.random.seed(0)
 
-###########################
-# Parse arguments
-###########################
-parser = argparse.ArgumentParser()
-parser.add_argument('dataDir')
-args = parser.parse_args()
-
-dataDir = args.dataDir
-
 ##########################
-# Load data
-#########################
-vascdata = util_data.VascData2D(dataDir)
+# Parse args
+##########################
+config = utility.parse_config('options.cfg')
+dataDir = config['learn_params']['train_dir']
+valDir = config['learn_params']['val_dir']
 
-#creates OBG data with pixel boundary 1
-vascdata.createOBG()
-
-N,Pw,Ph,C = vascdata.images_norm.shape
-
-#train test split
-X_train, Y_train, X_test, Y_test, inds, train_inds, test_inds = \
-    utility.train_test_split(vascdata.images_norm, vascdata.obg,0.75)
-
-Y_train = Y_train.reshape((Y_train.shape[0],Pw*Ph,3))
-Y_test = Y_test.reshape((Y_test.shape[0],Pw*Ph,3))
-
-print 'X_train.shape={},Y_train.shape={},X_test.shape={},Y_test.shape={}'.format(
-    X_train.shape,Y_train.shape,X_test.shape,Y_test.shape
-)
 
 ##############################
 # Neural network construction
@@ -52,6 +29,9 @@ threshold = 0.3
 output_channels = 3
 dense_size = 100
 opt = Adam(lr=lr)
+Pw = Ph = 64
+nb_epoch = 10
+batch_size = 32
 
 x = Input(shape=(Ph,Pw,1))
 
@@ -88,13 +68,11 @@ OBP_FCN.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accura
 OBP_FCN_output = Model(x,d)
 OBP_FCN_output.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 
-#OBP_FCN.compile(optimizer=opt, loss='hinge', metrics=['accuracy'])
-
 ###############################
 # Training
 ###############################
-OBP_FCN.fit(X_train, Y_train, batch_size=32, nb_epoch=30,
-validation_data=(X_test,Y_test))
+OBP_FCN,_ = utility.train(OBP_FCN, lr, batch_size, nb_epoch, dataDir, valDir, True,1)
+OBP_FCN, Data = utility.train(OBP_FCN, lr/10, batch_size, nb_epoch, dataDir, valDir, True,1)
 
 OBP_FCN.save('./models/OBP_FCN.h5')
 OBP_FCN_output.save('./models/OBP_FCN_output.h5')
@@ -102,6 +80,8 @@ OBP_FCN_output.save('./models/OBP_FCN_output.h5')
 ###############################
 # confusion matrix
 ###############################
+X_test = Data[2]
+Y_test = Data[3]
 Y_pred = OBP_FCN.predict(X_test)
 Y_pred = np.argmax(Y_pred,axis=2)
 Y_pred_flat = np.ravel(Y_pred)
@@ -129,5 +109,5 @@ for i in range(0,1):
     utility.heatmap(img, fn='./plots/segimg{}.html'.format(i))
     utility.heatmap(seg_pred, fn='./plots/segpred{}.html'.format(i))
     utility.heatmap(seg_true, fn='./plots/segtrue{}.html'.format(i))
-    utility.heatmap(boundary_pred, fn='./plots/segpred{}.html'.format(i))
-    utility.heatmap(boundary_true, fn='./plots/segtrue{}.html'.format(i))
+    utility.heatmap(boundary_pred, fn='./plots/obgpred{}.html'.format(i))
+    utility.heatmap(boundary_true, fn='./plots/obgtrue{}.html'.format(i))

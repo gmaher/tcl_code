@@ -82,17 +82,17 @@ d = Convolution2D(output_channels,Wfilter,Wfilter,activation='relu', border_mode
 
 #merge
 d = merge([d,fcn_out], mode='mul')
-
-FCN.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+OBG_FCN = model(x,d)
+OBG_FCN.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 
 
 ###############################
 # Training
 ###############################
-FCN.fit(X_train, Y_train, batch_size=32, nb_epoch=10,
+OBG_FCN.fit(X_train, Y_train, batch_size=32, nb_epoch=10,
 validation_data=(X_test,Y_test))
 
-FCN.save('./models/OBP_full.h5')
+OBG_FCN.save('./models/OBP_full.h5')
 
 ###############################
 # confusion matrix
