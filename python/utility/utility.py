@@ -648,32 +648,19 @@ def confusionMatrix(ytrue,ypred, as_fraction=True):
 		H = H/(totals+1e-6)
 		return np.around(H,2)
 
-def train(model, lr, batch_size, nb_epoch, vascdata, vascdata_val, obg=False, obg_w=1):
+def train(net, lrates, batch_size, nb_epoch, x_train, y_train, x_val,y_val):
 	"""Trains a model on 2d vascular data (optionally with boundary data)
 	"""
-	opt = Adam(lr=lr)
-	N,Pw,Ph,C = vascdata.images_norm.shape
-
-	X_train = vascdata.images_norm
-	X_test = vascdata_val.images_norm
-
-	if not obg:
-		Y_train = vascdata.segs_tf
-		Y_test = vascdata_val.segs_tf
-		model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-		model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
-		 validation_data=(X_test,Y_test))
-	else:
-		Y_train = vascdata.obg
-		Y_test = vascdata_val.obg
-
-		Y_train = Y_train.reshape((Y_train.shape[0],Pw*Ph,3))
-		Y_test = Y_test.reshape((Y_test.shape[0],Pw*Ph,3))
-		model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
-		model.fit(X_train, Y_train, batch_size=batch_size, nb_epoch=nb_epoch,
-		 validation_data=(X_test,Y_test))
-
-	return model
+	train_loss = []
+	val_loss = []
+	for lr in lrates:
+		opt = Adam(lr=lr)
+		net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+		history = net.fit(x_train, y_train,batch_size=batch_size, nb_epoch=nb_epoch,
+		validation_data=(x_val,y_val))
+		train_loss = train_loss + history.history['loss']
+		val_loss = val_loss + history.history['val_loss']
+	return net, train_loss, val_loss
 #######################################################
 # Plotly stuff
 #######################################################

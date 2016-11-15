@@ -30,7 +30,8 @@ proc runGroupsToVTKonFiles {imgs paths groups edges} {
 		puts "$I\n $P\n $G\n"
 		if [catch {
 				generate_truth_groups $I $P $G
-				generate_edge_groups $I $P $G}] {
+				generate_edge_groups $I $P $G
+				generate_edge_groups $I $P $G $E "edge96"}] {
 					close_files
 					continue
 				}

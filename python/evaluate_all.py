@@ -34,7 +34,7 @@ def get_outputs(seg):
     roc = roc_curve(np.ravel(Y_test),np.ravel(seg), pos_label=1)
     return (contour,errs,thresh,roc)
 
-def contour_plot(x_test, C, extent, labels, colors, filename):
+def contour_plot(X_test, Clist, extent, labels, colors, start_index, Nplots, filename,size=(20,20)):
     '''
     function to plot contours on top of images
 
@@ -48,28 +48,47 @@ def contour_plot(x_test, C, extent, labels, colors, filename):
     '''
     N = len(labels)
     plt.figure()
-    fig_contour, ax_contour = plt.subplots(1,N,figsize=(20,8))
-    plot_count = 0
+    fig_contour, ax_contour = plt.subplots(Nplots,N,figsize=size)
     handles = []
-    for j in range(0,len(C)):
-        contour = C[j]
-        label = labels[j]
-        color = colors[j]
-        ax_contour[j].imshow(x_test[:,:,0], extent=extent,cmap='gray')
-        if contour == []:
-            print "failed contour"
-            h, = ax_contour[j].plot([0],[0], color=color,label=label,linewidth=4)
-        else:
-            h, = ax_contour[j].plot(contour[:,0],contour[:,1], color=color,label=label,linewidth=4)
-        handles.append(h)
+    for i in range(Nplots):
+        x_test = X_test[start_index+i]
+        for j in range(0,len(Clist)):
+            contour = Clist[j][start_index+i]
+            label = labels[j]
+            color = colors[j]
+            ax_contour[i,j].imshow(x_test[:,:,0], extent=extent[start_index+i],cmap='gray')
+            if contour == []:
+                print "failed contour"
+                h, = ax_contour[i,j].plot([0],[0], color=color,label=label,linewidth=4)
+            else:
+                h, = ax_contour[i,j].plot(contour[:,0],contour[:,1], color=color,label=label,linewidth=4)
+            handles.append(h)
 
-    [a.set_axis_off() for a in ax_contour]
+            [a.set_axis_off() for a in ax_contour[i, :]]
+            [a.set_axis_off() for a in ax_contour[:, j]]
 
     plt.legend(handles=handles,
         labels=labels, loc='lower right', bbox_to_anchor=(1.0,1.0))
     plt.axis('off')
     fig_contour.tight_layout()
     plt.savefig(filename)
+
+def image_grid_plot(imlist, labels, Nplots, fn, size=(20,20)):
+    plt.figure()
+    fig_seg, ax_seg = plt.subplots(Nplots,len(imlist),figsize=size)
+    for i in range(0,Nplots):
+        for j in range(len(imlist)):
+            x = imlist[j]
+            if len(x.shape) == 4:
+                ax_seg[i,j].imshow(x[i,:,:,0],cmap='gray')
+            else:
+                ax_seg[i,j].imshow(x[i,:,:],cmap='gray')
+            ax_seg[i,j].set_title(labels[j],fontsize=100)
+        [a.set_axis_off() for a in ax_seg[i, :]]
+        [a.set_axis_off() for a in ax_seg[:, j]]
+    plt.axis('off')
+    fig_seg.tight_layout()
+    plt.savefig(fn)
 ##########################
 # Parse args
 ##########################
@@ -147,37 +166,28 @@ ls_thresh,ts = utility.cum_error_dist(ls_errs,DX)
 #############################
 # Visualize results
 #############################
+#Figure 0 OBP plot
+vasc2d.createOBG(border_width=1)
+image_grid_plot([X_test,vasc2d.obg[:,:,:,1],vasc2d.obg[:,:,:,2],
+OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
+['image','user segmentation','boundary','OBP_FCN segmentation','OBG_FCN boundary'],
+10,'./plots/OBP.png',(80,80))
+
 #Figure 1 segmentations
-plt.figure()
-Nplots = 4
-fig_seg, ax_seg = plt.subplots(Nplots,7,figsize=(35,25))
-for i in range(0,Nplots):
-    ax_seg[i,0].imshow(X_test[i,:,:,0],cmap='gray')
-    ax_seg[i,0].set_title('Image')
-    ax_seg[i,1].imshow(Y_test[i,:,:,0],cmap='gray')
-    ax_seg[i,1].set_title('User segmentation')
-    ax_seg[i,2].imshow(FCN_seg[i,:,:],cmap='gray')
-    ax_seg[i,2].set_title('FCN')
-    ax_seg[i,3].imshow(OBP_FCN_seg[i,:,:],cmap='gray')
-    ax_seg[i,3].set_title('OBP_FCN')
-    ax_seg[i,4].imshow(OBP_full_seg[i,:,:],cmap='gray')
-    ax_seg[i,4].set_title('OBG_FCN')
-    ax_seg[i,5].imshow(HED_seg[i,:,:],cmap='gray')
-    ax_seg[i,5].set_title('HED')
-    ax_seg[i,6].imshow(HED_dense_seg[i,:,:],cmap='gray')
-    ax_seg[i,6].set_title('HED_dense')
-    [a.set_axis_off() for a in ax_seg[i, :]]
-    [a.set_axis_off() for a in ax_seg[:, i]]
-plt.axis('off')
-fig_seg.tight_layout()
-plt.savefig('./plots/segs.png')
+image_grid_plot([X_test,Y_test,FCN_seg,OBP_FCN_seg,OBP_full_seg,HED_seg,HED_dense_seg],
+['image','user segmentation','FCN','OBP_FCN','OBG_FCN','HED','HED_dense'],
+10,'./plots/segs.png',(80,80))
 
 #Figure 2 contours
-contours_to_plot = [contours_test[0], ls_test[0], FCN_contour[0],
-OBP_FCN_contour[0], OBP_full_contour[0], HED_contour[0], HED_dense_contour[0]]
+contours_to_plot = [contours_test, ls_test, FCN_contour,
+OBP_FCN_contour, OBP_full_contour, HED_contour, HED_dense_contour]
 labels = ['user','level set','FCN','OBP_FCN','OBG_FCN','HED','HED_dense']
 colors = ['green','red','blue','yellow','magenta','teal','orange']
-contour_plot(X_test[0],contours_to_plot,extents_test[0],labels,colors,'./plots/contours.png')
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,0,5,'./plots/contours1.png',(20,20))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,100,5,'./plots/contours2.png',(20,20))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,1000,5,'./plots/contours3.png',(20,20))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,1500,5,'./plots/contours4.png',(20,20))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,1700,5,'./plots/contours4.png',(20,20))
 
 #Figure 3, IOU
 plt.figure()

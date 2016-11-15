@@ -39,6 +39,7 @@ segmentations = []
 meta_data = [[],[],[]]
 contours = []
 contours_ls = []
+contours_edge = []
 names = open(groupsDir+'../names.txt','w')
 
 eccentricity_limit = 0.2
@@ -69,15 +70,18 @@ if convert:
             mag = f.replace('truth.ls.vtp','truth.mag.vts')
             ls = f
             ls_image = f.replace('truth','image')
+            ls_edge = f.replace('truth','edge96')
 
             contour = utility.VTKPDReadAndReorder(groupsDir+ls)
             contour_image = utility.VTKPDReadAndReorder(groupsDir+ls_image)
+            contour_edge = utility.VTKPDReadAndReorder(groupsDir+ls_edge)
             if utility.eccentricity(contour) < eccentricity_limit:
                 continue
 
             #convert contours to 2d
             contour = contour[:,:2]
             contour_image = contour_image[:,:2]
+            contour_edge = contour_edge[:,:2]
             poly = Polygon(contour)
 
             mag_sp = utility.readVTKSP(groupsDir+mag)
@@ -93,6 +97,7 @@ if convert:
             images.append(mag_np)
             contours.append(contour)
             contours_ls.append(contour_image)
+            contours_edge.append(contour_edge)
 
             meta_data[0].append(spacing)
             meta_data[1].append(origin)
@@ -108,14 +113,20 @@ if convert:
     segmentations = np.asarray(segmentations)
     images = np.asarray(images)
     meta_data = np.asarray(meta_data)
+    names.close()
 
+    f = open('./groupsDir/../names.txt')
+    s = f.readlines()
     for k in dirs.keys():
+        group_names = open(dir[k]+'names.txt','w')
+        group_names.writelines(s[split_inds[k]])
+        group_names.close()
         np.save(dirs[k]+'segmentations', segmentations[split_inds[k]])
         np.save(dirs[k]+'images', images[split_inds[k]])
         np.save(dirs[k]+'metadata', meta_data[:,split_inds[k],:])
         np.save(dirs[k]+'contours', [contours[i] for i in split_inds[k]])
         np.save(dirs[k]+'ls_image', [contours_ls[i] for i in split_inds[k]])
-    names.close()
+        np.save(dirs[k]+'ls_edge', [contours_edge[i] for i in split_inds[k]])
 
     f = open('./data/train.txt','w')
     for m in split_models['train']:
