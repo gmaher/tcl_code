@@ -16,7 +16,8 @@ class VascData2D:
         self.metaString = dataDir + 'metadata.npy'
         self.contourString = dataDir + 'contours.npy'
         self.ls_string = dataDir + 'ls_image.npy'
-
+        self.ls_edge = dataDir + 'ls_edge.npy'
+        
         print 'loading data'
         self.images = np.load(self.imString)
         self.images = self.images.astype(float)
@@ -24,7 +25,8 @@ class VascData2D:
         self.meta = np.load(self.metaString)
         self.contours = np.load(self.contourString)
         self.contours_ls = np.load(self.ls_string)
-        
+        self.contours_edge = np.load(self.ls_edge)
+
         self.data_dims = self.images.shape
 
         #Keras/Tf require channel dimension so need to add this

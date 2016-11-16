@@ -47,12 +47,12 @@ threshold = 0.3
 output_channels = 1
 dense_size = 64
 dense_layers = 1
-nb_epoch=2
+nb_epoch=20
 batch_size=32
 Pw=Ph=64
 opt = Adam(lr=lr)
-#lrates = [lr,lr/10,lr/100]
-lrates = [lr]
+lrates = [lr/10,lr,lr/10,lr/100]
+#lrates = [lr]
 ###############################
 # Training
 ###############################
@@ -110,8 +110,8 @@ prediction = net.predict(vasc_test.images_norm)
 np.save('./predictions/{}'.format(model_to_train), prediction)
 
 plt.figure()
-plt.plot(range(0,len(train_loss),train_loss, color='red', label='train loss', linewidth=2)
-plt.plot(range(0,len(val_loss),val_loss, color='green', label='validation loss', linewidth=2)
+plt.plot(range(0,len(train_loss)),train_loss, color='red', label='train loss', linewidth=2)
+plt.plot(range(0,len(val_loss)),val_loss, color='green', label='validation loss', linewidth=2)
 plt.xlabel('epoch')
 plt.legend(loc='upper right')
 plt.savefig('./plots/{}_loss.png'.format(model_to_train))

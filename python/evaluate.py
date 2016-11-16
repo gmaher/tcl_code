@@ -15,7 +15,7 @@ import utility.util_data as util_data
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.pylab as pylab
-
+import os
 from sklearn.metrics import roc_curve
 import configparser
 
@@ -23,6 +23,26 @@ np.random.seed(0)
 THRESHOLD = 0.4
 ISOVALUE = 0.5
 DX = 0.01
+ts = np.arange(0,1+DX,DX)
+#########################################
+# Parse arguments
+#########################################
+parser = argparse.ArgumentParser()
+parser.add_argument('--pred_dir',default='./predictions/')
+parser.add_argument('-p','--paths',nargs='+',default=['all'])
+args = parser.parse_args()
+
+pred_dir = args.pred_dir
+path_types = args.paths
+
+#make folder name for plots and make directory
+plot_dir = "./plots/{}/".format("_".join(path_types))
+if not os.path.exists(os.path.abspath(plot_dir)):
+    os.mkdir(os.path.abspath(plot_dir))
+
+config = utility.parse_config('options.cfg')
+
+dataDir = config['learn_params']['test_dir']
 #########################################
 #function definitions
 #########################################
@@ -33,6 +53,35 @@ def get_outputs(seg):
     thresh,ts = utility.cum_error_dist(errs,DX)
     roc = roc_curve(np.ravel(Y_test),np.ravel(seg), pos_label=1)
     return (contour,errs,thresh,roc)
+
+def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape):
+    out = np.load(pred_string)
+    if len(out.shape) == 5:
+        out = out[0]
+        out = out[inds].reshape(shape)
+    elif out.shape[3] == 3:
+        out = out[inds,:,:,1].reshape(shape)
+    else:
+        out = out[inds].reshape(shape)
+
+    contour,errs,thresh,roc = get_outputs(out)
+
+    pred_dict['seg'][pred_code] = out
+    pred_dict['contour'][pred_code] = contour
+    pred_dict['error'][pred_code] = errs
+    pred_dict['thresh'][pred_code] = thresh
+    pred_dict['ROC'][pred_code] = roc
+    pred_dict['color'][pred_code] = pred_color
+
+def add_contour_to_dict(pred_dict,pred_code,pred_color,contours,contours_test,inds,DX):
+    ls_test = [contours[i] for i in inds]
+    errs = utility.listAreaOverlapError(ls_test, contours_test)
+    thresh,ts = utility.cum_error_dist(errs,DX)
+
+    pred_dict['thresh'][pred_code] = thresh
+    pred_dict['error'][pred_code] = errs
+    pred_dict['contour'][pred_code] = ls_test
+    pred_dict['color'][pred_code] = pred_color
 
 def contour_plot(X_test, Clist, extent, labels, colors, start_index, Nplots, filename,size=(20,20)):
     '''
@@ -89,12 +138,7 @@ def image_grid_plot(imlist, labels, Nplots, fn, size=(20,20)):
     plt.axis('off')
     fig_seg.tight_layout()
     plt.savefig(fn)
-##########################
-# Parse args
-##########################
-config = utility.parse_config('options.cfg')
 
-dataDir = config['learn_params']['test_dir']
 
 ###########################
 # Load data and preprocess
@@ -106,63 +150,44 @@ N, Pw, Ph, C = vasc2d.images_tf.shape
 print "Images stats\n N={}, Width={}, Height={}".format(
     N,Pw,Ph)
 
-X_test = vasc2d.images_norm
-Y_test = vasc2d.segs_tf
+if path_types != ['all']:
+    f = open(dataDir+'names.txt').readlines()
+    inds = [any(s in p.lower() for s in path_types) for p in f]
+else:
+    inds = range(0,N)
+
+X_test = vasc2d.images_norm[inds]
+Y_test = vasc2d.segs_tf[inds]
 Ntest = X_test.shape[0]
 
-meta_test = vasc2d.meta
-contours_test = vasc2d.contours
-
-
+meta_test = vasc2d.meta[:,inds,:]
 extents_test = utility.get_extents(meta_test)
-ROC = {}
-############################
-# Load Model 1 (FCN)
-############################
-FCN_seg = np.load('./predictions/FCN.npy').reshape((Ntest,Pw,Ph))
-FCN_contour,FCN_errs,FCN_thresh,FCN_roc =\
-get_outputs(FCN_seg)
-ROC['FCN'] = FCN_roc
+contours_test = [vasc2d.contours[i] for i in inds]
 
-###########################
-# Load Model 2 (OBP_FCN)
-###########################
-OBP_FCN_out = np.load('./predictions/OBP_FCN.npy')
-OBP_FCN_seg = OBP_FCN_out[:,:,:,1].reshape((Ntest,Pw,Ph))
-OBP_FCN_contour, OBP_FCN_errs, OBP_FCN_thresh, OBP_roc =\
-get_outputs(OBP_FCN_seg)
-ROC['OBP_FCN'] = OBP_roc
+PREDS = {}
+PREDS['seg'] = {}
+PREDS['contour'] = {}
+PREDS['thresh'] = {}
+PREDS['ROC'] = {}
+PREDS['color'] = {}
+PREDS['error'] = {}
 
-#############################
-# Load Model 3 (OBP_FCN_full)
-#############################
-OBP_full_seg = np.load('./predictions/OBG_FCN.npy').reshape((Ntest,Pw,Ph))
-OBP_full_contour, OBP_full_errs, OBP_full_thresh, OBP_roc =\
-get_outputs(OBP_full_seg)
-ROC['OBG_FCN'] = OBP_roc
+shape = (Ntest,Pw,Ph)
 
-#############################
-# Load HED
-#############################
-HED_seg = np.load('./predictions/HED.npy')[0].reshape((Ntest,Pw,Ph))
-HED_contour, HED_errs, HED_thresh, HED_roc =\
-get_outputs(HED_seg)
-ROC['HED'] = HED_roc
+#Load all predictions
+add_pred_to_dict(PREDS,pred_dir+'FCN.npy','FCN','red',inds,shape)
+add_pred_to_dict(PREDS,pred_dir+'OBP_FCN.npy','OBP_FCN','green',inds,shape)
+add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_FCN','blue',inds,shape)
+add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape)
+add_pred_to_dict(PREDS,pred_dir+'HED_dense.npy','HED_dense','orange',inds,shape)
 
-#############################
-# Load HED
-#############################
-HED_dense_seg = np.load('./predictions/HED_dense.npy').reshape((Ntest,Pw,Ph))
-HED_dense_contour, HED_dense_errs, HED_dense_thresh, HED_dense_roc =\
-get_outputs(HED_dense_seg)
-ROC['HED_dense'] = HED_dense_roc
+#load contours
+add_contour_to_dict(PREDS,'level set','yellow',vasc2d.contours_ls,contours_test,inds,DX)
+add_contour_to_dict(PREDS,'level set edge map','purple',vasc2d.contours_edge,contours_test,inds,DX)
 
-#############################
-# Level set
-#############################
-ls_test = vasc2d.contours_ls
-ls_errs = utility.listAreaOverlapError(ls_test, contours_test)
-ls_thresh,ts = utility.cum_error_dist(ls_errs,DX)
+#load OBP by itself for vizualization purposes
+OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
+
 #############################
 # Visualize results
 #############################
@@ -171,45 +196,41 @@ vasc2d.createOBG(border_width=1)
 image_grid_plot([X_test,vasc2d.obg[:,:,:,1],vasc2d.obg[:,:,:,2],
 OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
 ['image','user segmentation','boundary','OBP_FCN segmentation','OBG_FCN boundary'],
-10,'./plots/OBP.png',(80,80))
+10,plot_dir+'/OBP.png',(80,80))
 
 #Figure 1 segmentations
-image_grid_plot([X_test,Y_test,FCN_seg,OBP_FCN_seg,OBP_full_seg,HED_seg,HED_dense_seg],
-['image','user segmentation','FCN','OBP_FCN','OBG_FCN','HED','HED_dense'],
-10,'./plots/segs.png',(80,80))
+keys_seg = ['FCN','OBP_FCN','OBG_FCN','HED','HED_dense']
+segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
+labels = ['image', 'user segmentation']+keys_seg
+image_grid_plot(segs,labels,10,plot_dir+'/segs.png',(80,80))
 
 #Figure 2 contours
-contours_to_plot = [contours_test, ls_test, FCN_contour,
-OBP_FCN_contour, OBP_full_contour, HED_contour, HED_dense_contour]
-labels = ['user','level set','FCN','OBP_FCN','OBG_FCN','HED','HED_dense']
-colors = ['green','red','blue','yellow','magenta','teal','orange']
-contour_plot(X_test,contours_to_plot,extents_test,labels,colors,0,5,'./plots/contours1.png',(20,20))
-contour_plot(X_test,contours_to_plot,extents_test,labels,colors,100,5,'./plots/contours2.png',(20,20))
-contour_plot(X_test,contours_to_plot,extents_test,labels,colors,1000,5,'./plots/contours3.png',(20,20))
-contour_plot(X_test,contours_to_plot,extents_test,labels,colors,1500,5,'./plots/contours4.png',(20,20))
-contour_plot(X_test,contours_to_plot,extents_test,labels,colors,1700,5,'./plots/contours4.png',(20,20))
+keys = ['level set', 'level set edge map', 'FCN', 'OBP_FCN',
+'OBG_FCN', 'HED', 'HED_dense']
+contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
+labels = ['user']+keys
+colors = ['yellow']+[PREDS['color'][k] for k in keys]
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,0,5,plot_dir+'contours1.png',(20,20))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,100,5,plot_dir+'contours2.png',(20,20))
 
-#Figure 3, IOU
+# #Figure 3, IOU
 plt.figure()
-plt.plot(ts,ls_thresh, color='red', label='level set', linewidth=2)
-plt.plot(ts,FCN_thresh, color='blue', label='FCN', linewidth=2)
-plt.plot(ts,OBP_FCN_thresh, color='yellow', label='OBP_FCN', linewidth=2)
-plt.plot(ts,OBP_full_thresh, color='magenta', label='OBG_FCN', linewidth=2)
-plt.plot(ts,HED_thresh, color='black', label='HED', linewidth=2)
-plt.plot(ts,HED_dense_thresh, color='orange', label='HED_dense', linewidth=2)
+for k in keys:
+    plt.plot(ts,PREDS['thresh'][k], color=PREDS['color'][k],
+     label=k, linewidth=2)
 plt.xlabel('IOU error')
 plt.ylabel('Fraction of contours below error')
-plt.legend(loc='lower right')
-plt.savefig('./plots/IOU.png')
+plt.legend(loc='upper left')
+plt.savefig(plot_dir+'IOU.png')
 
-#Figure 4 ROC
+# #Figure 3, IOU
 plt.figure()
-plt.plot(ROC['FCN'][0],ROC['FCN'][1], color='red', label='FCN', linewidth=2)
-plt.plot(ROC['OBP_FCN'][0],ROC['OBP_FCN'][1], color='blue', label='OBP_FCN', linewidth=2)
-plt.plot(ROC['OBG_FCN'][0],ROC['OBG_FCN'][1], color='green', label='OBG_FCN', linewidth=2)
-plt.plot(ROC['HED'][0],ROC['HED'][1], color='black', label='HED', linewidth=2)
-plt.plot(ROC['HED_dense'][0],ROC['HED_dense'][1], color='orange', label='HED_dense', linewidth=2)
-plt.xlabel('False positive rate')
-plt.ylabel('True positive rate')
+for k in keys_seg:
+    plt.plot(PREDS['ROC'][k][0],PREDS['ROC'][k][1], color=PREDS['color'][k],
+     label=k, linewidth=2)
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
 plt.legend(loc='lower right')
-plt.savefig('./plots/roc.png')
+plt.savefig(plot_dir+'roc.png')
+
+# #Summary statistics
