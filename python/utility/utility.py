@@ -561,9 +561,10 @@ def threshold(x,value):
 		@a value: the cutoff value
 	'''
 	inds = x < value
-	x[x < value] = 0
-	x[x >= value] = 1
-	return x
+	y = np.copy(x)
+	y[x < value] = 0
+	y[x >= value] = 1
+	return y
 
 def get_extents(meta):
 	extents = []
@@ -640,8 +641,10 @@ def confusionMatrix(ytrue,ypred, as_fraction=True):
 	H = confusion_matrix(ytrue,ypred)
 
 	if not as_fraction:
+		print 'here'
 		return H
 	else:
+		print 'there'
 		H = H.astype(float)
 		totals = np.sum(H,axis=1)
 		totals = totals.reshape((-1,1))
@@ -655,9 +658,16 @@ def train(net, lrates, batch_size, nb_epoch, x_train, y_train, x_val,y_val):
 	val_loss = []
 	for lr in lrates:
 		opt = Adam(lr=lr)
-		net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-		history = net.fit(x_train, y_train,batch_size=batch_size, nb_epoch=nb_epoch,
-		validation_data=(x_val,y_val))
+		if (type(y_train)==list) or (y_train.shape[3] == 1):
+			net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+			history = net.fit(x_train, y_train,batch_size=batch_size, nb_epoch=nb_epoch,
+			validation_data=(x_val,y_val))
+		else:
+			train = y_train.reshape((y_train.shape[0],-1,3))
+			val = y_val.reshape((y_val.shape[0],-1,3))
+			net.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+			history = net.fit(x_train, train,batch_size=batch_size, nb_epoch=nb_epoch,
+			validation_data=(x_val,val))
 		train_loss = train_loss + history.history['loss']
 		val_loss = val_loss + history.history['val_loss']
 	return net, train_loss, val_loss

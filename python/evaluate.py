@@ -46,15 +46,31 @@ dataDir = config['learn_params']['test_dir']
 #########################################
 #function definitions
 #########################################
-def get_outputs(seg):
-    contour = utility.listSegToContours(seg, meta_test[1,:,:],
+def calc_accuracy(seg, seg_truth):
+    ypred = utility.threshold(np.ravel(seg),THRESHOLD)
+    ytruth = utility.threshold(np.ravel(seg_truth),THRESHOLD)
+    H = utility.confusionMatrix(ytruth,ypred)
+    N1 = np.sum(ytruth[:]==1)
+    N2 = np.sum(ytruth[:]==0)
+    acc = (N2*H[0,0] + N1*H[1,1])/(N1+N2)
+    mean_acc = 0.5*(H[0,0]+H[1,1])
+    print "N1 {} N2 {} H {} acc {} mean_acc {}".format(
+    N1,N2,H, acc, mean_acc
+    )
+    return (acc, mean_acc)
+
+def get_outputs(seg, seg_truth):
+    seg_thresh = utility.threshold(seg,THRESHOLD)
+    contour = utility.listSegToContours(seg_thresh, meta_test[1,:,:],
         meta_test[0,:,:], ISOVALUE)
     errs = utility.listAreaOverlapError(contour, contours_test)
     thresh,ts = utility.cum_error_dist(errs,DX)
     roc = roc_curve(np.ravel(Y_test),np.ravel(seg), pos_label=1)
-    return (contour,errs,thresh,roc)
 
-def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape):
+    acc,mean_acc = calc_accuracy(seg, seg_truth)
+    return (contour,errs,thresh,roc,acc,mean_acc)
+
+def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_truth):
     out = np.load(pred_string)
     if len(out.shape) == 5:
         out = out[0]
@@ -64,7 +80,7 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape):
     else:
         out = out[inds].reshape(shape)
 
-    contour,errs,thresh,roc = get_outputs(out)
+    contour,errs,thresh,roc,acc,mean_acc = get_outputs(out,seg_truth)
 
     pred_dict['seg'][pred_code] = out
     pred_dict['contour'][pred_code] = contour
@@ -72,6 +88,8 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape):
     pred_dict['thresh'][pred_code] = thresh
     pred_dict['ROC'][pred_code] = roc
     pred_dict['color'][pred_code] = pred_color
+    pred_dict['acc'][pred_code] = acc
+    pred_dict['mean_acc'][pred_code] = mean_acc
 
 def add_contour_to_dict(pred_dict,pred_code,pred_color,contours,contours_test,inds,DX):
     ls_test = [contours[i] for i in inds]
@@ -116,10 +134,11 @@ def contour_plot(X_test, Clist, extent, labels, colors, start_index, Nplots, fil
             [a.set_axis_off() for a in ax_contour[i, :]]
             [a.set_axis_off() for a in ax_contour[:, j]]
 
-    plt.legend(handles=handles,
-        labels=labels, loc='lower right', bbox_to_anchor=(1.0,1.0))
+    #plt.legend(handles=handles,
+    #    labels=labels, loc='lower right', bbox_to_anchor=(1.2,1.2))
     plt.axis('off')
-    fig_contour.tight_layout()
+    fig_contour.tight_layout(pad=0.0)
+    fig_contour.subplots_adjust(wspace=0, hspace=0)
     plt.savefig(filename)
 
 def image_grid_plot(imlist, labels, Nplots, fn, size=(20,20)):
@@ -132,11 +151,12 @@ def image_grid_plot(imlist, labels, Nplots, fn, size=(20,20)):
                 ax_seg[i,j].imshow(x[i,:,:,0],cmap='gray')
             else:
                 ax_seg[i,j].imshow(x[i,:,:],cmap='gray')
-            ax_seg[i,j].set_title(labels[j],fontsize=100)
+            #if i == 0:
+                #ax_seg[i,j].set_title(labels[j],fontsize=int(1.5*size[0]), fontweight='bold')
         [a.set_axis_off() for a in ax_seg[i, :]]
         [a.set_axis_off() for a in ax_seg[:, j]]
     plt.axis('off')
-    fig_seg.tight_layout()
+    fig_seg.tight_layout(pad=0.0)
     plt.savefig(fn)
 
 
@@ -152,7 +172,7 @@ print "Images stats\n N={}, Width={}, Height={}".format(
 
 if path_types != ['all']:
     f = open(dataDir+'names.txt').readlines()
-    inds = [any(s in p.lower() for s in path_types) for p in f]
+    inds = [i for i in range(N) if any(s in f[i].lower() for s in path_types)]
 else:
     inds = range(0,N)
 
@@ -171,18 +191,19 @@ PREDS['thresh'] = {}
 PREDS['ROC'] = {}
 PREDS['color'] = {}
 PREDS['error'] = {}
-
+PREDS['acc'] = {}
+PREDS['mean_acc'] = {}
 shape = (Ntest,Pw,Ph)
 
 #Load all predictions
-add_pred_to_dict(PREDS,pred_dir+'FCN.npy','FCN','red',inds,shape)
-add_pred_to_dict(PREDS,pred_dir+'OBP_FCN.npy','OBP_FCN','green',inds,shape)
-add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_FCN','blue',inds,shape)
-add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape)
-add_pred_to_dict(PREDS,pred_dir+'HED_dense.npy','HED_dense','orange',inds,shape)
+add_pred_to_dict(PREDS,pred_dir+'FCN.npy','SN','red',inds,shape,Y_test)
+add_pred_to_dict(PREDS,pred_dir+'OBP_FCN.npy','OBP_SN','green',inds,shape,Y_test)
+add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_SN','blue',inds,shape,Y_test)
+add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape,Y_test)
+#add_pred_to_dict(PREDS,pred_dir+'HED_dense.npy','HED_dense','orange',inds,shape)
 
 #load contours
-add_contour_to_dict(PREDS,'level set','yellow',vasc2d.contours_ls,contours_test,inds,DX)
+add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,inds,DX)
 add_contour_to_dict(PREDS,'level set edge map','purple',vasc2d.contours_edge,contours_test,inds,DX)
 
 #load OBP by itself for vizualization purposes
@@ -191,39 +212,55 @@ OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
 #############################
 # Visualize results
 #############################
+#Plot lots of images
+plot_inds = np.random.randint(Ntest,size=(5,5))
+image_grid_plot([Y_test[plot_inds[0,:]],Y_test[plot_inds[1,:]],Y_test[plot_inds[2,:]],
+Y_test[plot_inds[3,:]],Y_test[plot_inds[4,:]]],
+['segmentation','segmentation','segmentation','segmentation','segmentation'],
+5,plot_dir+'/segmentations.png',(40,40))
+
+#plot lots of segmentations
+image_grid_plot([X_test[plot_inds[0,:]],X_test[plot_inds[1,:]],X_test[plot_inds[2,:]],
+X_test[plot_inds[3,:]],X_test[plot_inds[4,:]]],
+['image','image','image','image','image'],
+5,plot_dir+'/images.png',(40,40))
+
 #Figure 0 OBP plot
 vasc2d.createOBG(border_width=1)
 image_grid_plot([X_test,vasc2d.obg[:,:,:,1],vasc2d.obg[:,:,:,2],
 OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
-['image','user segmentation','boundary','OBP_FCN segmentation','OBG_FCN boundary'],
-10,plot_dir+'/OBP.png',(80,80))
+['image','user segmentation','boundary','OBP_SN segmentation','OBG_SN boundary'],
+5,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
-keys_seg = ['FCN','OBP_FCN','OBG_FCN','HED','HED_dense']
+keys_seg = ['SN','OBP_SN','OBG_SN','HED']
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
-image_grid_plot(segs,labels,10,plot_dir+'/segs.png',(80,80))
+image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure 2 contours
-keys = ['level set', 'level set edge map', 'FCN', 'OBP_FCN',
-'OBG_FCN', 'HED', 'HED_dense']
+keys = ['level set', 'level set edge map', 'SN', 'OBP_SN',
+'OBG_SN', 'HED']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
 colors = ['yellow']+[PREDS['color'][k] for k in keys]
-contour_plot(X_test,contours_to_plot,extents_test,labels,colors,0,5,plot_dir+'contours1.png',(20,20))
-contour_plot(X_test,contours_to_plot,extents_test,labels,colors,100,5,plot_dir+'contours2.png',(20,20))
-
+n1 = 0
+n2 = int(Ntest/2)
+n3 = (Ntest-10)
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n1,5,plot_dir+'contours1.png',(14,20))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n2,5,plot_dir+'contours2.png',(20,20))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n3,5,plot_dir+'contours3.png',(20,14))
 # #Figure 3, IOU
 plt.figure()
 for k in keys:
     plt.plot(ts,PREDS['thresh'][k], color=PREDS['color'][k],
      label=k, linewidth=2)
-plt.xlabel('IOU error')
+plt.xlabel('Jaccard distance')
 plt.ylabel('Fraction of contours below error')
 plt.legend(loc='upper left')
 plt.savefig(plot_dir+'IOU.png')
 
-# #Figure 3, IOU
+# #Figure 4, ROC
 plt.figure()
 for k in keys_seg:
     plt.plot(PREDS['ROC'][k][0],PREDS['ROC'][k][1], color=PREDS['color'][k],
@@ -234,3 +271,18 @@ plt.legend(loc='lower right')
 plt.savefig(plot_dir+'roc.png')
 
 # #Summary statistics
+f = open(plot_dir+'seg_acc.csv','w')
+f.write(','+','.join(PREDS['acc'].keys()))
+f.write('\n')
+f.write('accuracy,'+','.join([str(PREDS['acc'][k]) for k in PREDS['acc']]))
+f.write('\n')
+f.write('mean accuracy,'+','.join([str(PREDS['mean_acc'][k]) for k in PREDS['mean_acc']]))
+f.close()
+
+f = open(plot_dir+'contour_acc.csv','w')
+f.write(','+','.join(PREDS['error'].keys()))
+f.write('\n')
+f.write('jaccard distance,'+','.join([str(np.mean(PREDS['error'][k])) for k in PREDS['error']]))
+f.write('\n')
+f.write('IOU,'+','.join([str(1-np.mean(PREDS['error'][k])) for k in PREDS['error']]))
+f.close()

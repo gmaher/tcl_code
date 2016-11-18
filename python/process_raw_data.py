@@ -6,7 +6,7 @@ from shapely.geometry import Polygon, Point
 import os
 from tqdm import tqdm
 import configparser
-
+np.random.seed(0)
 #############################
 #Parse input arguments
 #############################
@@ -44,14 +44,17 @@ eccentricity_limit = 0.2
 # Make model train/val/test split
 #################################
 models = [f.split('.')[0] for f in files if 'OSMSC' in f]
+#models = open('./data/mr_images.list').readlines()
+models = [m.replace('\n','') for m in models]
 models = list(set(models))
 inds = np.random.permutation(len(models))
 cut = int(round(split*len(models)))
 
 split_models = {}
 split_models['test'] = [models[i] for i in inds[:cut]]
-split_models['val'] = [models[i] for i in inds[cut:2*cut]]
-split_models['train'] = [models[i] for i in inds[2*cut:]]
+split_models['test'].append('OSMSC0002')
+split_models['val'] = [models[i] for i in inds[cut:2*cut] if models[i] != "OSMSC0002"]
+split_models['train'] = [models[i] for i in inds[2*cut:] if models[i] != "OSMSC0002"]
 
 split_inds = {}
 split_inds['train'] = []
@@ -59,7 +62,7 @@ split_inds['val'] = []
 split_inds['test'] = []
 
 count = 0
-files = [f for f in files if 'truth.ls' in f and (not "OSMSC0159" in f)]
+files = [f for f in files if 'truth.ls' in f and (not "OSMSC0159" in f) and any(s.lower() in f.lower() for s in models)]
 
 for f in tqdm(files):
     if "truth.ls" in f:

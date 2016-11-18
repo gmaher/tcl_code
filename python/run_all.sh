@@ -8,4 +8,4 @@ python train.py OBG_FCN
 
 python train.py HED
 
-python train.py HED_dense
+#python train.py HED_dense
