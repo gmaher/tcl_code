@@ -10,3 +10,4 @@ python/predictions/*
 *.html
 *.h5
 *.png
+*.vtp
