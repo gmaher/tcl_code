@@ -119,6 +119,10 @@ proc generate_truth_groups {img path grp} {
   puts "getting image name"
   set imgname [get_image_name $img]
 
+	#reset edgeImage param
+	global itklsGUIParams
+	set itklsGUIParams(edgeImage) 0
+
   puts "starting group loop"
   foreach grp [array names pathmap] {
 		puts $grp
@@ -140,6 +144,11 @@ proc generate_truth_groups {img path grp} {
 	      	repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/thr/selected -type ascii
 	      	repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
 	      	repos_writeVtkStructuredPoints -file $pot_fn -obj /tmp/lsGUI/pot -type ascii
+				}
+				if {[repos_exists -obj /lsGUI/$pathid/$point/ls]} {
+					repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/ls -type ascii
+					repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
+					repos_writeVtkStructuredPoints -file $pot_fn -obj /tmp/lsGUI/pot -type ascii
 				}
 	    }
 		}

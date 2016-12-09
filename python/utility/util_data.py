@@ -17,7 +17,7 @@ class VascData2D:
         self.contourString = dataDir + 'contours.npy'
         self.ls_string = dataDir + 'ls_image.npy'
         self.ls_edge = dataDir + 'ls_edge.npy'
-        
+
         print 'loading data'
         self.images = np.load(self.imString)
         self.images = self.images.astype(float)
@@ -45,8 +45,8 @@ class VascData2D:
             @a border_width (int) - boundary width to use
         '''
         print 'creating OBG data'
-        self.obg = np.zeros((self.data_dims[0],self.data_dims[1],
-            self.data_dims[2],3))
+        dims = self.images_norm.shape
+        self.obg = np.zeros((dims[0],dims[1],dims[2],3))
 
         for i in tqdm(range(0,len(self.segs))):
             self.obg[i,:] = utility.segToOBG(self.segs_tf[i],border_width)

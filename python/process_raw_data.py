@@ -43,8 +43,8 @@ eccentricity_limit = 0.2
 #################################
 # Make model train/val/test split
 #################################
-models = [f.split('.')[0] for f in files if 'OSMSC' in f]
-#models = open('./data/mr_images.list').readlines()
+#models = [f.split('.')[0] for f in files if 'OSMSC' in f]
+models = open('./data/mr_images.list').readlines()
 models = [m.replace('\n','') for m in models]
 models = list(set(models))
 inds = np.random.permutation(len(models))
@@ -52,7 +52,7 @@ cut = int(round(split*len(models)))
 
 split_models = {}
 split_models['test'] = [models[i] for i in inds[:cut]]
-split_models['test'].append('OSMSC0002')
+#split_models['test'].append('OSMSC0002')
 split_models['val'] = [models[i] for i in inds[cut:2*cut] if models[i] != "OSMSC0002"]
 split_models['train'] = [models[i] for i in inds[2*cut:] if models[i] != "OSMSC0002"]
 

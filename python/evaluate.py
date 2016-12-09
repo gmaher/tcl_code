@@ -172,12 +172,19 @@ print "Images stats\n N={}, Width={}, Height={}".format(
 
 if path_types != ['all']:
     f = open(dataDir+'names.txt').readlines()
-    inds = [i for i in range(N) if any(s in f[i].lower() for s in path_types)]
+    inds = [i for i in range(N) if any(s.lower() in f[i].lower() for s in path_types)]
+    paths = [f[i] for i in inds]
+    inds = [x for (x,y) in sorted(zip(inds,paths), key=lambda pair:int(pair[1].split('.')[2]))]
 else:
     inds = range(0,N)
 
 X_test = vasc2d.images_norm[inds]
 Y_test = vasc2d.segs_tf[inds]
+
+vasc2d.images_norm = vasc2d.images_norm[inds]
+vasc2d.segs_tf = vasc2d.segs_tf[inds]
+vasc2d.segs = vasc2d.segs[inds]
+
 Ntest = X_test.shape[0]
 
 meta_test = vasc2d.meta[:,inds,:]
@@ -227,10 +234,10 @@ X_test[plot_inds[3,:]],X_test[plot_inds[4,:]]],
 
 #Figure 0 OBP plot
 vasc2d.createOBG(border_width=1)
-image_grid_plot([X_test,vasc2d.obg[:,:,:,1],vasc2d.obg[:,:,:,2],
+image_grid_plot([X_test,Y_test,vasc2d.obg[:,:,:,1],vasc2d.obg[:,:,:,2],
 OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
-['image','user segmentation','boundary','OBP_SN segmentation','OBG_SN boundary'],
-5,plot_dir+'/OBP.png',(40,40))
+['image','user segmentation','object','boundary','OBP_SN segmentation','OBG_SN boundary'],
+15,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
 keys_seg = ['SN','OBP_SN','OBG_SN','HED']
