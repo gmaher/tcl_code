@@ -24,8 +24,9 @@ sudo apt-get install gcc-multilib build-essential g++ gfortran
 sudo apt-get install libmpich2-dev
 sudo apt-get install dcmtk
 sudo apt-get install libgdcm-tools
-sudo apt-get install libglu1-mesa-dev libxt-dev libgl1-mesa-dev
+sudo apt-get install libglu1-mesa-dev libxt-dev libgl1-mesa-dev mesa-common-dev
 sudo apt-get install glib2.0-dev
+sudo apt-get install libx11-dev
 conda install -c https://conda.anaconda.org/simpleitk SimpleITK
 
 # #################################################

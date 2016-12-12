@@ -28,13 +28,11 @@ proc runGroupsToVTKonFiles {imgs paths groups edges} {
 
 	foreach I $imgs P $paths G $groups E $edges {
 		puts "$I\n $P\n $G\n"
-		if [catch {
-				generate_truth_groups $I $P $G
-				generate_edge_groups $I $P $G
-				generate_edge_groups $I $P $G $E "edge96"}] {
-					close_files
-					continue
-				}
+		catch {generate_truth_groups $I $P $G}
+		catch {generate_edge_groups $I $P $G}
+		catch {generate_edge_groups $I $P $G $E "edge96"}
+		close_files
+
 
 		#generate_edge_groups $I $P $G $E "edge96"
 		#generate_edge_groups $I $P $G $E "edge96_LS" LSEdge
@@ -122,6 +120,7 @@ proc generate_truth_groups {img path grp} {
 	#reset edgeImage param
 	global itklsGUIParams
 	set itklsGUIParams(edgeImage) 0
+	set itklsGUIParams(2DEdgeImage) "image"
 
   puts "starting group loop"
   foreach grp [array names pathmap] {
@@ -144,11 +143,20 @@ proc generate_truth_groups {img path grp} {
 	      	repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/thr/selected -type ascii
 	      	repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
 	      	repos_writeVtkStructuredPoints -file $pot_fn -obj /tmp/lsGUI/pot -type ascii
+
+					#Delete repository objects so they don't hang around
+					repos_delete -obj /lsGUI/$pathid/$point/thr/selected
+					repos_delete -obj /tmp/lsGUI/mag
+					repos_delete -obj /tmp/lsGUI/pot
 				}
 				if {[repos_exists -obj /lsGUI/$pathid/$point/ls]} {
 					repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/ls -type ascii
 					repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
 					repos_writeVtkStructuredPoints -file $pot_fn -obj /tmp/lsGUI/pot -type ascii
+
+					repos_delete -obj /lsGUI/$pathid/$point/ls
+					repos_delete -obj /tmp/lsGUI/mag
+					repos_delete -obj /tmp/lsGUI/pot
 				}
 	    }
 		}
@@ -171,8 +179,8 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "u
   #   @a grp: string, the path to the group folder to load
   #   @a edge: string, the path to the edge map to load
   #   @a edgeString: string, code to append to the outputted files
-
-  puts "loading files"
+	puts "generated edge"
+  puts "generate_edge_groups ${img} ${path} ${grp} ${edge}"
   global gImageVol
   global gFilenames
   load_files $img $path $grp $edge
@@ -183,6 +191,7 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "u
 		set itklsGUIParams(2DEdgeImage) $edgeType
 		set itklsGUIParams(useEdgeImage) "disp"
 	} else {
+		set itklsGUIParams(2DEdgeImage) "image"
 		set itklsGUIParams(useEdgeImage) 0
 	}
 
@@ -232,6 +241,9 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "u
 	      repos_writeVtkStructuredPoints -file $mag_fn -obj /img/$pathid/$point/mag -type ascii
 	      repos_writeVtkStructuredPoints -file $pot_fn -obj /img/$pathid/$point/pot -type ascii
 
+				repos_delete -obj /lsGUI/$pathid/$point/ls
+				repos_delete -obj /img/$pathid/$point/mag
+				repos_delete -obj /img/$pathid/$point/pot
 	    }
 		}
   }
@@ -284,6 +296,7 @@ proc get_path_map {} {
 }
 
 proc load_files {img path grp {edge 0}} {
+	puts "loading ${img} ${path} ${grp} ${edge}"
   global gImageVol
 
   if {[string match *.mha* $img]} {
@@ -291,18 +304,21 @@ proc load_files {img path grp {edge 0}} {
   } else {
     set gImageVol(xml_filename) $img
   }
-
+	puts "loading edge"
   if {$edge ne "0"} {
     seg_LoadEdgeImageMha $edge
   }
   createPREOPloadsaveLoadVol
 
   #load paths
+	puts "loading path"
+	puts $path
   global gFilenames
   set gFilenames(path_file) $path
   guiFNMloadHandPaths
 
   #load groups
+	puts "loading surfaces"
   set gFilenames(groups_dir) $grp
   createPREOPgrpLoadGroups
   guiSV_group_update_tree
