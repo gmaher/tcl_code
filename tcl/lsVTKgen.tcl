@@ -363,3 +363,11 @@ proc checkGroupsInPathPoints {grp} {
 	}
 	return 1
 }
+
+proc group_names {} {
+    #@author Ken Wang
+    #@c Return the group names.
+    #@r list of group names.
+    global gGroup
+    return [array names gGroup]
+}
