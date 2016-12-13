@@ -125,6 +125,9 @@ proc generate_truth_groups {img path grp} {
   puts "starting group loop"
   foreach grp [array names pathmap] {
 		puts $grp
+		#if {[string match "LVA" $grp]} {
+		#	set data [gets stdin]
+		#}
 		if {[group_exists $grp]} {
 			set pathid $pathmap($grp)
 	    group_restorePreopSegs $grp
@@ -140,6 +143,7 @@ proc generate_truth_groups {img path grp} {
 	      set mag_fn ${imgname}.${grp}.${point}.truth.mag.vts
 	      set pot_fn ${imgname}.${grp}.${point}.truth.pot.vts
 				if {[repos_exists -obj /lsGUI/$pathid/$point/thr/selected]} {
+					puts "ls 1"
 	      	repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/thr/selected -type ascii
 	      	repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
 	      	repos_writeVtkStructuredPoints -file $pot_fn -obj /tmp/lsGUI/pot -type ascii
@@ -150,6 +154,7 @@ proc generate_truth_groups {img path grp} {
 					repos_delete -obj /tmp/lsGUI/pot
 				}
 				if {[repos_exists -obj /lsGUI/$pathid/$point/ls]} {
+					puts "ls 2"
 					repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/ls -type ascii
 					repos_writeVtkStructuredPoints -file $mag_fn -obj /tmp/lsGUI/mag -type ascii
 					repos_writeVtkStructuredPoints -file $pot_fn -obj /tmp/lsGUI/pot -type ascii
