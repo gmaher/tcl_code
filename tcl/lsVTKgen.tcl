@@ -191,6 +191,7 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "u
   load_files $img $path $grp $edge
 
   global itklsGUIParams
+	set itklsGUIParams(phyRadius) 0.3
 
   if {$edge ne 0} {
 		set itklsGUIParams(2DEdgeImage) $edgeType
