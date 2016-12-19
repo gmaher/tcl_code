@@ -8,6 +8,10 @@ set I [lindex $argv 1]
 set P [lindex $argv 2]
 set G [lindex $argv 3]
 set E [lindex $argv 4]
+
+global gOptions
+set gOptions(resliceDims) {192 192}
+
 generate_truth_groups $I $P $G
 generate_edge_groups $I $P $G
 generate_edge_groups $I $P $G $E "edge96"
