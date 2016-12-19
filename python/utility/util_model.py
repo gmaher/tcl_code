@@ -147,10 +147,10 @@ def hed_keras(input_shape=(64,64,1), l2_reg=0):
     arr = np.asarray([1.0/3,1.0/3,1.0/3])
     arr = arr.reshape((1,1,3,1))
     bias = np.asarray([0.0])
-    out.set_weights([arr,bias])
-    out.trainable = False
-    model = Model(inp,[out,out1,out2,out3])
 
+    model = Model(inp,[out,out1,out2,out3])
+    model.layers[-1].set_weights([arr,bias])
+    model.layers[-1].trainable = False
     return model
 
 def hed_dense(hed,input_shape=(64,64,1),dense_size=4096):
