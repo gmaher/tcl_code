@@ -297,6 +297,6 @@ f.close()
 #HED Plot
 hed = load_model('./models/HED.h5')
 Y_hed = hed.predict(X_test)
-image_grid_plot([X_test]+[Y_hed],
-['image','hed1'],
+image_grid_plot([X_test]+Y_hed,
+['image','hed1','hed2','hed3','hed4'],
 15,plot_dir+'/hed.png',(40,40))
