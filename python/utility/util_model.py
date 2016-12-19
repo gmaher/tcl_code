@@ -117,31 +117,31 @@ def hed_keras(input_shape=(64,64,1), l2_reg=0):
     out3 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
     out3 = UpSampling2D(size=(4,4), name='upsample3')(out3)
     out3 = Activation('sigmoid', name='sigmoid-dsn3')(out3)
-    x = Activation('relu')(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='pool3')(x)
-
-    #conv4
-    x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv4_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv4_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    x = Convolution2D(512,3,3,activation='linear', border_mode='same', name='conv4_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    out4 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    out4 = UpSampling2D(size=(8,8), name='upsample4')(out4)
-    out4 = Activation('sigmoid', name='sigmoid-dsn4')(out4)
-    x = Activation('relu')(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='pool4')(x)
-
-    #conv5
-    x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv5_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv5_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    x = Convolution2D(512,3,3,activation='linear', border_mode='same', name='conv5_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    out5 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn5', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    out5 = UpSampling2D(size=(16,16), name='upsample5')(out5)
-    out5 = Activation('sigmoid', name='sigmoid-dsn5')(out5)
+    # x = Activation('relu')(x)
+    # x = MaxPooling2D((2, 2), strides=(2, 2), name='pool3')(x)
+    #
+    # #conv4
+    # x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv4_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv4_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # x = Convolution2D(512,3,3,activation='linear', border_mode='same', name='conv4_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # out4 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # out4 = UpSampling2D(size=(8,8), name='upsample4')(out4)
+    # out4 = Activation('sigmoid', name='sigmoid-dsn4')(out4)
+    # x = Activation('relu')(x)
+    # x = MaxPooling2D((2, 2), strides=(2, 2), name='pool4')(x)
+    #
+    # #conv5
+    # x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv5_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv5_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # x = Convolution2D(512,3,3,activation='linear', border_mode='same', name='conv5_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # out5 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn5', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # out5 = UpSampling2D(size=(16,16), name='upsample5')(out5)
+    # out5 = Activation('sigmoid', name='sigmoid-dsn5')(out5)
 
     #Merge all outputs
-    out = merge([out1,out2,out3,out4,out5], mode='concat', concat_axis=3)
+    out = merge([out1,out2,out3], mode='concat', concat_axis=3)
     out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='new-score-weighting', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
-    model = Model(inp,[out,out1,out2,out3,out4,out5])
+    model = Model(inp,[out,out1,out2,out3])
 
     return model
 
