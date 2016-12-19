@@ -293,3 +293,10 @@ f.write('jaccard distance,'+','.join([str(np.mean(PREDS['error'][k])) for k in P
 f.write('\n')
 f.write('IOU,'+','.join([str(1-np.mean(PREDS['error'][k])) for k in PREDS['error']]))
 f.close()
+
+#HED Plot
+hed = load_model('./models/HED.h5')
+Y_hed = hed.predict(X_test)
+image_grid_plot([X_test]+Y_hed,
+['image','hed1','hed2','hed3','hed4','hed5','hed6'],
+15,plot_dir+'/hed.png',(40,40))
