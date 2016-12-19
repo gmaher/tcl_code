@@ -4,6 +4,7 @@ from keras.layers import Reshape, Flatten, UpSampling2D
 from keras.layers import MaxPooling2D, Activation
 from keras.optimizers import Adam
 from keras.regularizers import l2
+import numpy as np
 def FCN(input_shape=(64,64,1), Nfilters=32, Wfilter=3,num_conv_1=3, num_conv_2=3,
 output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False, l2_reg=0.0):
     '''
