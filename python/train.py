@@ -53,7 +53,7 @@ batch_size=32
 Pw=Ph=64
 opt = Adam(lr=lr)
 lrates = [lr,lr/10,lr/100,lr/1000]
-l2_reg=0.1
+l2_reg=0.0
 #lrates = [lr]
 ###############################
 # Training
