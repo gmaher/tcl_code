@@ -141,6 +141,13 @@ def hed_keras(input_shape=(64,64,1), l2_reg=0):
     #Merge all outputs
     out = merge([out1,out2,out3], mode='concat', concat_axis=3)
     out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='new-score-weighting', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
+
+    #weights to initialize final layer to be simple average
+    arr = np.asarray([1.0/3,1.0/3,1.0/3])
+    arr = arr.reshape((1,1,3,1))
+    bias = np.asarray([0.0])
+    out.set_weights([arr,bias])
+    out.trainable = False
     model = Model(inp,[out,out1,out2,out3])
 
     return model
