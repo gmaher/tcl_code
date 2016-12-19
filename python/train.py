@@ -96,8 +96,8 @@ if model_to_train == 'HED':
     #net = load_model('./models/hed_bsds_vasc.h5')
     net = util_model.hed_keras((64,64,1),l2_reg=l2_reg)
     #high learning rate
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*4,
-     vasc_val.images_norm,[vasc_val.segs_tf]*4)
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
+     vasc_val.images_norm,vasc_val.segs_tf)
     net.save('./models/HED.h5')
 
 if model_to_train == 'HED_dense':
