@@ -10,7 +10,7 @@ set G [lindex $argv 3]
 set E [lindex $argv 4]
 
 global gOptions
-set gOptions(resliceDims) {192 192}
+set gOptions(resliceDims) {64 64}
 
 generate_truth_groups $I $P $G
 generate_edge_groups $I $P $G
