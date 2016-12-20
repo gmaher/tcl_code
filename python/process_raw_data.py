@@ -67,7 +67,7 @@ meta_data = [[],[],[]]
 contours = []
 contours_ls = []
 contours_edge = []
-names = open(input_dir+'../names.txt','w')
+names = open(input_dir+'names.txt','w')
 
 eccentricity_limit = 0.2
 
