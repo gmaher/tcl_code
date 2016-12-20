@@ -50,7 +50,8 @@ dense_size = 100
 dense_layers = 1
 nb_epoch=10
 batch_size=32
-Pw=Ph=64
+Pw=Ph=int(conig['learn_params']['image_dims'])
+input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)
 lrates = [lr,lr/10,lr/100,lr/1000]
 l2_reg=0.0
@@ -59,7 +60,7 @@ l2_reg=0.0
 # Training
 ###############################
 if model_to_train == 'FCN':
-    net = util_model.FCN(Nfilters=Nfilters,Wfilter=Wfilter,
+    net = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
     num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,dense_size=dense_size, l2_reg=l2_reg)
     net.name ='FCN'
 
@@ -69,7 +70,7 @@ if model_to_train == 'FCN':
     net.save('./models/FCN.h5')
 
 if model_to_train == 'OBP_FCN':
-    net,net_categorical = util_model.FCN(Nfilters=Nfilters,Wfilter=Wfilter, output_channels=3,
+    net,net_categorical = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter, output_channels=3,
     dense_layers=dense_layers,dense_size=dense_size, obg=True,l2_reg=l2_reg)
     #have to manually compile net because it isn't directly trained
     net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
@@ -85,7 +86,7 @@ if model_to_train == 'OBG_FCN':
     fcn = load_model('./models/FCN.h5')
     obp = load_model('./models/OBP_FCN.h5')
 
-    net = util_model.OBG_FCN(fcn,obp,Nfilters=Nfilters,Wfilter=Wfilter,l2_reg=l2_reg)
+    net = util_model.OBG_FCN(fcn,obp,input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,l2_reg=l2_reg)
 
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
      vasc_val.images_norm,vasc_val.segs_tf)
@@ -94,7 +95,7 @@ if model_to_train == 'OBG_FCN':
 
 if model_to_train == 'HED':
     #net = load_model('./models/hed_bsds_vasc.h5')
-    net = util_model.hed_keras((64,64,1),l2_reg=l2_reg)
+    net = util_model.hed_keras(input_shape=input_shape,l2_reg=l2_reg)
     #high learning rate
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*4,
      vasc_val.images_norm,[vasc_val.segs_tf]*4)
