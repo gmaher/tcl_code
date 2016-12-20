@@ -20,6 +20,10 @@ import configparser
 from keras.optimizers import Adam
 import util_data
 
+def mkdir(fn):
+    if not os.path.exists(os.path.abspath(fn)):
+        os.mkdir(os.path.abspath(fn))
+
 def parse_config(fn):
 	config = configparser.ConfigParser()
 	config.read(fn)

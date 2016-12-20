@@ -21,14 +21,25 @@ np.random.seed(0)
 #args
 parser = argparse.ArgumentParser()
 parser.add_argument('model')
+parser.add_argument('config_file')
 args = parser.parse_args()
 model_to_train = args.model
+config_file = args.config_file
 
 #config
-config = utility.parse_config('options.cfg')
-dataDir = config['learn_params']['train_dir']
-valDir = config['learn_params']['val_dir']
-testDir = config['learn_params']['test_dir']
+config = utility.parse_config(config_file)
+dataDir = config['learn_params']['train_dir']+'train'
+valDir = config['learn_params']['val_dir']+'val'
+testDir = config['learn_params']['test_dir']+'test'
+output_dir = config['learn_params']['output_dir']
+model_dir = config['learn_params']['model_dir']
+pred_dir = config['learn_params']['pred_dir']
+plot_dir = config['learn_params']['plot_dir']
+
+utility.mkdir(output_dir)
+utility.mkdir(model_dir)
+utility.mkdir(pred_dir)
+utility.mkdir(plot_dir)
 
 vasc_train = util_data.VascData2D(dataDir)
 vasc_train.createOBG(border_width=1)
@@ -67,7 +78,7 @@ if model_to_train == 'FCN':
     net,train_loss,val_loss =\
         utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
          vasc_val.images_norm,vasc_val.segs_tf)
-    net.save('./models/FCN.h5')
+    net.save(model_dir+'FCN.h5')
 
 if model_to_train == 'OBP_FCN':
     net,net_categorical = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter, output_channels=3,
@@ -79,8 +90,8 @@ if model_to_train == 'OBP_FCN':
     net_categorical,train_loss,val_loss = utility.train(net_categorical, lrates, batch_size, nb_epoch, vasc_train.images_norm,
      vasc_train.obg, vasc_val.images_norm,vasc_val.obg)
 
-    net.save('./models/OBP_FCN.h5')
-    net_categorical.save('./models/OBP_FCN_categorical.h5')
+    net.save(model_dir+'OBP_FCN.h5')
+    net_categorical.save(model_dir+'OBP_FCN_categorical.h5')
 
 if model_to_train == 'OBG_FCN':
     fcn = load_model('./models/FCN.h5')
@@ -91,7 +102,7 @@ if model_to_train == 'OBG_FCN':
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
      vasc_val.images_norm,vasc_val.segs_tf)
 
-    net.save('./models/OBG_FCN.h5')
+    net.save(model_dir+'OBG_FCN.h5')
 
 if model_to_train == 'HED':
     #net = load_model('./models/hed_bsds_vasc.h5')
@@ -99,7 +110,7 @@ if model_to_train == 'HED':
     #high learning rate
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*4,
      vasc_val.images_norm,[vasc_val.segs_tf]*4)
-    net.save('./models/HED.h5')
+    net.save(model_dir+'HED.h5')
 
 if model_to_train == 'HED_dense':
     hed = load_model('./models/hed_bsds_vasc.h5')
@@ -108,17 +119,17 @@ if model_to_train == 'HED_dense':
     #high learning rate
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
      vasc_val.images_norm,vasc_val.segs_tf)
-    net.save('./models/HED_dense.h5')
+    net.save(model_dir+'HED_dense.h5')
 
 prediction = net.predict(vasc_test.images_norm)
-np.save('./predictions/{}'.format(model_to_train), prediction)
+np.save(pred_dir+'{}'.format(model_to_train), prediction)
 
 plt.figure()
 plt.plot(range(0,len(train_loss)),train_loss, color='red', label='train loss', linewidth=2)
 plt.plot(range(0,len(val_loss)),val_loss, color='green', label='validation loss', linewidth=2)
 plt.xlabel('epoch')
 plt.legend(loc='upper right')
-plt.savefig('./plots/{}_loss.png'.format(model_to_train))
+plt.savefig(plot_dir+'{}_loss.png'.format(model_to_train))
 ###############################
 # confusion matrix
 ###############################
