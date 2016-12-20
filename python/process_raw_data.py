@@ -11,40 +11,76 @@ np.random.seed(0)
 #Parse input arguments
 #############################
 parser = argparse.ArgumentParser()
-parser.add_argument('groupsDir')
+parser.add_argument('input_dir')
+parser.add_argument('output_dir')
+parser.add_argument('-t','--type',default='all',choices=['all','ct','mr'])
 args = parser.parse_args()
-groupsDir = args.groupsDir
+input_dir = args.input_dir
+output_dir = args.output_dir
+im_type = args.type
 
 #############################
-#Parse config params
+#create output directories
 #############################
-config = configparser.ConfigParser()
-config.read('options.cfg')
+if not os.path.exists(os.path.abspath(output_dir)):
+    os.mkdir(os.path.abspath(output_dir))
+
 dirs = {}
-dirs['train'] = config['learn_params']['train_dir']
-dirs['val'] = config['learn_params']['val_dir']
-dirs['test'] = config['learn_params']['test_dir']
-split = float(config['learn_params']['split'])
+if im_type == 'all':
+    if not os.path.exists(os.path.abspath(output_dir+'all')):
+        os.mkdir(os.path.abspath(output_dir+'all'))
+
+    dirs['train'] = output_dir+'all/train/'
+    dirs['val'] = output_dir+'all/val/'
+    dirs['test'] = output_dir+'all/test/'
+
+if im_type == 'mr':
+    if not os.path.exists(os.path.abspath(output_dir+'mr')):
+        os.mkdir(os.path.abspath(output_dir+'mr'))
+
+    dirs['train'] = output_dir+'mr/train/'
+    dirs['val'] = output_dir+'mr/val/'
+    dirs['test'] = output_dir+'mr/test'
+
+if im_type == 'ct':
+    if not os.path.exists(os.path.abspath(output_dir+'ct')):
+        os.mkdir(os.path.abspath(output_dir+'ct'))
+
+    dirs['train'] = output_dir+'ct/train/'
+    dirs['val'] = output_dir+'ct/val/'
+    dirs['test'] = output_dir+'ct/test/'
+
+for k in dirs.keys():
+    if not os.path.exists(os.path.abspath(dirs[k])):
+        os.mkdir(os.path.abspath(dirs[k]))
+
+#split = float(config['learn_params']['split'])
+split = 0.15
 
 ################################
 # Create variables to store data
 ################################
-files = os.listdir(groupsDir)
+files = os.listdir(input_dir)
 images = []
 segmentations = []
 meta_data = [[],[],[]]
 contours = []
 contours_ls = []
 contours_edge = []
-names = open(groupsDir+'../names.txt','w')
+names = open(input_dir+'../names.txt','w')
 
 eccentricity_limit = 0.2
 
 #################################
 # Make model train/val/test split
 #################################
-#models = [f.split('.')[0] for f in files if 'OSMSC' in f]
-models = open('./data/mr_images.list').readlines()
+if im_type == 'all':
+    models = [f.split('.')[0] for f in files if 'OSMSC' in f]
+if im_type == 'mr':
+    models = open('./data/mr_images.list').readlines()
+if im_type == 'ct':
+    models = open('./data/ct_images.list').readlines()
+
 models = [m.replace('\n','') for m in models]
 models = list(set(models))
 inds = np.random.permutation(len(models))
@@ -71,9 +107,9 @@ for f in tqdm(files):
         ls_image = f.replace('truth','image')
         ls_edge = f.replace('truth','edge96')
 
-        contour = utility.VTKPDReadAndReorder(groupsDir+ls)
-        contour_image = utility.VTKPDReadAndReorder(groupsDir+ls_image)
-        contour_edge = utility.VTKPDReadAndReorder(groupsDir+ls_edge)
+        contour = utility.VTKPDReadAndReorder(input_dir+ls)
+        contour_image = utility.VTKPDReadAndReorder(input_dir+ls_image)
+        contour_edge = utility.VTKPDReadAndReorder(input_dir+ls_edge)
         if utility.eccentricity(contour) < eccentricity_limit:
             continue
 
@@ -83,7 +119,7 @@ for f in tqdm(files):
         contour_edge = contour_edge[:,:2]
         poly = Polygon(contour)
 
-        mag_sp = utility.readVTKSP(groupsDir+mag)
+        mag_sp = utility.readVTKSP(input_dir+mag)
 
         spacing = mag_sp.GetSpacing()
         origin = mag_sp.GetOrigin()
@@ -109,12 +145,12 @@ for f in tqdm(files):
                 split_inds[k].append(count)
         count+=1
 
-segmentations = np.asarray(segmentations)
-images = np.asarray(images)
+segmentations = np.asarray(segmentations).reshape((-1,segmentations[0].shape[0],segmentations[0].shape[1]))
+images = np.asarray(images).reshape((-1,images[0].shape[0],images[0].shape[1]))
 meta_data = np.asarray(meta_data)
 names.close()
 
-f = open(groupsDir+'../names.txt')
+f = open(input_dir+'../names.txt')
 s = f.readlines()
 for k in dirs.keys():
     group_names = open(dirs[k]+'names.txt','w')
@@ -127,17 +163,17 @@ for k in dirs.keys():
     np.save(dirs[k]+'ls_image', [contours_ls[i] for i in split_inds[k]])
     np.save(dirs[k]+'ls_edge', [contours_edge[i] for i in split_inds[k]])
 
-f = open('./data/train.txt','w')
+f = open(dirs['train']+'train.txt','w')
 for m in split_models['train']:
     f.write(m+'\n')
 f.close()
 
-f = open('./data/val.txt','w')
+f = open(dirs['val']+'val.txt','w')
 for m in split_models['val']:
     f.write(m+'\n')
 f.close()
 
-f = open('./data/test.txt','w')
+f = open(dirs['test']+'test.txt','w')
 for m in split_models['test']:
     f.write(m+'\n')
 f.close()
