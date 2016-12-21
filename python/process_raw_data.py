@@ -145,8 +145,12 @@ for f in tqdm(files):
                 split_inds[k].append(count)
         count+=1
 
-segmentations = np.asarray(segmentations).reshape((-1,segmentations[0].shape[0],segmentations[0].shape[1]))
-images = np.asarray(images).reshape((-1,images[0].shape[0],images[0].shape[1]))
+segmentations = np.asarray(segmentations)
+if len(segmentations.shape) != 3:
+    segmentations = segmentations.reshape((-1,segmentations[0].shape[0],segmentations[0].shape[1]))
+images = np.asarray(images)
+if len(images.shape) != 3:
+    image = images.reshape((-1,images[0].shape[0],images[0].shape[1]))
 meta_data = np.asarray(meta_data)
 names.close()
 

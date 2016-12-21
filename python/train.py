@@ -28,9 +28,9 @@ config_file = args.config_file
 
 #config
 config = utility.parse_config(config_file)
-dataDir = config['learn_params']['data_dir']+'train'
-valDir = config['learn_params']['data_dir']+'val'
-testDir = config['learn_params']['data_dir']+'test'
+dataDir = config['learn_params']['data_dir']+'train/'
+valDir = config['learn_params']['data_dir']+'val/'
+testDir = config['learn_params']['data_dir']+'test/'
 output_dir = config['learn_params']['output_dir']
 model_dir = config['learn_params']['model_dir']
 pred_dir = config['learn_params']['pred_dir']
