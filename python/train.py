@@ -61,11 +61,11 @@ dense_size = 100
 dense_layers = 1
 nb_epoch=10
 batch_size=32
-Pw=Ph=int(conig['learn_params']['image_dims'])
+Pw=Ph=int(config['learn_params']['image_dims'])
 input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)
 lrates = [lr,lr/10,lr/100,lr/1000]
-l2_reg=0.0
+l2_reg=0.1
 #lrates = [lr]
 ###############################
 # Training
@@ -106,7 +106,7 @@ if model_to_train == 'OBG_FCN':
 
 if model_to_train == 'HED':
     #net = load_model('./models/hed_bsds_vasc.h5')
-    net = util_model.hed_keras(input_shape=input_shape,l2_reg=l2_reg)
+    net = util_model.hed_keras(input_shape=input_shape,l2_reg=0.0)
     #high learning rate
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*4,
      vasc_val.images_norm,[vasc_val.segs_tf]*4)
