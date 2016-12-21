@@ -28,21 +28,27 @@ ts = np.arange(0,1+DX,DX)
 # Parse arguments
 #########################################
 parser = argparse.ArgumentParser()
-parser.add_argument('--pred_dir',default='./predictions/')
+parser.add_argument('config_file')
+#parser.add_argument('--pred_dir',default='./predictions/')
 parser.add_argument('-p','--paths',nargs='+',default=['all'])
 args = parser.parse_args()
 
-pred_dir = args.pred_dir
+config_file = args.config_file
+config = utility.parse_config('options.cfg')
+
+dataDir = config['learn_params']['data_dir']+'test/'
+
+pred_dir = config['learn_params']['pred_dir']
 path_types = args.paths
 
 #make folder name for plots and make directory
-plot_dir = "./plots/{}/".format("_".join(path_types))
+plot_dir = config['learn_params']['plot_dir']
+plot_dir = plot_dir+"{}/".format("_".join(path_types))
+
 if not os.path.exists(os.path.abspath(plot_dir)):
     os.mkdir(os.path.abspath(plot_dir))
 
-config = utility.parse_config('options.cfg')
 
-dataDir = config['learn_params']['test_dir']
 #########################################
 #function definitions
 #########################################
