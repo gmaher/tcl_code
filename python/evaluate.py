@@ -34,7 +34,7 @@ parser.add_argument('-p','--paths',nargs='+',default=['all'])
 args = parser.parse_args()
 
 config_file = args.config_file
-config = utility.parse_config('options.cfg')
+config = utility.parse_config(config_file)
 
 dataDir = config['learn_params']['data_dir']+'test/'
 
