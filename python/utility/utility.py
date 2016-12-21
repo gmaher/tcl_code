@@ -634,6 +634,19 @@ def listAreaOverlapError(Y_pred,Y_truth):
 	    errs.append(e)
 	return errs
 
+def contourRadius(contour):
+	"""
+	calculates the radius of a list of a (x,y) points
+
+	args:
+		@a contour, numpy array (num points, 2)
+	"""
+	tup = zip(contour[:,0],contour[:,1])
+
+	p = Polygon(tup)
+
+	return np.sqrt(p.area/np.pi)
+	
 def confusionMatrix(ytrue,ypred, as_fraction=True):
 	'''
 	computes confusion matrix and (optionally) converts it to fractional form
