@@ -5,6 +5,7 @@ models/
 python/data/*
 python/plots/*
 python/predictions/*
+python/output
 *.csv
 *.txt
 *.html

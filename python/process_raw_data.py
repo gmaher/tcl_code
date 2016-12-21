@@ -40,7 +40,7 @@ if im_type == 'mr':
 
     dirs['train'] = output_dir+'mr/train/'
     dirs['val'] = output_dir+'mr/val/'
-    dirs['test'] = output_dir+'mr/test'
+    dirs['test'] = output_dir+'mr/test/'
 
 if im_type == 'ct':
     if not os.path.exists(os.path.abspath(output_dir+'ct')):
