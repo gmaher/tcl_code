@@ -150,7 +150,7 @@ images = np.asarray(images).reshape((-1,images[0].shape[0],images[0].shape[1]))
 meta_data = np.asarray(meta_data)
 names.close()
 
-f = open(input_dir+'../names.txt')
+f = open(input_dir+'names.txt')
 s = f.readlines()
 for k in dirs.keys():
     group_names = open(dirs[k]+'names.txt','w')
