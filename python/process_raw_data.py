@@ -13,11 +13,13 @@ np.random.seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument('input_dir')
 parser.add_argument('output_dir')
+parser.add_argument('imsize')
 parser.add_argument('-t','--type',default='all',choices=['all','ct','mr'])
 args = parser.parse_args()
 input_dir = args.input_dir
 output_dir = args.output_dir
 im_type = args.type
+imsize = int(args.imsize)
 
 #############################
 #create output directories
@@ -100,6 +102,9 @@ split_inds['test'] = []
 count = 0
 files = [f for f in files if 'truth.ls' in f and (not "OSMSC0159" in f) and any(s.lower() in f.lower() for s in models)]
 
+segmentations = np.zeros((len(files),imsize,imsize))
+images = np.zeros((len(files),imsize,imsize))
+
 for f in tqdm(files):
     if "truth.ls" in f:
         mag = f.replace('truth.ls.vtp','truth.mag.vts')
@@ -128,8 +133,11 @@ for f in tqdm(files):
         seg = utility.contourToSeg(contour, origin, dims, spacing)
         mag_np = utility.VTKSPtoNumpy(mag_sp)[0]
 
-        segmentations.append(seg)
-        images.append(mag_np)
+        #segmentations.append(seg)
+        #images.append(mag_np)
+        segmentations[count,:,:] = seg
+        images[count,:,:] = mag_np
+
         contours.append(contour)
         contours_ls.append(contour_image)
         contours_edge.append(contour_edge)
@@ -145,12 +153,12 @@ for f in tqdm(files):
                 split_inds[k].append(count)
         count+=1
 
-segmentations = np.asarray(segmentations)
-if len(segmentations.shape) != 3:
-    segmentations = segmentations.reshape((-1,segmentations[0].shape[0],segmentations[0].shape[1]))
-images = np.asarray(images)
-if len(images.shape) != 3:
-    image = images.reshape((-1,images[0].shape[0],images[0].shape[1]))
+# segmentations = np.asarray(segmentations)
+# if len(segmentations.shape) != 3:
+#     segmentations = segmentations.reshape((-1,segmentations[0].shape[0],segmentations[0].shape[1]))
+# images = np.asarray(images)
+# if len(images.shape) != 3:
+#     image = images.reshape((-1,images[0].shape[0],images[0].shape[1]))
 meta_data = np.asarray(meta_data)
 names.close()
 
