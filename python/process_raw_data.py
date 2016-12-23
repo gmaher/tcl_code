@@ -133,6 +133,9 @@ for f in tqdm(files):
         seg = utility.contourToSeg(contour, origin, dims, spacing)
         mag_np = utility.VTKSPtoNumpy(mag_sp)[0]
 
+        if mag_np.shape[0] != imsize:
+            print "shape mismatch, continuing"
+            continue
         #segmentations.append(seg)
         #images.append(mag_np)
         segmentations[count,:,:] = seg
