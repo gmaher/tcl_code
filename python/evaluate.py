@@ -37,7 +37,7 @@ config_file = args.config_file
 config = utility.parse_config(config_file)
 
 dataDir = config['learn_params']['data_dir']+'test/'
-
+model_dir = config['learn_params']['model_dir']
 pred_dir = config['learn_params']['pred_dir']
 path_types = args.paths
 
@@ -301,7 +301,7 @@ f.write('IOU,'+','.join([str(1-np.mean(PREDS['error'][k])) for k in PREDS['error
 f.close()
 
 #HED Plot
-hed = load_model('./models/HED.h5')
+hed = load_model(model_dir+'HED.h5')
 Y_hed = hed.predict(X_test)
 image_grid_plot([X_test]+Y_hed,
 ['image','hed1','hed2','hed3','hed4'],
@@ -313,10 +313,10 @@ plt.figure()
 plt.scatter(radius_vector, PREDS['error']['SN'])
 plt.xlabel('radius')
 plt.ylabel('error')
-plt.saveFig(plot_dir+'sn_scatter.png')
+plt.savefig(plot_dir+'sn_scatter.png')
 
 plt.figure()
 plt.scatter(radius_vector, PREDS['error']['level set'])
 plt.xlabel('radius')
 plt.ylabel('error')
-plt.saveFig(plot_dir+'ls_scatter.png')
+plt.savefig(plot_dir+'ls_scatter.png')

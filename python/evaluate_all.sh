@@ -1,9 +1,13 @@
 #!/bin/bash
 
-python evaluate.py
+python evaluate.py options.cfg
 
-python evaluate.py -p aorta
+python evaluate.py options2.cfg
 
-python evaluate.py -p osmsc0002
+python evaluate.py options3.cfg
 
-python evaluate.py -p lpa rpa
+python evaluate.py options4.cfg
+
+python evaluate.py options5.cfg
+
+python evaluate.py options6.cfg

@@ -94,8 +94,8 @@ if model_to_train == 'OBP_FCN':
     net_categorical.save(model_dir+'OBP_FCN_categorical.h5')
 
 if model_to_train == 'OBG_FCN':
-    fcn = load_model('./models/FCN.h5')
-    obp = load_model('./models/OBP_FCN.h5')
+    fcn = load_model(model_dir+'FCN.h5')
+    obp = load_model(model_dir+'OBP_FCN.h5')
 
     net = util_model.OBG_FCN(fcn,obp,input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,l2_reg=l2_reg)
 

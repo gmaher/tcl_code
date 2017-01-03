@@ -10,22 +10,22 @@
 #python train.py HED options.cfg
 
 #options2
-#python train.py FCN options2.cfg
+python train.py FCN options2.cfg
 
-#python train.py OBP_FCN options2.cfg
+python train.py OBP_FCN options2.cfg
 
-#python train.py OBG_FCN options2.cfg
+python train.py OBG_FCN options2.cfg
 
-#python train.py HED options2.cfg
+python train.py HED options2.cfg
 
 #options3
-#python train.py FCN options3.cfg
+python train.py FCN options3.cfg
 
-#python train.py OBP_FCN options3.cfg
+python train.py OBP_FCN options3.cfg
 
-#python train.py OBG_FCN options3.cfg
+python train.py OBG_FCN options3.cfg
 
-#python train.py HED options3.cfg
+python train.py HED options3.cfg
 
 #options4
 python train.py FCN options4.cfg

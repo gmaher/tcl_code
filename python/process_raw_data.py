@@ -135,6 +135,7 @@ for f in tqdm(files):
 
         if mag_np.shape[0] != imsize:
             print "shape mismatch, continuing"
+            print f
             continue
         #segmentations.append(seg)
         #images.append(mag_np)
