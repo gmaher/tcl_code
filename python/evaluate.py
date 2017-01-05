@@ -134,7 +134,7 @@ def contour_plot(X_test, Clist, extent, labels, colors, start_index, Nplots, fil
                 print "failed contour"
                 h, = ax_contour[i,j].plot([0],[0], color=color,label=label,linewidth=4)
             else:
-                h, = ax_contour[i,j].plot(contour[:,0],contour[:,1], color=color,label=label,linewidth=4)
+                h, = ax_contour[i,j].plot(contour[:,0],-contour[:,1], color=color,label=label,linewidth=4)
             handles.append(h)
 
             [a.set_axis_off() for a in ax_contour[i, :]]
@@ -313,10 +313,63 @@ plt.figure()
 plt.scatter(radius_vector, PREDS['error']['SN'])
 plt.xlabel('radius')
 plt.ylabel('error')
+plt.xlim(-0.2,2.0)
+plt.ylim(-0.2,1.2)
 plt.savefig(plot_dir+'sn_scatter.png')
 
 plt.figure()
 plt.scatter(radius_vector, PREDS['error']['level set'])
 plt.xlabel('radius')
 plt.ylabel('error')
+plt.xlim(-0.2,2.0)
+plt.ylim(-0.2,1.2)
 plt.savefig(plot_dir+'ls_scatter.png')
+
+#Radius error binning plot
+def radiusErrorCount(errors,radiuses,err_thresh, rad_range):
+    """
+    computes number of errors smaller than err_thresh for all vessels with radius
+    in rad_range
+
+    args:
+        @a errors: list of errors
+        @a radiuses: list of radiuses
+        @a err_thresh: error threshold below which to count
+        @a rad_range: radius range in which to consider errors
+
+    returns:
+        @a err_count: number of errors below threshold
+    """
+    r = [1 for i in range(len(radiuses)) if radiuses[i] >= rad_range[0] and
+    radiuses[i] < rad_range[1]]
+    e = [1 for i in range(len(radiuses)) if radiuses[i] >= rad_range[0] and
+    radiuses[i] < rad_range[1] and errors[i] <= err_thresh]
+
+    err_count = float(np.sum(e))/np.sum(r)
+    return err_count
+
+r =[[0,0.3],[0.3,1.0],[1.0,2.5]]
+rad_err_thresh = 0.25
+
+sn = [radiusErrorCount(PREDS['error']['SN'],radius_vector,rad_err_thresh,rad) for rad in
+r]
+obg = [radiusErrorCount(PREDS['error']['OBG_SN'],radius_vector,rad_err_thresh,rad) for rad in
+r]
+ls = [radiusErrorCount(PREDS['error']['level set'],radius_vector,rad_err_thresh,rad) for rad in
+r]
+
+ind = np.array([0,2,4])
+width=0.3
+
+plt.figure()
+plt.bar(ind,sn,width,color='r', label='SN')
+plt.bar(ind+width,obg,width,color='b', label='OBG_SN')
+plt.bar(ind+2*width,ls,width,color='pink', label='level set')
+
+plt.ylim(0,1.0)
+plt.ylabel('Fraction of vessels with error below threshold')
+plt.xlabel('radius')
+plt.xticks(ind+width, ['0-0.3cm','0.3-1.0cm','1.0-2.5cm'])
+plt.legend(loc='upper left')
+
+plt.savefig(plot_dir+'radiusBar.png')

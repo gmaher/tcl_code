@@ -97,15 +97,21 @@ def hed_keras(input_shape=(64,64,1), l2_reg=0):
 
     #conv1
     x = Convolution2D(64,3,3,activation='relu', border_mode='same', name='conv1_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(inp)
+    x = BatchNormalization(mode=2)(x)
     x = Convolution2D(64,3,3,activation='linear', border_mode='same', name='conv1_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    out1 = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='score-dsn1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
+    out1 = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='score-dsn1',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
     x = Activation('relu')(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='pool1')(x)
 
     #conv2
     x = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv2_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
     x = Convolution2D(128,3,3,activation='linear', border_mode='same', name='conv2_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    out2 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
+    out2 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn2',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
     out2 = UpSampling2D(size=(2,2), name='upsample2')(out2)
     out2 = Activation('sigmoid', name='sigmoid-dsn2')(out2)
     x = Activation('relu')(x)
@@ -113,9 +119,12 @@ def hed_keras(input_shape=(64,64,1), l2_reg=0):
 
     #conv3
     x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
     x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
     x = Convolution2D(256,3,3,activation='linear', border_mode='same', name='conv3_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
-    out3 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    out3 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn3',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
     out3 = UpSampling2D(size=(4,4), name='upsample3')(out3)
     out3 = Activation('sigmoid', name='sigmoid-dsn3')(out3)
     # x = Activation('relu')(x)
@@ -141,6 +150,8 @@ def hed_keras(input_shape=(64,64,1), l2_reg=0):
 
     #Merge all outputs
     out = merge([out1,out2,out3], mode='concat', concat_axis=3)
+    out = BatchNormalization(mode=2)(out)
+    out = Convolution2D(3,1,1,activation='linear', border_mode='same', name='new-score-weighting_pre', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
     out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='new-score-weighting', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
 
     #weights to initialize final layer to be simple average

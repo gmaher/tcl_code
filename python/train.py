@@ -60,7 +60,7 @@ output_channels = 1
 dense_size = 100
 dense_layers = 1
 nb_epoch=10
-batch_size=32
+batch_size=128
 Pw=Ph=int(config['learn_params']['image_dims'])
 input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)
@@ -72,7 +72,8 @@ l2_reg=0.1
 ###############################
 if model_to_train == 'FCN':
     net = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
-    num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,dense_size=dense_size, l2_reg=l2_reg)
+    num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,
+    dense_size=dense_size, l2_reg=l2_reg, mask=True)
     net.name ='FCN'
 
     net,train_loss,val_loss =\
