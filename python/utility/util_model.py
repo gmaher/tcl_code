@@ -36,7 +36,7 @@ output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False, l2_reg=0.
     	m = Dense(input_shape[0]*input_shape[1], activation='relu',
         W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
 
-    	m = Reshape(input_shape)(m)
+    	m = Reshape(input_shape, name="mask")(m)
 
     	#merge
     	d = merge([d,m], mode='mul')
@@ -92,7 +92,8 @@ def OBG_FCN(FCN,OBP_FCN,input_shape=(64,64,1), Nfilters=32, Wfilter=3, output_ch
     OBG_FCN = Model(x,d)
     return OBG_FCN
 
-def hed_keras(input_shape=(64,64,1), l2_reg=0):
+def hed_keras(input_shape=(64,64,1), Wfilter=3, Nfilters=32, dense_layers=1, dense_size=64,
+num_conv=2, mask=True, l2_reg=0):
     inp = Input(shape=input_shape)
 
     #conv1
@@ -151,8 +152,33 @@ def hed_keras(input_shape=(64,64,1), l2_reg=0):
     #Merge all outputs
     out = merge([out1,out2,out3], mode='concat', concat_axis=3)
     out = BatchNormalization(mode=2)(out)
-    out = Convolution2D(3,1,1,activation='linear', border_mode='same', name='new-score-weighting_pre', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
+    out = Convolution2D(3,1,1,activation='relu', border_mode='same', name='new-score-weighting_pre', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
     out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='new-score-weighting', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
+
+    #mask layer
+    if mask:
+    	m = Flatten()(inp)
+
+    	for i in range(0,dense_layers):
+    		m = Dense(dense_size, activation='relu',
+            W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    	m = Dense(input_shape[0]*input_shape[1], activation='relu',
+        W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    	m = Reshape(input_shape, name="mask")(m)
+
+    	#merge
+    	d = merge([out,m], mode='mul')
+
+        #finetune
+        for i in range(0,num_conv):
+            d = BatchNormalization(mode=2)(d)
+            d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
+            border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+        out = Convolution2D(1,Wfilter,Wfilter,activation='sigmoid',
+        border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
 
     #weights to initialize final layer to be simple average
     arr = np.asarray([1.0/3,1.0/3,1.0/3])
@@ -160,8 +186,8 @@ def hed_keras(input_shape=(64,64,1), l2_reg=0):
     bias = np.asarray([0.0])
 
     model = Model(inp,[out,out1,out2,out3])
-    model.layers[-1].set_weights([arr,bias])
-    model.layers[-1].trainable = False
+    #model.layers[-1].set_weights([arr,bias])
+    #model.layers[-1].trainable = False
     return model
 
 def hed_dense(hed,input_shape=(64,64,1),dense_size=4096):

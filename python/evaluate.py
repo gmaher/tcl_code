@@ -301,10 +301,20 @@ f.write('IOU,'+','.join([str(1-np.mean(PREDS['error'][k])) for k in PREDS['error
 f.close()
 
 #HED Plot
+from keras import backend as K
+def get_activation(x,name,model):
+    f = K.function([model.layers[0].input],
+        [model.get_layer(name).output])
+
+    return f([x])[0]
+
 hed = load_model(model_dir+'HED.h5')
 Y_hed = hed.predict(X_test)
-image_grid_plot([X_test]+Y_hed,
-['image','hed1','hed2','hed3','hed4'],
+mask = get_activation(X_test,"mask",hed)
+inside_output = get_activation(X_test,"new-score-weighting",hed)
+
+image_grid_plot([X_test]+Y_hed+[mask,inside_output],
+['image','hed1','hed2','hed3','hed4','mask','inside_output'],
 15,plot_dir+'/hed.png',(40,40))
 
 #Radius scatter plot

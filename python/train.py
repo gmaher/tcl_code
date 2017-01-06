@@ -58,7 +58,7 @@ lr = 1e-3
 threshold = 0.3
 output_channels = 1
 dense_size = 100
-dense_layers = 1
+dense_layers = 3
 nb_epoch=10
 batch_size=128
 Pw=Ph=int(config['learn_params']['image_dims'])
@@ -107,7 +107,8 @@ if model_to_train == 'OBG_FCN':
 
 if model_to_train == 'HED':
     #net = load_model('./models/hed_bsds_vasc.h5')
-    net = util_model.hed_keras(input_shape=input_shape,l2_reg=0.0)
+    net = util_model.hed_keras(input_shape=input_shape, Wfilter=Wfilter, mask=True, Nfilters=Nfilters,
+    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0)
     #high learning rate
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*4,
      vasc_val.images_norm,[vasc_val.segs_tf]*4)
