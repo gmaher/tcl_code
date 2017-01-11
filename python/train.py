@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 
 from utility import util_data
 from utility import util_model
+import scipy
 import argparse
 np.random.seed(0)
 ##########################
@@ -53,12 +54,12 @@ vasc_test.createOBG(border_width=1)
 ##############################
 Nfilters = 32
 Wfilter = 3
-num_conv=3
+num_conv=6
 lr = 1e-3
 threshold = 0.3
 output_channels = 1
 dense_size = 100
-dense_layers = 3
+dense_layers = 1
 nb_epoch=10
 batch_size=128
 Pw=Ph=int(config['learn_params']['image_dims'])
@@ -114,16 +115,27 @@ if model_to_train == 'HED':
      vasc_val.images_norm,[vasc_val.segs_tf]*4)
     net.save(model_dir+'HED.h5')
 
-if model_to_train == 'HED_dense':
-    hed = load_model('./models/hed_bsds_vasc.h5')
-    hed.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-    net = util_model.hed_dense(hed, dense_size=dense_size)
+if model_to_train == 'I2INet':
+
+    net = util_model.I2INet(input_shape=input_shape, Wfilter=Wfilter, mask=True, Nfilters=Nfilters,
+    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
     #high learning rate
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
-     vasc_val.images_norm,vasc_val.segs_tf)
-    net.save(model_dir+'HED_dense.h5')
+    downsampled_train = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_train.segs_tf])
+    downsampled_train = downsampled_train.reshape((vasc_train.segs_tf.shape[0],Pw/2,Ph/2,1))
+    downsampled_train /= np.max(downsampled_train)
+
+    downsampled_val = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_val.segs_tf])
+    downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
+    downsampled_val /= np.max(downsampled_val)
+
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
+     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net.save(model_dir+'I2INet.h5')
 
 prediction = net.predict(vasc_test.images_norm)
+if model_to_train == 'HED' or model_to_train == 'I2INet':
+    prediction = prediction[0]
+
 np.save(pred_dir+'{}'.format(model_to_train), prediction)
 
 plt.figure()
@@ -137,7 +149,7 @@ plt.savefig(plot_dir+'{}_loss.png'.format(model_to_train))
 ###############################
 X_test = vasc_val.images_norm
 Y_pred = net.predict(X_test)
-if model_to_train == 'HED':
+if model_to_train == 'HED' or model_to_train == 'I2INet':
     Y_pred = Y_pred[0]
 if Y_pred.shape[3] == 1:
     Y_test = vasc_val.segs_tf

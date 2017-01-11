@@ -213,7 +213,7 @@ add_pred_to_dict(PREDS,pred_dir+'FCN.npy','SN','red',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'OBP_FCN.npy','OBP_SN','green',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_SN','blue',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape,Y_test)
-#add_pred_to_dict(PREDS,pred_dir+'HED_dense.npy','HED_dense','orange',inds,shape)
+add_pred_to_dict(PREDS,pred_dir+'I2INet.npy','I2INet','orange',inds,shape, Y_test)
 
 #load contours
 add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,inds,DX)
@@ -246,14 +246,14 @@ OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
 15,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
-keys_seg = ['SN','OBP_SN','OBG_SN','HED']
+keys_seg = ['SN','OBP_SN','OBG_SN','HED','I2INet']
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure 2 contours
 keys = ['level set', 'level set edge map', 'SN', 'OBP_SN',
-'OBG_SN', 'HED']
+'OBG_SN', 'HED','I2INet']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
 colors = ['yellow']+[PREDS['color'][k] for k in keys]
@@ -312,16 +312,48 @@ hed = load_model(model_dir+'HED.h5')
 Y_hed = hed.predict(X_test)
 mask = get_activation(X_test,"mask",hed)
 inside_output = get_activation(X_test,"new-score-weighting",hed)
+merged = get_activation(X_test,'merged',hed)
 
-image_grid_plot([X_test]+Y_hed+[mask,inside_output],
-['image','hed1','hed2','hed3','hed4','mask','inside_output'],
+image_grid_plot([X_test]+Y_hed+[mask,inside_output,merged],
+['image','hed1','hed2','hed3','hed4','mask','inside_output','merged'],
 15,plot_dir+'/hed.png',(40,40))
+
+#I2INet
+i2i = load_model(model_dir+'I2INet.h5')
+Y_i2i = i2i.predict(X_test)
+mask = get_activation(X_test,"mask",hed)
+inside_output = get_activation(X_test,"new-score-weighting",hed)
+merged = get_activation(X_test,'merged',hed)
+
+plt.figure()
+plt.imshow(X_test[2,:,:,0])
+plt.colorbar()
+plt.savefig(plot_dir+'/hedimage.png')
+
+plt.figure()
+plt.imshow(mask[2,:,:,0])
+plt.colorbar()
+plt.savefig(plot_dir+'/hedmask.png')
+
+plt.figure()
+plt.imshow(inside_output[2,:,:,0])
+plt.colorbar()
+plt.savefig(plot_dir+'/hedinsideoutput.png')
+
+plt.figure()
+plt.imshow(merged[2,:,:,0])
+plt.colorbar()
+plt.savefig(plot_dir+'/hedmerged.png')
+
+image_grid_plot([X_test]+Y_i2i,
+['image','i2i1','i2i2'],
+15,plot_dir+'/i2i.png',(40,40))
 
 #Radius scatter plot
 radius_vector = [utility.contourRadius(x) for x in contours_test]
 plt.figure()
 plt.scatter(radius_vector, PREDS['error']['SN'])
-plt.xlabel('radius')
+plt.xlabel('radius (cm)')
 plt.ylabel('error')
 plt.xlim(-0.2,2.0)
 plt.ylim(-0.2,1.2)
@@ -329,11 +361,29 @@ plt.savefig(plot_dir+'sn_scatter.png')
 
 plt.figure()
 plt.scatter(radius_vector, PREDS['error']['level set'])
-plt.xlabel('radius')
+plt.xlabel('radius (cm)')
 plt.ylabel('error')
 plt.xlim(-0.2,2.0)
 plt.ylim(-0.2,1.2)
 plt.savefig(plot_dir+'ls_scatter.png')
+
+#Radius scatter plot
+pixel_vector = np.array(radius_vector)/np.array(meta_test[0,:,0])
+plt.figure()
+plt.scatter(pixel_vector, PREDS['error']['SN'])
+plt.xlabel('radius (pixels)')
+plt.ylabel('error')
+plt.xlim(-0.2,30.0)
+plt.ylim(-0.2,1.2)
+plt.savefig(plot_dir+'sn_scatter_pixel.png')
+
+plt.figure()
+plt.scatter(pixel_vector, PREDS['error']['level set'])
+plt.xlabel('radius (pixels)')
+plt.ylabel('error')
+plt.xlim(-0.2,30.0)
+plt.ylim(-0.2,1.2)
+plt.savefig(plot_dir+'ls_scatter_pixel.png')
 
 #Radius error binning plot
 def radiusErrorCount(errors,radiuses,err_thresh, rad_range):
@@ -365,6 +415,10 @@ sn = [radiusErrorCount(PREDS['error']['SN'],radius_vector,rad_err_thresh,rad) fo
 r]
 obg = [radiusErrorCount(PREDS['error']['OBG_SN'],radius_vector,rad_err_thresh,rad) for rad in
 r]
+hed_rad = [radiusErrorCount(PREDS['error']['HED'],radius_vector,rad_err_thresh,rad) for rad in
+r]
+i2i_rad = [radiusErrorCount(PREDS['error']['I2INet'],radius_vector,rad_err_thresh,rad) for rad in
+r]
 ls = [radiusErrorCount(PREDS['error']['level set'],radius_vector,rad_err_thresh,rad) for rad in
 r]
 
@@ -374,7 +428,9 @@ width=0.3
 plt.figure()
 plt.bar(ind,sn,width,color='r', label='SN')
 plt.bar(ind+width,obg,width,color='b', label='OBG_SN')
-plt.bar(ind+2*width,ls,width,color='pink', label='level set')
+plt.bar(ind+2*width,hed_rad,width,color='black', label='HED')
+plt.bar(ind+3*width,i2i_rad,width,color='orange', label='I2INet')
+plt.bar(ind+4*width,ls,width,color='pink', label='level set')
 
 plt.ylim(0,1.0)
 plt.ylabel('Fraction of vessels with error below threshold')
@@ -383,3 +439,38 @@ plt.xticks(ind+width, ['0-0.3cm','0.3-1.0cm','1.0-2.5cm'])
 plt.legend(loc='upper left')
 
 plt.savefig(plot_dir+'radiusBar.png')
+
+############################
+# pixel error plot
+############################
+rpix =[[0,5.0],[5.0,10.0],[15.0,30.0]]
+rad_err_thresh = 0.25
+
+sn_pix = [radiusErrorCount(PREDS['error']['SN'],pixel_vector,rad_err_thresh,rad) for rad in
+rpix]
+obg_pix = [radiusErrorCount(PREDS['error']['OBG_SN'],pixel_vector,rad_err_thresh,rad) for rad in
+rpix]
+hed_rad_pix = [radiusErrorCount(PREDS['error']['HED'],pixel_vector,rad_err_thresh,rad) for rad in
+rpix]
+i2i_rad_pix = [radiusErrorCount(PREDS['error']['I2INet'],pixel_vector,rad_err_thresh,rad) for rad in
+rpix]
+ls_pix = [radiusErrorCount(PREDS['error']['level set'],pixel_vector,rad_err_thresh,rad) for rad in
+rpix]
+
+ind = np.array([0,2,4])
+width=0.3
+
+plt.figure()
+plt.bar(ind,sn_pix,width,color='r', label='SN')
+plt.bar(ind+width,obg_pix,width,color='b', label='OBG_SN')
+plt.bar(ind+2*width,hed_rad_pix,width,color='black', label='HED')
+plt.bar(ind+3*width,i2i_rad_pix,width,color='orange', label='I2INet')
+plt.bar(ind+4*width,ls_pix,width,color='pink', label='level set')
+
+plt.ylim(0,1.0)
+plt.ylabel('Fraction of vessels with error below threshold')
+plt.xlabel('radius (pixels)')
+plt.xticks(ind+width, ['0-5 pixels','5-10 pixels','10-30 pixels'])
+plt.legend(loc='upper left')
+
+plt.savefig(plot_dir+'radiusBar_pixels.png')
