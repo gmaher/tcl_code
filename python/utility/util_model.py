@@ -293,3 +293,37 @@ num_conv=2, mask=True, l2_reg=0, batchnorm=True):
     #model.layers[-1].set_weights([arr,bias])
     #model.layers[-1].trainable = False
     return model
+
+def FC_branch(input_shape=(64,64,1), Nfilters=32, Wfilter=3,num_conv_1=3, num_conv_2=3,
+output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False, l2_reg=0.0):
+    '''
+    Makes an FCN neural network
+    '''
+    x = Input(shape=input_shape)
+
+    #mask layer
+    m = Flatten()(x)
+
+    for i in range(0,dense_layers):
+    	m = Dense(dense_size, activation='relu',
+        W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    m = Dense(input_shape[0]*input_shape[1], activation='relu',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    d = Reshape(input_shape, name="mask")(m)
+
+    #finetune
+    for i in range(0,num_conv_2):
+        d = BatchNormalization(mode=2)(d)
+        d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
+        border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(output_channels,
+    Wfilter,Wfilter,activation='linear', border_mode='same',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    d = Activation('sigmoid', name='sigmoid')(d)
+    FCN = Model(x,d)
+    return FCN

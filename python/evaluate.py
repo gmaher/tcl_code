@@ -12,6 +12,9 @@ from keras.optimizers import Adam
 from tqdm import tqdm
 
 import utility.util_data as util_data
+import matplotlib
+matplotlib.rcParams.update({'font.size': 18})
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.pylab as pylab
@@ -132,9 +135,9 @@ def contour_plot(X_test, Clist, extent, labels, colors, start_index, Nplots, fil
             ax_contour[i,j].imshow(x_test[:,:,0], extent=extent[start_index+i],cmap='gray')
             if contour == []:
                 print "failed contour"
-                h, = ax_contour[i,j].plot([0],[0], color=color,label=label,linewidth=4)
+                h, = ax_contour[i,j].plot([0],[0], color=color,label=label,linewidth=6)
             else:
-                h, = ax_contour[i,j].plot(contour[:,0],-contour[:,1], color=color,label=label,linewidth=4)
+                h, = ax_contour[i,j].plot(contour[:,0],-contour[:,1], color=color,label=label,linewidth=6)
             handles.append(h)
 
             [a.set_axis_off() for a in ax_contour[i, :]]
@@ -209,11 +212,12 @@ PREDS['mean_acc'] = {}
 shape = (Ntest,Pw,Ph)
 
 #Load all predictions
-add_pred_to_dict(PREDS,pred_dir+'FCN.npy','SN','red',inds,shape,Y_test)
+add_pred_to_dict(PREDS,pred_dir+'FCN.npy','RSN','red',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'OBP_FCN.npy','OBP_SN','green',inds,shape,Y_test)
-add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_SN','blue',inds,shape,Y_test)
+add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_RSN','blue',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'I2INet.npy','I2INet','orange',inds,shape, Y_test)
+add_pred_to_dict(PREDS,pred_dir+'FC_branch.npy','FC_branch','teal',inds,shape, Y_test)
 
 #load contours
 add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,inds,DX)
@@ -246,14 +250,15 @@ OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
 15,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
-keys_seg = ['SN','OBP_SN','OBG_SN','HED','I2INet']
+keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch']
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure 2 contours
-keys = ['level set', 'level set edge map', 'SN', 'OBP_SN',
-'OBG_SN', 'HED','I2INet']
+#keys = ['level set', 'level set edge map', RSN, 'OBP_SN',
+#'OBG_RSN', 'HED','I2INet', 'FC_branch']
+keys = ['level set', 'RSN','OBG_RSN', 'HED','I2INet']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
 colors = ['yellow']+[PREDS['color'][k] for k in keys]
@@ -262,14 +267,14 @@ n2 = int(Ntest/2)
 n3 = (Ntest-10)
 contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n1,5,plot_dir+'contours1.png',(14,20))
 contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n2,5,plot_dir+'contours2.png',(20,20))
-contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n3,5,plot_dir+'contours3.png',(20,14))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n3,4,plot_dir+'contours3.png',(20,14))
 # #Figure 3, IOU
 plt.figure()
 for k in keys:
     plt.plot(ts,PREDS['thresh'][k], color=PREDS['color'][k],
-     label=k, linewidth=2)
+     label=k, linewidth=4)
 plt.xlabel('Jaccard distance')
-plt.ylabel('Fraction of contours below error')
+plt.ylabel('Cumulative error distribution, F(x)')
 plt.legend(loc='upper left')
 plt.savefig(plot_dir+'IOU.png')
 
@@ -352,7 +357,7 @@ image_grid_plot([X_test]+Y_i2i,
 #Radius scatter plot
 radius_vector = [utility.contourRadius(x) for x in contours_test]
 plt.figure()
-plt.scatter(radius_vector, PREDS['error']['SN'])
+plt.scatter(radius_vector, PREDS['error']['RSN'])
 plt.xlabel('radius (cm)')
 plt.ylabel('error')
 plt.xlim(-0.2,2.0)
@@ -370,7 +375,7 @@ plt.savefig(plot_dir+'ls_scatter.png')
 #Radius scatter plot
 pixel_vector = np.array(radius_vector)/np.array(meta_test[0,:,0])
 plt.figure()
-plt.scatter(pixel_vector, PREDS['error']['SN'])
+plt.scatter(pixel_vector, PREDS['error']['RSN'])
 plt.xlabel('radius (pixels)')
 plt.ylabel('error')
 plt.xlim(-0.2,30.0)
@@ -411,9 +416,9 @@ def radiusErrorCount(errors,radiuses,err_thresh, rad_range):
 r =[[0,0.3],[0.3,1.0],[1.0,2.5]]
 rad_err_thresh = 0.25
 
-sn = [radiusErrorCount(PREDS['error']['SN'],radius_vector,rad_err_thresh,rad) for rad in
+sn = [radiusErrorCount(PREDS['error']['RSN'],radius_vector,rad_err_thresh,rad) for rad in
 r]
-obg = [radiusErrorCount(PREDS['error']['OBG_SN'],radius_vector,rad_err_thresh,rad) for rad in
+obg = [radiusErrorCount(PREDS['error']['OBG_RSN'],radius_vector,rad_err_thresh,rad) for rad in
 r]
 hed_rad = [radiusErrorCount(PREDS['error']['HED'],radius_vector,rad_err_thresh,rad) for rad in
 r]
@@ -426,8 +431,8 @@ ind = np.array([0,2,4])
 width=0.3
 
 plt.figure()
-plt.bar(ind,sn,width,color='r', label='SN')
-plt.bar(ind+width,obg,width,color='b', label='OBG_SN')
+plt.bar(ind,sn,width,color='r', label='RSN')
+plt.bar(ind+width,obg,width,color='b', label='OBG_RSN')
 plt.bar(ind+2*width,hed_rad,width,color='black', label='HED')
 plt.bar(ind+3*width,i2i_rad,width,color='orange', label='I2INet')
 plt.bar(ind+4*width,ls,width,color='pink', label='level set')
@@ -446,9 +451,9 @@ plt.savefig(plot_dir+'radiusBar.png')
 rpix =[[0,5.0],[5.0,10.0],[15.0,30.0]]
 rad_err_thresh = 0.25
 
-sn_pix = [radiusErrorCount(PREDS['error']['SN'],pixel_vector,rad_err_thresh,rad) for rad in
+sn_pix = [radiusErrorCount(PREDS['error']['RSN'],pixel_vector,rad_err_thresh,rad) for rad in
 rpix]
-obg_pix = [radiusErrorCount(PREDS['error']['OBG_SN'],pixel_vector,rad_err_thresh,rad) for rad in
+obg_pix = [radiusErrorCount(PREDS['error']['OBG_RSN'],pixel_vector,rad_err_thresh,rad) for rad in
 rpix]
 hed_rad_pix = [radiusErrorCount(PREDS['error']['HED'],pixel_vector,rad_err_thresh,rad) for rad in
 rpix]
@@ -461,8 +466,8 @@ ind = np.array([0,2,4])
 width=0.3
 
 plt.figure()
-plt.bar(ind,sn_pix,width,color='r', label='SN')
-plt.bar(ind+width,obg_pix,width,color='b', label='OBG_SN')
+plt.bar(ind,sn_pix,width,color='r', label='RSN')
+plt.bar(ind+width,obg_pix,width,color='b', label='OBG_RSN')
 plt.bar(ind+2*width,hed_rad_pix,width,color='black', label='HED')
 plt.bar(ind+3*width,i2i_rad_pix,width,color='orange', label='I2INet')
 plt.bar(ind+4*width,ls_pix,width,color='pink', label='level set')

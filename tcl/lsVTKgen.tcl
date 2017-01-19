@@ -122,6 +122,10 @@ proc generate_truth_groups {img path grp} {
 	set itklsGUIParams(edgeImage) 0
 	set itklsGUIParams(2DEdgeImage) "image"
 
+	#file for storing group info
+	global pathInfoFile
+	global gPathPoints
+
   puts "starting group loop"
   foreach grp [array names pathmap] {
 		puts $grp
@@ -142,6 +146,9 @@ proc generate_truth_groups {img path grp} {
 	      set ls_fn ${imgname}.${grp}.${point}.truth.ls.vtp
 	      set mag_fn ${imgname}.${grp}.${point}.truth.mag.vts
 	      set pot_fn ${imgname}.${grp}.${point}.truth.pot.vts
+
+				#puts $pathInfoFile "${imgname} ${grp} ${point} [lindex $gPathPoints($pathid,splinePts) $point]"
+
 				if {[repos_exists -obj /lsGUI/$pathid/$point/thr/selected]} {
 					puts "ls 1"
 	      	repos_writeVtkPolyData -file $ls_fn -obj /lsGUI/$pathid/$point/thr/selected -type ascii
@@ -191,7 +198,6 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "u
   load_files $img $path $grp $edge
 
   global itklsGUIParams
-	set itklsGUIParams(phyRadius) 0.3
 
   if {$edge ne 0} {
 		set itklsGUIParams(2DEdgeImage) $edgeType

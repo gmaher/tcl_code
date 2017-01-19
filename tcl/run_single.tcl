@@ -12,8 +12,13 @@ set E [lindex $argv 4]
 global gOptions
 set gOptions(resliceDims) {64 64}
 
+#global pathInfoFile
+#set pathInfoFile [open "[pwd]/../pathInfo.txt" a]
+
 generate_truth_groups $I $P $G
 generate_edge_groups $I $P $G
 generate_edge_groups $I $P $G $E "edge96"
+
+#close $pathInfoFile
 #mainGUIexit 1
 exit

@@ -82,6 +82,17 @@ if model_to_train == 'FCN':
          vasc_val.images_norm,vasc_val.segs_tf)
     net.save(model_dir+'FCN.h5')
 
+if model_to_train == 'FC_branch':
+    net = util_model.FC_branch(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
+    num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,
+    dense_size=dense_size, l2_reg=l2_reg, mask=True)
+    net.name ='FC_branch'
+
+    net,train_loss,val_loss =\
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
+         vasc_val.images_norm,vasc_val.segs_tf)
+    net.save(model_dir+'FC_branch.h5')
+
 if model_to_train == 'OBP_FCN':
     net,net_categorical = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter, output_channels=3,
     dense_layers=dense_layers,dense_size=dense_size, obg=True,l2_reg=l2_reg)

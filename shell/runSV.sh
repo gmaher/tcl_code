@@ -11,6 +11,10 @@
 echo "Input arguments: $1 $2 $3"
 echo "Generating raw data using simvascular"
 cd $3
+
+touch ../pathInfo.txt
+rm ../pathInfo.txt
+
 paste images.txt paths.txt groups.txt edge.txt | while read I P G E; do
   echo "$I $P $G $E"
   $1 $2 $I $P $G $E
