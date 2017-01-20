@@ -147,7 +147,7 @@ proc generate_truth_groups {img path grp} {
 	      set mag_fn ${imgname}.${grp}.${point}.truth.mag.vts
 	      set pot_fn ${imgname}.${grp}.${point}.truth.pot.vts
 
-				#puts $pathInfoFile "${imgname} ${grp} ${point} [lindex $gPathPoints($pathid,splinePts) $point]"
+				puts $pathInfoFile "${imgname} ${grp} ${point} [lindex $gPathPoints($pathid,splinePts) $point]"
 
 				if {[repos_exists -obj /lsGUI/$pathid/$point/thr/selected]} {
 					puts "ls 1"

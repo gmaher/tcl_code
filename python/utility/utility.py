@@ -101,6 +101,55 @@ def get_group_from_file(fn):
 				#read next line
 				l = f.readline()
 
+def parsePathInfo(fn):
+    """
+    returns a dictionary containing, origin normal and tangent from paths in
+    simvascular
+
+    args:
+        fn (string): filename of file containing path info on each line
+
+    returns:
+        res (dictionary): dict[image.path.point] = [p, t, tx]
+    """
+
+    l = open(fn).readlines()
+    l = [k.split(' ') for k in l]
+
+    for j in [4,6,8]:
+        for i in range(len(l)):
+            l[i][j] = l[i][j].translate(None,'()').split(',')
+            l[i][j] = [float(k) for k in l[i][j]]
+
+    res = {}
+    for i in range(len(l)):
+        res["{}.{}.{}".format(l[i][0],l[i][1],l[i][2])] = [l[i][4],l[i][6],l[i][8]]
+    return res
+
+def denormalizeContour(c,p,t,tx):
+    """
+    uses simvascular path info to transform a contour from 2d to 3d
+
+    args:
+        c (np array, (num points x 2)) - contour to transform
+        p (np array 1x3) - 3d origin of contour
+        t (np array 1x3) - normal vector of 3d contour
+        tx (np array 1x3) - vector in 3d contour plane
+
+    returns:
+        res (np array, (num points x 3)) - 3d contour
+    """
+    c = np.array(c)
+    p = np.array(p)
+    t = np.array(t)
+    tx = np.array(tx)
+
+    ty = np.cross(t,tx)
+    ty = ty/np.linalg.norm(ty)
+
+    res = np.array([k + k[0]*tx + k[1]*ty for k in c])
+    return res
+
 def get_vec_shift(group):
 	'''
 	takes a list of 3d point tuples that lie on a plane
@@ -646,7 +695,7 @@ def contourRadius(contour):
 	p = Polygon(tup)
 
 	return np.sqrt(p.area/np.pi)
-	
+
 def confusionMatrix(ytrue,ypred, as_fraction=True):
 	'''
 	computes confusion matrix and (optionally) converts it to fractional form
