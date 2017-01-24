@@ -19,6 +19,7 @@ from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge,
 import configparser
 from keras.optimizers import Adam
 import util_data
+from scipy.interpolate import UnivariateSpline
 
 def mkdir(fn):
     if not os.path.exists(os.path.abspath(fn)):
@@ -140,6 +141,8 @@ def denormalizeContour(c,p,t,tx):
         res (np array, (num points x 3)) - 3d contour
     """
     c = np.array(c)
+    if c.shape[1] == 2:
+        c = np.hstack((c, np.zeros((c.shape[0],1))))
     p = np.array(p)
     t = np.array(t)
     tx = np.array(tx)
@@ -147,8 +150,8 @@ def denormalizeContour(c,p,t,tx):
     ty = np.cross(t,tx)
     ty = ty/np.linalg.norm(ty)
 
-    res = np.array([k + k[0]*tx + k[1]*ty for k in c])
-    return res
+    res = np.array([p + k[0]*tx + k[1]*ty for k in c])
+    return res[:-1]
 
 def get_vec_shift(group):
 	'''
@@ -500,18 +503,18 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		using the y spacing and the second column using the x spacing
 	'''
 	contours = measure.find_contours(segmentation, isovalue)
-	#index = 0
-	# if len(contours) > 1:
-	# 	xdims,ydims = segmentation.shape
-	# 	xcenter = xdims/2
-	# 	ycenter = ydims/2
-	# 	dist = 1000
-	# 	for i in range(0,len(contours)):
-	# 		center = np.mean(contours[i],axis=0)
-	# 		new_dist = np.sqrt((xcenter-center[1])**2 + (ycenter-center[0])**2)
-	# 		if new_dist < dist:
-	# 			dist = new_dist
-	# 			index = i
+	index = 0
+	if len(contours) > 1:
+		xdims,ydims = segmentation.shape
+		xcenter = xdims/2
+		ycenter = ydims/2
+		dist = 1000
+		for i in range(0,len(contours)):
+			center = np.mean(contours[i],axis=0)
+			new_dist = np.sqrt((xcenter-center[1])**2 + (ycenter-center[0])**2)
+			if new_dist < dist:
+				dist = new_dist
+				index = i
 	returned_contours = []
 	for c in contours:
 		points = c
@@ -523,9 +526,23 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 
 		returned_contours.append(contour)
 	if len(returned_contours) > 0:
-		return returned_contours[0]
+		return returned_contours[index]
 	else:
 		return []
+
+def smoothContour(c):
+    x = c[:,0]
+    y = c[:,1]
+    t = np.linspace(0,1,y.shape[0])
+    tnew = np.linspace(0,0.965,y.shape[0]*2)
+
+    sx = UnivariateSpline(t,x, k = 5)
+    sy = UnivariateSpline(t,y, k = 5)
+
+    x_new = sx(tnew)
+    y_new = sy(tnew)
+
+    return np.array([x_new,y_new]).T
 
 def segToOBG(seg, border_width=1):
 	'''

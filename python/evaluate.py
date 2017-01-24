@@ -231,6 +231,7 @@ OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
 #############################
 #Plot lots of images
 plot_inds = np.random.randint(Ntest,size=(5,5))
+plot_inds[4,4] = 1262
 image_grid_plot([Y_test[plot_inds[0,:]],Y_test[plot_inds[1,:]],Y_test[plot_inds[2,:]],
 Y_test[plot_inds[3,:]],Y_test[plot_inds[4,:]]],
 ['segmentation','segmentation','segmentation','segmentation','segmentation'],
@@ -241,6 +242,13 @@ image_grid_plot([X_test[plot_inds[0,:]],X_test[plot_inds[1,:]],X_test[plot_inds[
 X_test[plot_inds[3,:]],X_test[plot_inds[4,:]]],
 ['image','image','image','image','image'],
 5,plot_dir+'/images.png',(40,40))
+
+#plot lots of predicted segmentations
+seg = PREDS['seg']['RSN']
+image_grid_plot([seg[plot_inds[0,:]],seg[plot_inds[1,:]],seg[plot_inds[2,:]],
+seg[plot_inds[3,:]],seg[plot_inds[4,:]]],
+['image','image','image','image','image'],
+5,plot_dir+'/predicted_segmentations.png',(40,40))
 
 #Figure 0 OBP plot
 vasc2d.createOBG(border_width=1)
