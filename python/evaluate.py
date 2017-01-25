@@ -23,8 +23,7 @@ from sklearn.metrics import roc_curve
 import configparser
 
 np.random.seed(0)
-THRESHOLD = 0.4
-ISOVALUE = 0.5
+
 DX = 0.01
 ts = np.arange(0,1+DX,DX)
 #########################################
@@ -44,6 +43,9 @@ model_dir = config['learn_params']['model_dir']
 pred_dir = config['learn_params']['pred_dir']
 path_types = args.paths
 
+THRESHOLD = float(config['learn_params']['threshold'])
+ISOVALUE = float(config['learn_params']['isovalue'])
+image_dims = int(config['learn_params']['image_dims'])
 #make folder name for plots and make directory
 plot_dir = config['learn_params']['plot_dir']
 plot_dir = plot_dir+"{}/".format("_".join(path_types))
@@ -231,7 +233,7 @@ OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
 #############################
 #Plot lots of images
 plot_inds = np.random.randint(Ntest,size=(5,5))
-plot_inds[4,4] = 1262
+plot_inds[4,4] = 1653
 image_grid_plot([Y_test[plot_inds[0,:]],Y_test[plot_inds[1,:]],Y_test[plot_inds[2,:]],
 Y_test[plot_inds[3,:]],Y_test[plot_inds[4,:]]],
 ['segmentation','segmentation','segmentation','segmentation','segmentation'],
@@ -263,6 +265,13 @@ segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
+#Figure segmentations for high error vessels
+inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.9]
+keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch']
+segs = [X_test[inds],Y_test[inds]]+[PREDS['seg'][k][inds] for k in keys_seg]
+labels = ['image', 'user segmentation']+keys_seg
+image_grid_plot(segs,labels,10,plot_dir+'/segs_higherr.png',(40,40))
+
 #Figure 2 contours
 #keys = ['level set', 'level set edge map', RSN, 'OBP_SN',
 #'OBG_RSN', 'HED','I2INet', 'FC_branch']
@@ -273,9 +282,17 @@ colors = ['yellow']+[PREDS['color'][k] for k in keys]
 n1 = 0
 n2 = int(Ntest/2)
 n3 = (Ntest-10)
+n4 = plot_inds[4,4]
+
 contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n1,5,plot_dir+'contours1.png',(14,20))
 contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n2,5,plot_dir+'contours2.png',(20,20))
 contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n3,4,plot_dir+'contours3.png',(20,14))
+contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n4,4,plot_dir+'contours4.png',(20,14))
+
+#High error contours
+contours_to_plot = [[contours_test[i] for i in inds]]+[[PREDS['contour'][k][i] for i in inds] for k in keys]
+contour_plot(X_test[inds],contours_to_plot,extents_test,labels,colors,0,10,plot_dir+'contours_higherr.png',(20,20))
+
 # #Figure 3, IOU
 plt.figure()
 for k in keys:
@@ -487,3 +504,26 @@ plt.xticks(ind+width, ['0-5 pixels','5-10 pixels','10-30 pixels'])
 plt.legend(loc='upper left')
 
 plt.savefig(plot_dir+'radiusBar_pixels.png')
+
+#Central pixel probability vs error
+cprob = PREDS['seg']['RSN'][:,image_dims/2,image_dims/2]
+s = np.mean(PREDS['seg']['RSN'], axis=(1,2))
+m = np.max(PREDS['seg']['RSN'], axis=(1,2))
+
+plt.figure()
+plt.scatter(cprob, PREDS['error']['RSN'])
+plt.xlabel('center pixel probability')
+plt.ylabel('error')
+plt.savefig(plot_dir+'prob_center.png')
+
+plt.figure()
+plt.scatter(s, PREDS['error']['RSN'])
+plt.xlabel('mean pixel probability')
+plt.ylabel('error')
+plt.savefig(plot_dir+'prob_mean.png')
+
+plt.figure()
+plt.scatter(m, PREDS['error']['RSN'])
+plt.xlabel('max pixel probability')
+plt.ylabel('error')
+plt.savefig(plot_dir+'prob_max.png')

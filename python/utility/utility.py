@@ -530,19 +530,24 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 	else:
 		return []
 
-def smoothContour(c):
+def smoothContour(c, num_modes=10):
     x = c[:,0]
     y = c[:,1]
-    t = np.linspace(0,1,y.shape[0])
-    tnew = np.linspace(0,0.965,y.shape[0]*2)
+    mu = np.mean(c,axis=0)
 
-    sx = UnivariateSpline(t,x, k = 5)
-    sy = UnivariateSpline(t,y, k = 5)
+    x = x-mu[0]
+    y = y-mu[1]
 
-    x_new = sx(tnew)
-    y_new = sy(tnew)
+    xfft = np.fft.fft(x)
+    yfft = np.fft.fft(y)
 
-    return np.array([x_new,y_new]).T
+    xfft[num_modes:] = 0
+    yfft[num_modes:] = 0
+
+    sx = 2*np.fft.ifft(xfft)+mu[0]
+    sy = 2*np.fft.ifft(yfft)+mu[1]
+
+    return np.array([np.real(sx),np.real(sy)]).T
 
 def segToOBG(seg, border_width=1):
 	'''
@@ -699,6 +704,19 @@ def listAreaOverlapError(Y_pred,Y_truth):
 
 	    errs.append(e)
 	return errs
+
+def contourArea(contour):
+	"""
+	calculates the radius of a list of a (x,y) points
+
+	args:
+		@a contour, numpy array (num points, 2)
+	"""
+	tup = zip(contour[:,0],contour[:,1])
+
+	p = Polygon(tup)
+
+	return p.area
 
 def contourRadius(contour):
 	"""

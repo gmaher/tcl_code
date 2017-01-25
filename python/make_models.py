@@ -102,7 +102,9 @@ for m in model_dict.keys():
             path_info = pinfo[key]
             contour_index = t[0]
             c = contour[contour_index]
+
             if c != []:
+                c = utility.smoothContour(c, num_modes=2)
                 cdenorm = utility.denormalizeContour(c,path_info[0],path_info[1],
                     path_info[2])
 
