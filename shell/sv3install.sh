@@ -9,7 +9,7 @@ echo "installing in ${1}"
 cp -r ../cmake/SV3CMakeOptions/ ${1}
 
 for f in $1/SV3CMakeOptions/*; do
-  sed -i "s#/home/marsdenlab/projects/#$1#g" $f
+  sed -i "s#/home/marsdenlab/projects/SV3/#$1#g" $f
   sed -i "s#/home/marsdenlab#$HOME#g" $f
 done
 
@@ -98,7 +98,7 @@ cd ../../..
 # #########################################
 git clone https://github.com/SimVascular/SimVascular.git
 cd SimVascular
-git checkout changes_for_SV3
+#git checkout changes_for_SV3
 cd ..
 
 # #########################################
