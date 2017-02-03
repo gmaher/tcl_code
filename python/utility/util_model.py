@@ -47,13 +47,13 @@ output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False, l2_reg=0.
         d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
         border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
 
-    d = BatchNormalization(mode=2)(d)
-    d = Convolution2D(output_channels,
+    dout = BatchNormalization(mode=2)(d)
+    dout = Convolution2D(output_channels,
     Wfilter,Wfilter,activation='linear', border_mode='same',
-    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(dout)
 
     if obg:
-        d_softmax_input = Reshape((input_shape[0]*input_shape[1],output_channels))(d)
+        d_softmax_input = Reshape((input_shape[0]*input_shape[1],output_channels))(dout)
         d_out = Activation('softmax', name='softmax')(d_softmax_input)
         FCN_categorical = Model(x,d_out)
 
@@ -61,9 +61,34 @@ output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False, l2_reg=0.
         FCN = Model(x,d)
         return FCN,FCN_categorical
     else:
-        d = Activation('sigmoid', name='sigmoid')(d)
-        FCN = Model(x,d)
-        return FCN
+        dout = Activation('sigmoid', name='sigmoid')(dout)
+        FCN = Model(x,dout)
+        FCN_f = Model(x,d)
+        return FCN, FCN_f
+
+def FCN_multi(FCN_f,input_shape=(64,64,1), Nfilters=32, Wfilter=3, output_channels=1, l2_reg=0):
+    x = Input(shape=input_shape)
+
+    fcn_out = FCN_f(x)
+
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(fcn_out)
+    d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+    d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+    d = BatchNormalization(mode=2)(d)
+    # d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu', border_mode='same',
+    # W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+    # d = BatchNormalization(mode=2)(d)
+    d = Convolution2D(output_channels,Wfilter,Wfilter,activation='sigmoid', border_mode='same',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    #merge
+    FCN_multi = Model(x,d)
+    return FCN_multi
 
 def OBG_FCN(FCN,OBP_FCN,input_shape=(64,64,1), Nfilters=32, Wfilter=3, output_channels=1, l2_reg=0):
     x = Input(shape=input_shape)
@@ -326,4 +351,43 @@ output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False, l2_reg=0.
 
     d = Activation('sigmoid', name='sigmoid')(d)
     FCN = Model(x,d)
+    return FCN
+
+def ConvFC(input_shape=(64,64,1), Nfilters=32, Wfilter=3,num_conv_1=3,
+output_channels=1, dense_layers=1,dense_size=64, l2_reg=0.0):
+    '''
+    Makes an convolutional network folloed by FC layers
+    '''
+    x = Input(shape=input_shape)
+
+    #main branch
+    d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
+    border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    d = BatchNormalization(mode=2)(d)
+
+    for i in range(0,num_conv_1):
+        d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
+        border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+        d = BatchNormalization(mode=2)(d)
+
+    dout = Convolution2D(1,Wfilter,Wfilter,activation='sigmoid', border_mode='same',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg), name='deepsupervision')(d)
+
+
+    m = Flatten()(d)
+
+    for i in range(0,dense_layers):
+    	m = Dense(dense_size, activation='relu',
+        W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+        #m = BatchNormalization()(m)
+
+    #m = Dense(input_shape[0]*input_shape[1], activation='linear',
+    #W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    m = Dense(input_shape[0]*input_shape[1], activation='sigmoid',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    m = Reshape(input_shape, name="out")(m)
+
+    FCN = Model(x,[m,dout])
     return FCN

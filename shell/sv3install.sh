@@ -2,6 +2,17 @@
 
 echo "installing in ${1}"
 
+
+#########################################
+# Copy cmake files
+#########################################
+cp -r ../cmake/SV3CMakeOptions/ ${1}
+
+for f in $1/SV3CMakeOptions/*; do
+  sed -i "s#/home/marsdenlab/projects/#$1#g" $f
+  sed -i "s#/home/marsdenlab#$HOME#g" $f
+done
+
 cd $1
 
 #NOTE: Need to add /home/marsdenlab/projects/SV3/sv3_build/Lib to LD_LIBRARY_PATH

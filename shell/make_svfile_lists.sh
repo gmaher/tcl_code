@@ -28,10 +28,10 @@ for dir in $1*; do
 	echo $dir
 	echo $num_images $num_groups $num_paths $num_edge
 
-	# if ([ "$num_images" == "1" ] && [ "$num_groups" -ge "1" ]  &&
-	#  [ "$num_paths" -ge "1" ] && [ "$num_edge" == "1" ]);
-	 if ([ "$num_images" == "1" ] && [ "$num_groups" == "1" ]  &&
-	  [ "$num_paths" == "1" ] && [ "$num_edge" == "1" ]);
+	 if ([ "$num_images" == "1" ] && [ "$num_groups" -ge "1" ]  &&
+	  [ "$num_paths" -ge "1" ] && [ "$num_edge" == "1" ]);
+	# if ([ "$num_images" == "1" ] && [ "$num_groups" == "1" ]  &&
+	#  [ "$num_paths" == "1" ] && [ "$num_edge" == "1" ]);
 		then
 			find $dir -name "*OSMSC*-cm.mha" >> $3/images.txt
 			find $dir -name "*groups-cm" -type d -print -quit >> $3/groups.txt

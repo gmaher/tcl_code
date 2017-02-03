@@ -67,20 +67,54 @@ input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)
 lrates = [lr,lr/10,lr/100,lr/1000]
 l2_reg=0.1
+r_finetune = 0.5
 #lrates = [lr]
 ###############################
 # Training
 ###############################
 if model_to_train == 'FCN':
-    net = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
+    net, net_f = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
     num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,
     dense_size=dense_size, l2_reg=l2_reg, mask=True)
     net.name ='FCN'
-
+    net_f.name='FCN'
     net,train_loss,val_loss =\
         utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
          vasc_val.images_norm,vasc_val.segs_tf)
     net.save(model_dir+'FCN.h5')
+    net_f.save(model_dir+'FCN_f.h5')
+
+if model_to_train == 'FCN_multi':
+    net_f = load_model(output_dir+'../4/models/FCN_f.h5')
+    net = util_model.FCN_multi(net_f,input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
+    l2_reg=l2_reg)
+
+    net,train_loss,val_loss =\
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
+         vasc_val.images_norm,vasc_val.segs_tf)
+    net.save(model_dir+'FCN_multi.h5')
+
+if model_to_train == 'FCN_finetune':
+    net,net_f = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
+    num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,
+    dense_size=dense_size, l2_reg=l2_reg, mask=True)
+    net.name ='FCN_finetune'
+
+    net,train_loss,val_loss =\
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
+         vasc_val.images_norm,vasc_val.segs_tf)
+
+    N = vasc_train.images_norm.shape[0]
+    rads = [utility.contourRadius(x) for x in vasc_train.contours]
+    inds = [i for i in range(len(rads)) if rads[i] <= r_finetune]
+    X_small = vasc_train.images_norm[inds]
+    Y_small = vasc_train.segs_tf[inds]
+
+    net,train_loss,val_loss =\
+        utility.train(net, lrates[1:], batch_size, nb_epoch, X_small, Y_small,
+         vasc_val.images_norm,vasc_val.segs_tf)
+
+    net.save(model_dir+'FCN_finetune.h5')
 
 if model_to_train == 'FC_branch':
     net = util_model.FC_branch(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
@@ -92,6 +126,17 @@ if model_to_train == 'FC_branch':
         utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
          vasc_val.images_norm,vasc_val.segs_tf)
     net.save(model_dir+'FC_branch.h5')
+
+if model_to_train == 'ConvFC':
+    net = util_model.ConvFC(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
+    num_conv_1=2*num_conv,dense_layers=4*dense_layers,
+    dense_size=dense_size, l2_reg=l2_reg)
+    net.name ='ConvFC'
+
+    net,train_loss,val_loss =\
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*2,
+         vasc_val.images_norm,[vasc_val.segs_tf]*2)
+    net.save(model_dir+'ConvFC.h5')
 
 if model_to_train == 'OBP_FCN':
     net,net_categorical = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter, output_channels=3,
@@ -144,7 +189,7 @@ if model_to_train == 'I2INet':
     net.save(model_dir+'I2INet.h5')
 
 prediction = net.predict(vasc_test.images_norm)
-if model_to_train == 'HED' or model_to_train == 'I2INet':
+if model_to_train == 'HED' or model_to_train == 'I2INet' or model_to_train == 'ConvFC':
     prediction = prediction[0]
 
 np.save(pred_dir+'{}'.format(model_to_train), prediction)
@@ -160,7 +205,7 @@ plt.savefig(plot_dir+'{}_loss.png'.format(model_to_train))
 ###############################
 X_test = vasc_val.images_norm
 Y_pred = net.predict(X_test)
-if model_to_train == 'HED' or model_to_train == 'I2INet':
+if model_to_train == 'HED' or model_to_train == 'I2INet' or model_to_train == 'ConvFC':
     Y_pred = Y_pred[0]
 if Y_pred.shape[3] == 1:
     Y_test = vasc_val.segs_tf

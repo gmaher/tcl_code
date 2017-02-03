@@ -69,6 +69,9 @@ meta_data = [[],[],[]]
 contours = []
 contours_ls = []
 contours_edge = []
+contours_seg = []
+im_seg = []
+mag_seg = []
 names = open(input_dir+'names.txt','w')
 
 eccentricity_limit = 0.2
@@ -90,9 +93,13 @@ cut = int(round(split*len(models)))
 
 split_models = {}
 split_models['test'] = [models[i] for i in inds[:cut]]
-#split_models['test'].append('OSMSC0002')
-split_models['val'] = [models[i] for i in inds[cut:2*cut] if models[i] != "OSMSC0002"]
-split_models['train'] = [models[i] for i in inds[2*cut:] if models[i] != "OSMSC0002"]
+if im_type == 'ct' or im_type == 'all':
+    split_models['test'].append('OSMSC0002')
+    split_models['val'] = [models[i] for i in inds[cut:2*cut] if models[i] != "OSMSC0002"]
+    split_models['train'] = [models[i] for i in inds[2*cut:] if models[i] != "OSMSC0002"]
+else:
+    split_models['val'] = [models[i] for i in inds[cut:2*cut]]
+    split_models['train'] = [models[i] for i in inds[2*cut:]]
 
 split_inds = {}
 split_inds['train'] = []
@@ -104,13 +111,16 @@ files = [f for f in files if 'truth.ls' in f and (not "OSMSC0159" in f) and any(
 
 segmentations = np.zeros((len(files),imsize,imsize))
 images = np.zeros((len(files),imsize,imsize))
-
+im_seg = np.zeros((len(files),imsize,imsize))
+mag_seg = np.zeros((len(files),imsize,imsize))
 for f in tqdm(files):
     if "truth.ls" in f:
         mag = f.replace('truth.ls.vtp','truth.mag.vts')
         ls = f
         ls_image = f.replace('truth','image')
         ls_edge = f.replace('truth','edge96')
+        ls_seg = f.replace('truth','seg3d')
+
 
         contour = utility.VTKPDReadAndReorder(input_dir+ls)
         contour_image = utility.VTKPDReadAndReorder(input_dir+ls_image)
@@ -137,6 +147,27 @@ for f in tqdm(files):
             print "shape mismatch, continuing"
             print f
             continue
+
+        if os.path.isfile(input_dir+ls_seg):
+            print "Found 3d seg {}".format(ls_seg)
+            c_seg = utility.VTKPDReadAndReorder(input_dir+ls_seg)
+            c_seg = c_seg[:,:2]
+            contours_seg.append(c_seg)
+
+            mseg = mag.replace('truth','seg3d')
+            pseg = mag.replace('truth.mag','seg3d.pot')
+
+            msegnp = utility.VTKSPtoNumpyFromFile(input_dir+mseg)[0]
+            psegnp = utility.VTKSPtoNumpyFromFile(input_dir+pseg)[0]
+
+            im_seg[count,:,:] = psegnp
+            mag_seg[count,:,:] = msegnp
+
+        else:
+            contours_seg.append(contour_edge)
+            im_seg[count,:,:] = mag_np
+            mag_seg[count,:,:] = mag_np
+
         #segmentations.append(seg)
         #images.append(mag_np)
         segmentations[count,:,:] = seg
@@ -174,10 +205,13 @@ for k in dirs.keys():
     group_names.close()
     np.save(dirs[k]+'segmentations', segmentations[split_inds[k]])
     np.save(dirs[k]+'images', images[split_inds[k]])
+    np.save(dirs[k]+'images_seg', im_seg[split_inds[k]])
+    np.save(dirs[k]+'mag_seg', mag_seg[split_inds[k]])
     np.save(dirs[k]+'metadata', meta_data[:,split_inds[k],:])
     np.save(dirs[k]+'contours', [contours[i] for i in split_inds[k]])
     np.save(dirs[k]+'ls_image', [contours_ls[i] for i in split_inds[k]])
     np.save(dirs[k]+'ls_edge', [contours_edge[i] for i in split_inds[k]])
+    np.save(dirs[k]+'ls_seg', [contours_seg[i] for i in split_inds[k]])
 
 f = open(dirs['train']+'train.txt','w')
 for m in split_models['train']:

@@ -83,7 +83,7 @@ def get_outputs(seg, seg_truth):
 
 def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_truth):
     out = np.load(pred_string)
-    if len(out.shape) == 5:
+    if len(out.shape) == 5 or len(out.shape) == 2:
         out = out[0]
         out = out[inds].reshape(shape)
     elif out.shape[3] == 3:
@@ -195,6 +195,7 @@ Y_test = vasc2d.segs_tf[inds]
 vasc2d.images_norm = vasc2d.images_norm[inds]
 vasc2d.segs_tf = vasc2d.segs_tf[inds]
 vasc2d.segs = vasc2d.segs[inds]
+vasc2d.mag_seg = vasc2d.mag_seg[inds]
 
 Ntest = X_test.shape[0]
 
@@ -220,10 +221,14 @@ add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_RSN','blue',inds,shape,Y_test
 add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'I2INet.npy','I2INet','orange',inds,shape, Y_test)
 add_pred_to_dict(PREDS,pred_dir+'FC_branch.npy','FC_branch','teal',inds,shape, Y_test)
+add_pred_to_dict(PREDS,pred_dir+'ConvFC.npy','ConvFC','gray',inds,shape, Y_test)
+add_pred_to_dict(PREDS,pred_dir+'FCN_finetune.npy','RSN_finetune','m',inds,shape, Y_test)
+add_pred_to_dict(PREDS,pred_dir+'FCN_multi.npy','RSN_multi','c',inds,shape, Y_test)
 
 #load contours
 add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,inds,DX)
 add_contour_to_dict(PREDS,'level set edge map','purple',vasc2d.contours_edge,contours_test,inds,DX)
+add_contour_to_dict(PREDS,'level set segmentation','yellow',vasc2d.contours_seg,contours_test,inds,DX)
 
 #load OBP by itself for vizualization purposes
 OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
@@ -233,7 +238,7 @@ OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
 #############################
 #Plot lots of images
 plot_inds = np.random.randint(Ntest,size=(5,5))
-plot_inds[4,4] = 1653
+#plot_inds[4,4] = 1380
 image_grid_plot([Y_test[plot_inds[0,:]],Y_test[plot_inds[1,:]],Y_test[plot_inds[2,:]],
 Y_test[plot_inds[3,:]],Y_test[plot_inds[4,:]]],
 ['segmentation','segmentation','segmentation','segmentation','segmentation'],
@@ -244,6 +249,11 @@ image_grid_plot([X_test[plot_inds[0,:]],X_test[plot_inds[1,:]],X_test[plot_inds[
 X_test[plot_inds[3,:]],X_test[plot_inds[4,:]]],
 ['image','image','image','image','image'],
 5,plot_dir+'/images.png',(40,40))
+
+image_grid_plot([vasc2d.mag_seg[plot_inds[0,:]],vasc2d.mag_seg[plot_inds[1,:]],vasc2d.mag_seg[plot_inds[2,:]],
+vasc2d.mag_seg[plot_inds[3,:]],vasc2d.mag_seg[plot_inds[4,:]]],
+['image','image','image','image','image'],
+5,plot_dir+'/mag_seg.png',(40,40))
 
 #plot lots of predicted segmentations
 seg = PREDS['seg']['RSN']
@@ -260,7 +270,7 @@ OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
 15,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
-keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch']
+keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
@@ -275,7 +285,7 @@ image_grid_plot(segs,labels,10,plot_dir+'/segs_higherr.png',(40,40))
 #Figure 2 contours
 #keys = ['level set', 'level set edge map', RSN, 'OBP_SN',
 #'OBG_RSN', 'HED','I2INet', 'FC_branch']
-keys = ['level set', 'RSN','OBG_RSN', 'HED','I2INet']
+keys = ['level set', 'level set segmentation', 'RSN','OBG_RSN', 'HED','I2INet', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
 colors = ['yellow']+[PREDS['color'][k] for k in keys]
@@ -355,6 +365,10 @@ mask = get_activation(X_test,"mask",hed)
 inside_output = get_activation(X_test,"new-score-weighting",hed)
 merged = get_activation(X_test,'merged',hed)
 
+#convfc
+fc = load_model(model_dir+'ConvFC.h5')
+Y_fc = fc.predict(X_test)
+
 plt.figure()
 plt.imshow(X_test[2,:,:,0])
 plt.colorbar()
@@ -378,6 +392,10 @@ plt.savefig(plot_dir+'/hedmerged.png')
 image_grid_plot([X_test]+Y_i2i,
 ['image','i2i1','i2i2'],
 15,plot_dir+'/i2i.png',(40,40))
+
+image_grid_plot([X_test]+Y_fc,
+['image','i2i1','i2i2'],
+15,plot_dir+'/fc.png',(40,40))
 
 #Radius scatter plot
 radius_vector = [utility.contourRadius(x) for x in contours_test]
@@ -451,8 +469,13 @@ i2i_rad = [radiusErrorCount(PREDS['error']['I2INet'],radius_vector,rad_err_thres
 r]
 ls = [radiusErrorCount(PREDS['error']['level set'],radius_vector,rad_err_thresh,rad) for rad in
 r]
-
-ind = np.array([0,2,4])
+ls_seg = [radiusErrorCount(PREDS['error']['level set segmentation'],radius_vector,rad_err_thresh,rad) for rad in
+r]
+sn_ft = [radiusErrorCount(PREDS['error']['RSN_finetune'],radius_vector,rad_err_thresh,rad) for rad in
+r]
+sn_multi = [radiusErrorCount(PREDS['error']['RSN_multi'],radius_vector,rad_err_thresh,rad) for rad in
+r]
+ind = np.array([0,3,6])
 width=0.3
 
 plt.figure()
@@ -460,13 +483,16 @@ plt.bar(ind,sn,width,color='r', label='RSN')
 plt.bar(ind+width,obg,width,color='b', label='OBG_RSN')
 plt.bar(ind+2*width,hed_rad,width,color='black', label='HED')
 plt.bar(ind+3*width,i2i_rad,width,color='orange', label='I2INet')
-plt.bar(ind+4*width,ls,width,color='pink', label='level set')
+plt.bar(ind+4*width,sn_ft,width,color='m', label='RSN_finetune')
+plt.bar(ind+5*width,sn_multi,width,color='c', label='RSN_finetune')
+plt.bar(ind+6*width,ls,width,color='pink', label='level set')
+plt.bar(ind+7*width,ls_seg,width,color='green', label='level set segmentation')
 
 plt.ylim(0,1.0)
 plt.ylabel('Fraction of vessels with error below threshold')
 plt.xlabel('radius')
 plt.xticks(ind+width, ['0-0.3cm','0.3-1.0cm','1.0-2.5cm'])
-plt.legend(loc='upper left')
+plt.legend(loc='upper right', bbox_to_anchor=(1.5,0.5))
 
 plt.savefig(plot_dir+'radiusBar.png')
 
@@ -527,3 +553,31 @@ plt.scatter(m, PREDS['error']['RSN'])
 plt.xlabel('max pixel probability')
 plt.ylabel('error')
 plt.savefig(plot_dir+'prob_max.png')
+
+#Compute radius change statistics
+
+names = open(dataDir+'names.txt').readlines()
+names = [n.split('.') for n in names]
+names = [names[i] for i in range(len(names)) if PREDS['contour']['RSN'][i] != []]
+radius_vector = [utility.contourRadius(x) for x in PREDS['contour']['RSN'] if x != []]
+radius_vector_true = [utility.contourRadius(contours_test[i]) for i in range(Ntest) if
+ PREDS['contour']['RSN'][i] != []]
+vs = sorted(zip(radius_vector,names), key=lambda x:(x[1][0]+x[1][1],int(x[1][2])))
+radius = [vs[i][0] for i in range(len(vs))]
+paths = [vs[i][1][0]+vs[i][1][1] for i in range(len(vs))]
+vs = sorted(zip(radius_vector_true,names), key=lambda x:(x[1][0]+x[1][1],int(x[1][2])))
+radius_true = [vs[i][0] for i in range(len(vs))]
+
+ratios = []
+ratios_true = []
+for i in range(len(radius)-1):
+    if paths[i] == paths[i+1]:
+        ratios.append(float(radius[i])/radius[i+1])
+        ratios_true.append(float(radius_true[i])/radius_true[i+1])
+
+plt.figure()
+plt.hist(ratios, bins=40, alpha=0.5, label='RSN')
+plt.hist(ratios_true, bins=40, alpha=0.5, label='Ground truth')
+plt.xlabel('radius ratio')
+plt.legend()
+plt.savefig(plot_dir+'radiusratio.png')

@@ -331,39 +331,44 @@ def validSurface(pd):
 		return True
 
 def VTKSPtoNumpy(vol):
-	'''
-	Utility function to convert a VTK structured points (SP) object to a numpy array
-	the exporting is done via the vtkImageExport object which copies the data
-	from the supplied SP object into an empty pointer or array
+    '''
+    Utility function to convert a VTK structured points (SP) object to a numpy array
+    the exporting is done via the vtkImageExport object which copies the data
+    from the supplied SP object into an empty pointer or array
 
-	C/C++ can interpret a python string as a pointer/array
+    C/C++ can interpret a python string as a pointer/array
 
-	This function was shamelessly copied from
-	http://public.kitware.com/pipermail/vtkusers/2002-September/013412.html
-	args:
-		@a vol: vtk.vtkStructuredPoints object
-	'''
-	exporter = vtkImageExport()
-	exporter.SetInputData(vol)
-	dims = exporter.GetDataDimensions()
-	if (exporter.GetDataScalarType() == 3):
-		dtype = UnsignedInt8
-	if (exporter.GetDataScalarType() == 4):
-		dtype = np.short
-	if (exporter.GetDataScalarType() == 5):
-		dtype = np.int16
-	if (exporter.GetDataScalarType() == 10):
-		dtype = np.float32
-	a = np.zeros(reduce(np.multiply,dims),dtype)
-	s = a.tostring()
-	exporter.SetExportVoidPointer(s)
-	exporter.Export()
-	a = np.reshape(np.fromstring(s,dtype),(dims[2],dims[0],dims[1]))
-	return a
+    This function was shamelessly copied from
+    http://public.kitware.com/pipermail/vtkusers/2002-September/013412.html
+    args:
+    	@a vol: vtk.vtkStructuredPoints object
+    '''
+    exporter = vtkImageExport()
+    exporter.SetInputData(vol)
+    dims = exporter.GetDataDimensions()
+    if np.sum(dims) == 0:
+        return np.zeros((1,64,64))
+    if (exporter.GetDataScalarType() == 3):
+    	dtype = UnsignedInt8
+    if (exporter.GetDataScalarType() == 4):
+    	dtype = np.short
+    if (exporter.GetDataScalarType() == 5):
+    	dtype = np.int16
+    if (exporter.GetDataScalarType() == 10):
+    	dtype = np.float32
+    if (exporter.GetDataScalarType() == 11):
+    	dtype = np.float64
+    a = np.zeros(reduce(np.multiply,dims),dtype)
+    s = a.tostring()
+    exporter.SetExportVoidPointer(s)
+    exporter.Export()
+    a = np.reshape(np.fromstring(s,dtype),(dims[2],dims[0],dims[1]))
+    return a
 
 def VTKSPtoNumpyFromFile(fn):
 	'''
 	reads a .vts file into a numpy array
+
 
 	args:
 		@a fn - string, filename of .sp file to read

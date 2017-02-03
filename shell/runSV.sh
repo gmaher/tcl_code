@@ -18,7 +18,7 @@ rm ../pathInfo.txt
 paste images.txt paths.txt groups.txt edge.txt | while read I P G E; do
   echo "$I $P $G $E"
   $1 $2 $I $P $G $E
-  sleep 100
+  sleep 200
 done
 
 #
