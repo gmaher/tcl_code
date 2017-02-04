@@ -276,11 +276,14 @@ labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure segmentations for high error vessels
-inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.9]
+inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.8]
 keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch']
 segs = [X_test[inds],Y_test[inds]]+[PREDS['seg'][k][inds] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
-image_grid_plot(segs,labels,10,plot_dir+'/segs_higherr.png',(40,40))
+l = 10
+if len(inds) < l:
+    l = len(inds)-1
+image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
 #Figure 2 contours
 #keys = ['level set', 'level set edge map', RSN, 'OBP_SN',

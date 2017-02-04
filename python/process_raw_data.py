@@ -52,6 +52,14 @@ if im_type == 'ct':
     dirs['val'] = output_dir+'ct/val/'
     dirs['test'] = output_dir+'ct/test/'
 
+if im_type == 'jameson':
+    if not os.path.exists(os.path.abspath(output_dir+'jameson')):
+        os.mkdir(os.path.abspath(output_dir+'jameson'))
+
+    dirs['train'] = output_dir+'jameson/train/'
+    dirs['val'] = output_dir+'jameson/val/'
+    dirs['test'] = output_dir+'jameson/test/'
+
 for k in dirs.keys():
     if not os.path.exists(os.path.abspath(dirs[k])):
         os.mkdir(os.path.abspath(dirs[k]))
@@ -100,6 +108,11 @@ if im_type == 'ct' or im_type == 'all':
 else:
     split_models['val'] = [models[i] for i in inds[cut:2*cut]]
     split_models['train'] = [models[i] for i in inds[2*cut:]]
+
+if im_type == 'jameson':
+    split_models['train'] = open('./data/jameson_train.txt').readlines()
+    split_models['val'] = open('./data/jameson_val.txt').readlines()
+    split_models['test'] = open('./data/jameson_test.txt').readlines()
 
 split_inds = {}
 split_inds['train'] = []

@@ -199,7 +199,7 @@ proc generate_edge_groups {img path grp {edge 0} {edgeString image} {edgeType "u
 
   global itklsGUIParams
 	set itklsGUIParams(phyRadius) 0.3
-	
+
   if {$edge ne 0} {
 		set itklsGUIParams(2DEdgeImage) $edgeType
 		set itklsGUIParams(useEdgeImage) "disp"
@@ -271,6 +271,7 @@ proc get_image_name {fn} {
   #   @a fn - string, the filepath to the image
   set f [lindex [split $fn /] end]
   string map {-cm.mha ""} $f
+	string map {_all.mha ""} $f
 }
 
 proc get_group_points {grpName} {
