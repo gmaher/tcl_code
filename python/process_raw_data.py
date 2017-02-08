@@ -87,32 +87,34 @@ eccentricity_limit = 0.2
 #################################
 # Make model train/val/test split
 #################################
-if im_type == 'all':
-    models = [f.split('.')[0] for f in files if 'OSMSC' in f]
-if im_type == 'mr':
-    models = open('./data/mr_images.list').readlines()
-if im_type == 'ct':
-    models = open('./data/ct_images.list').readlines()
-
-models = [m.replace('\n','') for m in models]
-models = list(set(models))
-inds = np.random.permutation(len(models))
-cut = int(round(split*len(models)))
-
-split_models = {}
-split_models['test'] = [models[i] for i in inds[:cut]]
-if im_type == 'ct' or im_type == 'all':
-    split_models['test'].append('OSMSC0002')
-    split_models['val'] = [models[i] for i in inds[cut:2*cut] if models[i] != "OSMSC0002"]
-    split_models['train'] = [models[i] for i in inds[2*cut:] if models[i] != "OSMSC0002"]
-else:
-    split_models['val'] = [models[i] for i in inds[cut:2*cut]]
-    split_models['train'] = [models[i] for i in inds[2*cut:]]
-
 if im_type == 'jameson':
     split_models['train'] = open('./data/jameson_train.txt').readlines()
     split_models['val'] = open('./data/jameson_val.txt').readlines()
     split_models['test'] = open('./data/jameson_test.txt').readlines()
+else:
+    if im_type == 'all':
+        models = [f.split('.')[0] for f in files if 'OSMSC' in f]
+    if im_type == 'mr':
+        models = open('./data/mr_images.list').readlines()
+    if im_type == 'ct':
+        models = open('./data/ct_images.list').readlines()
+
+    models = [m.replace('\n','') for m in models]
+    models = list(set(models))
+    inds = np.random.permutation(len(models))
+    cut = int(round(split*len(models)))
+
+    split_models = {}
+    split_models['test'] = [models[i] for i in inds[:cut]]
+    if im_type == 'ct' or im_type == 'all':
+        split_models['test'].append('OSMSC0002')
+        split_models['val'] = [models[i] for i in inds[cut:2*cut] if models[i] != "OSMSC0002"]
+        split_models['train'] = [models[i] for i in inds[2*cut:] if models[i] != "OSMSC0002"]
+    else:
+        split_models['val'] = [models[i] for i in inds[cut:2*cut]]
+        split_models['train'] = [models[i] for i in inds[2*cut:]]
+
+
 
 split_inds = {}
 split_inds['train'] = []

@@ -92,7 +92,7 @@ for m in model_dict.keys():
         points = model_dict[m][p]
         points = sorted(points, key=lambda x: int(x[1]))
 
-        f = open(groups_dir+p,'w')
+        f = open(groups_dir+p+'pred','w')
         for t in points:
             f.write('/group/{}/{}\n'.format(p,t[1]))
             f.write(t[1]+'\n')
@@ -125,7 +125,7 @@ proc group_autoload {} {
     set grpdir $gFilenames(groups_dir)\n""")
 
     for p in model_dict[m].keys():
-        f.write('   group_readProfiles {'+p+'} [file join $grpdir {'+p+'}]\n')
+        f.write('   group_readProfiles {'+p+'pred} [file join $grpdir {'+p+'pred}]\n')
 
     f.write('}')
     f.close()

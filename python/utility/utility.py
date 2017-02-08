@@ -68,39 +68,39 @@ def get_groups_dir(vasc_dir, imgname):
 			return root
 
 def get_group_from_file(fn):
-	'''
-	get a dictionary mapping group numbers to a list of 3d tuples
+    '''
+    get a dictionary mapping group numbers to a list of 3d tuples
 
-	@a: fn - path to the groups file
-	'''
-	group = {}
-	f = open(fn, 'r')
+    @a: fn - path to the groups file
+    '''
+    group = {}
+    f = open(fn, 'r')
 
-	while True:
-		name = f.readline()
-		num = f.readline()
-		meta = f.readline()
+    while True:
+        name = f.readline()
+        num = f.readline()
+        meta = f.readline()
+        #print '{} {} {}'.format(name, num, meta)
+    	if name in ['\n', '\r\n', ""]:
+    		print "end of file: ", fn
+    		return group
 
-		if name in ['\n', '\r\n', ""]:
-			print "end of file: ", fn
-			return group
+    	else:
+    		num = int(num)
+    		group[num] = []
 
-		else:
-			num = int(num)
-			group[num] = []
+    		#read empty line
+    		l = f.readline()
+    		#read first group point
+    		l = f.readline()
+    		while l not in ['\n', '\r\n']:
+    			l = l.split()
+    			l = [float(i) for i in l]
 
-			#read empty line
-			l = f.readline()
-			#read first group point
-			l = f.readline()
-			while l not in ['\n', '\r\n']:
-				l = l.split()
-				l = [float(i) for i in l]
+    			group[num].append((l[0],l[1],l[2]))
 
-				group[num].append((l[0],l[1],l[2]))
-
-				#read next line
-				l = f.readline()
+    			#read next line
+    			l = f.readline()
 
 def parsePathInfo(fn):
     """
@@ -152,6 +152,89 @@ def denormalizeContour(c,p,t,tx):
 
     res = np.array([p + k[0]*tx + k[1]*ty for k in c])
     return res[:-1]
+
+def groupsToPoints(folder):
+    files = os.listdir(folder)
+    groups = []
+    points = []
+
+    for f in files:
+        if '.' not in f:
+            groups.append(get_group_from_file(folder+f))
+
+    for g in groups:
+        for n in g.keys():
+            for p in g[n]:
+                points.append((p[0],p[1],p[2]))
+
+    return points
+    
+def reconstructSurface(folder):
+    pointSource = vtk.vtkProgrammableSource()
+
+    def readPoints():
+            output = pointSource.GetPolyDataOutput()
+            points = vtk.vtkPoints()
+            output.SetPoints(points)
+
+            group_points = groupsToPoints(folder)
+
+            for p in group_points:
+                points.insertNextPoint(p[0],p[1],p[2])
+
+    pointSource.SetExecuteMethod(readPoints)
+
+
+    # Construct the surface and create isosurface.
+    surf = vtk.vtkSurfaceReconstructionFilter()
+    surf.SetInputConnection(pointSource.GetOutputPort())
+
+    cf = vtk.vtkContourFilter()
+    cf.SetInputConnection(surf.GetOutputPort())
+    cf.SetValue(0, 0.0)
+
+    # Sometimes the contouring algorithm can create a volume whose gradient
+    # vector and ordering of polygon (using the right hand rule) are
+    # inconsistent. vtkReverseSense cures this problem.
+    reverse = vtk.vtkReverseSense()
+    reverse.SetInputConnection(cf.GetOutputPort())
+    reverse.ReverseCellsOn()
+    reverse.ReverseNormalsOn()
+
+    map = vtk.vtkPolyDataMapper()
+    map.SetInputConnection(reverse.GetOutputPort())
+    map.ScalarVisibilityOff()
+
+    surfaceActor = vtk.vtkActor()
+    surfaceActor.SetMapper(map)
+    surfaceActor.GetProperty().SetDiffuseColor(1.0000, 0.3882, 0.2784)
+    surfaceActor.GetProperty().SetSpecularColor(1, 1, 1)
+    surfaceActor.GetProperty().SetSpecular(.4)
+    surfaceActor.GetProperty().SetSpecularPower(50)
+
+    # Create the RenderWindow, Renderer and both Actors
+    ren = vtk.vtkRenderer()
+    renWin = vtk.vtkRenderWindow()
+    renWin.AddRenderer(ren)
+    iren = vtk.vtkRenderWindowInteractor()
+    iren.SetRenderWindow(renWin)
+
+    # Add the actors to the renderer, set the background and size
+    ren.AddActor(surfaceActor)
+    ren.SetBackground(1, 1, 1)
+    renWin.SetSize(400, 400)
+    ren.GetActiveCamera().SetFocalPoint(0, 0, 0)
+    ren.GetActiveCamera().SetPosition(1, 0, 0)
+    ren.GetActiveCamera().SetViewUp(0, 0, 1)
+    ren.ResetCamera()
+    ren.GetActiveCamera().Azimuth(20)
+    ren.GetActiveCamera().Elevation(30)
+    ren.GetActiveCamera().Dolly(1.2)
+    ren.ResetCameraClippingRange()
+
+    iren.Initialize()
+    renWin.Render()
+    iren.Start()
 
 def get_vec_shift(group):
 	'''

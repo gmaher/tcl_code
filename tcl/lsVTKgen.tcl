@@ -385,3 +385,104 @@ proc group_names {} {
     global gGroup
     return [array names gGroup]
 }
+
+proc create_model_polydata {model_name} {
+  global gRen3d
+  global guiPDvars
+  global gui3Dvars
+  global gOptions
+  global guiSVvars
+
+  global guiBOOLEANvars
+  set gOptions(meshing_solid_kernel) PolyData
+  set kernel $gOptions(meshing_solid_kernel)
+  set gOptions(meshing_solid_kernel) $kernel
+  solid_setKernel -name $kernel
+
+  set ordered_names    $guiBOOLEANvars(selected_groups)
+  set ordered_names2    $guiBOOLEANvars(selected_seg3d)
+  set sampling_default $guiBOOLEANvars(sampling_default)
+  set lin_multiplier   $guiBOOLEANvars(linear_sampling_along_length_multiplier)
+  set useLinearSampleAlongLength   $guiBOOLEANvars(use_linear_sampling_along_length)
+  set numModes         $guiBOOLEANvars(num_modes_for_FFT)
+  array set overrides  $guiBOOLEANvars(sampling_overrides)
+  set useFFT           $guiBOOLEANvars(use_FFT)
+  set sample_per_segment $guiBOOLEANvars(sampling_along_length_multiplier)
+  set addCaps          $guiBOOLEANvars(add_caps_to_vessels)
+  set noInterOut       $guiBOOLEANvars(no_inter_output)
+  set tol 	       $guiBOOLEANvars(tolerance)
+  set spline           $guiBOOLEANvars(spline_type)
+
+
+  #set model [guiSV_model_new_surface_name 0]
+	set model $model_name
+  catch {repos_delete -obj $model}
+  if {[model_create $kernel $model] != 1} {
+    guiSV_model_delete_model $kernel $model
+    catch {repos_delete -obj /models/$kernel/$model}
+    model_create $kernel $model
+  }
+
+  foreach grp $ordered_names {
+
+    set numOutPtsInSegs $sampling_default
+
+    if [info exists overrides($grp)] {
+      set numOutPtsInSegs $overrides($grp)
+      puts "overriding default ($sampling_default) with ($numOutPtsInSegs) for ($grp)."
+    }
+
+    set vecFlag 0
+
+    set numSegs [llength [group_get $grp]]
+
+    set numOutPtsAlongLength [expr $sample_per_segment * $numSegs]
+
+    set numPtsInLinearSampleAlongLength [expr $lin_multiplier *$numOutPtsAlongLength]
+
+    puts "num pts along length: $numPtsInLinearSampleAlongLength"
+
+    set outPD /guiGROUPS/polydatasurface/$grp
+    catch {repos_delete -obj $outPD}
+
+    solid_setKernel -name PolyData
+    polysolid_c_create_vessel_from_group $grp $vecFlag  $useLinearSampleAlongLength $numPtsInLinearSampleAlongLength  $useFFT $numModes  $numOutPtsInSegs $numOutPtsAlongLength $addCaps $spline $outPD
+
+  }
+
+  #if {[llength $ordered_names] ==0 && [llength $ordered_names2] == 0} {
+  #    tk_messageBox -title "Select Surfaces on Segmentation Tab"  -type ok -message "Please select surfaces for boolean on segmentation tab"
+  #    return
+  #}
+  for {set i 0} {$i < [llength $ordered_names]} {incr i} {
+    lappend vessel_names /guiGROUPS/polydatasurface/[lindex $ordered_names $i]
+    lappend names [lindex $ordered_names $i]
+  }
+  global gSeg3D
+  for {set i 0} {$i < [llength $ordered_names2]} {incr i} {
+    set name [lindex $ordered_names2 $i]
+    lappend names $name
+    if {![check_surface_for_capids $gSeg3D($name)]} {
+      puts "vessel $name doesn't have CapIDs, setting to -1"
+      set_capids_for_pd $gSeg3D($name)
+    }
+    lappend vessel_names $gSeg3D($name)
+
+  }
+  puts $vessel_names
+
+  geom_all_union -srclist $vessel_names -intertype $noInterOut -result $model -tolerance $tol
+  set pdobject /models/$kernel/$model
+  catch {repos_delete -obj $pdobject}
+  $model GetPolyData -result $pdobject
+  set rtnstr [geom_checksurface -src $pdobject -tolerance $tol]
+
+  set_facenames_as_groupnames $model $names $addCaps
+  #set_facenames_as_groupnames $myresult $names 0
+
+  guiSV_model_add_faces_to_tree $kernel $model
+  guiSV_model_display_only_given_model $model 1
+
+	puts "Model creation $model_name complete"
+  #tk_messageBox -title "Solid Unions Complete"  -type ok -message "Number of Free Edges: [lindex $rtnstr 0]\n (Free edges are okay for open surfaces)\n Number of Bad Edges: [lindex $rtnstr 1]"
+}

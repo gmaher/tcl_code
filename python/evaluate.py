@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 import utility.util_data as util_data
 import matplotlib
-matplotlib.rcParams.update({'font.size': 18})
+matplotlib.rcParams.update({'font.size': 15})
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -310,11 +310,12 @@ contour_plot(X_test[inds],contours_to_plot,extents_test,labels,colors,0,10,plot_
 plt.figure()
 for k in keys:
     plt.plot(ts,PREDS['thresh'][k], color=PREDS['color'][k],
-     label=k, linewidth=4)
+     label=k, linewidth=3)
 plt.xlabel('Jaccard distance')
 plt.ylabel('Cumulative error distribution, F(x)')
-plt.legend(loc='upper left')
-plt.savefig(plot_dir+'IOU.png')
+lg = plt.legend(loc='center right', bbox_to_anchor=(1.7,0.5))
+plt.grid(b='on')
+plt.savefig(plot_dir+'IOU.png',bbox_extra_artists=(lg,), bbox_inches='tight')
 
 # #Figure 4, ROC
 plt.figure()
@@ -487,7 +488,7 @@ plt.bar(ind+width,obg,width,color='b', label='OBG_RSN')
 plt.bar(ind+2*width,hed_rad,width,color='black', label='HED')
 plt.bar(ind+3*width,i2i_rad,width,color='orange', label='I2INet')
 plt.bar(ind+4*width,sn_ft,width,color='m', label='RSN_finetune')
-plt.bar(ind+5*width,sn_multi,width,color='c', label='RSN_finetune')
+plt.bar(ind+5*width,sn_multi,width,color='c', label='RSN_multi')
 plt.bar(ind+6*width,ls,width,color='pink', label='level set')
 plt.bar(ind+7*width,ls_seg,width,color='green', label='level set segmentation')
 
@@ -495,9 +496,9 @@ plt.ylim(0,1.0)
 plt.ylabel('Fraction of vessels with error below threshold')
 plt.xlabel('radius')
 plt.xticks(ind+width, ['0-0.3cm','0.3-1.0cm','1.0-2.5cm'])
-plt.legend(loc='upper right', bbox_to_anchor=(1.5,0.5))
+lg = plt.legend(loc='center right', bbox_to_anchor=(1.7,0.5))
 
-plt.savefig(plot_dir+'radiusBar.png')
+plt.savefig(plot_dir+'radiusBar.png',bbox_extra_artists=(lg,), bbox_inches='tight')
 
 ############################
 # pixel error plot
@@ -530,14 +531,15 @@ plt.ylim(0,1.0)
 plt.ylabel('Fraction of vessels with error below threshold')
 plt.xlabel('radius (pixels)')
 plt.xticks(ind+width, ['0-5 pixels','5-10 pixels','10-30 pixels'])
-plt.legend(loc='upper left')
+lg = plt.legend(loc='upper right', bbox_to_anchor=(1.6,0.5))
 
-plt.savefig(plot_dir+'radiusBar_pixels.png')
+plt.savefig(plot_dir+'radiusBar_pixels.png',bbox_extra_artists=(lg,), bbox_inches='tight')
 
 #Central pixel probability vs error
 cprob = PREDS['seg']['RSN'][:,image_dims/2,image_dims/2]
 s = np.mean(PREDS['seg']['RSN'], axis=(1,2))
 m = np.max(PREDS['seg']['RSN'], axis=(1,2))
+sd = np.std(PREDS['seg']['RSN'], axis=(1,2))
 
 plt.figure()
 plt.scatter(cprob, PREDS['error']['RSN'])
@@ -556,6 +558,12 @@ plt.scatter(m, PREDS['error']['RSN'])
 plt.xlabel('max pixel probability')
 plt.ylabel('error')
 plt.savefig(plot_dir+'prob_max.png')
+
+plt.figure()
+plt.scatter(sd, PREDS['error']['RSN'])
+plt.xlabel('pixel probability std')
+plt.ylabel('error')
+plt.savefig(plot_dir+'prob_std.png')
 
 #Compute radius change statistics
 
