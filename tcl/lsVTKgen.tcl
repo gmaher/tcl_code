@@ -270,6 +270,7 @@ proc get_image_name {fn} {
   #args:
   #   @a fn - string, the filepath to the image
   set f [lindex [split $fn /] end]
+	string map {_seg ""} $f
   string map {-cm.mha ""} $f
 	string map {_all.mha ""} $f
 	string map {-image.mha ""} $f
