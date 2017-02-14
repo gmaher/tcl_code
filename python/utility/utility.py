@@ -551,7 +551,24 @@ def getNodeOrdering(C):
 
 	return ordering
 
-def VTKScreenshotPD(pds, views):
+def addPdToRen(ren, pd):
+    """
+    adds a polydata object to a render window
+
+    args:
+        ren - vtk renderer object
+        pd - vtk polydata object
+    """
+
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputData(pd)
+
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+
+    ren.AddActor(actor)
+
+def VTKScreenshotPD(pds, views, fn):
     """
     this function loads a list of polydata objects into a renderwindow and screenshots them
 
@@ -559,6 +576,26 @@ def VTKScreenshotPD(pds, views):
 
     returns:
     """
+    ren = vtk.vtkRenderer()
+    renwin = vtk.vtkRenderWindow()
+    renwin.AddRenderer(ren)
+
+    iren = vtk.vtkRenderWindowInteractor()
+    iren.SetRenderWindow(renwin)
+
+    for p in pds:
+        addPdToRen(ren, p)
+
+    iren.Initialize()
+
+    ren.ResetCamera()
+    ren.GetActiveCamera().Zoom(1.0)
+    ren.SetBackground(1,1,1)
+    renwin.Render()
+
+    iren.Start()
+
+    return iren,renwin,ren
 
 def contourToSeg(contour, origin, dims, spacing):
 	'''

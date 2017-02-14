@@ -12,3 +12,4 @@ python/output
 *.h5
 *.png
 *.vtp
+*.pyc
