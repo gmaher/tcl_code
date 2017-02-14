@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('input_dir')
 parser.add_argument('output_dir')
 parser.add_argument('imsize')
-parser.add_argument('-t','--type',default='all',choices=['all','ct','mr'])
+parser.add_argument('-t','--type',default='all',choices=['all','ct','mr','jameson'])
 args = parser.parse_args()
 input_dir = args.input_dir
 output_dir = args.output_dir
@@ -87,10 +87,14 @@ eccentricity_limit = 0.2
 #################################
 # Make model train/val/test split
 #################################
+split_models = {}
 if im_type == 'jameson':
     split_models['train'] = open('./data/jameson_train.txt').readlines()
     split_models['val'] = open('./data/jameson_val.txt').readlines()
     split_models['test'] = open('./data/jameson_test.txt').readlines()
+    for k in split_models.keys():
+        split_models[k] = [s.replace('\n','') for s in split_models[k]]
+    models = split_models['train'] + split_models['val'] + split_models['test']
 else:
     if im_type == 'all':
         models = [f.split('.')[0] for f in files if 'OSMSC' in f]
@@ -104,7 +108,7 @@ else:
     inds = np.random.permutation(len(models))
     cut = int(round(split*len(models)))
 
-    split_models = {}
+
     split_models['test'] = [models[i] for i in inds[:cut]]
     if im_type == 'ct' or im_type == 'all':
         split_models['test'].append('OSMSC0002')
@@ -178,11 +182,14 @@ for f in tqdm(files):
             im_seg[count,:,:] = psegnp
             mag_seg[count,:,:] = msegnp
 
-        else:
+        elif os.path.isfile(input_dir+ls_edge):
             contours_seg.append(contour_edge)
             im_seg[count,:,:] = mag_np
             mag_seg[count,:,:] = mag_np
-
+        else:
+            contours_seg.append(contour_image)
+            im_seg[count,:,:] = mag_np
+            mag_seg[count,:,:] = mag_np
         #segmentations.append(seg)
         #images.append(mag_np)
         segmentations[count,:,:] = seg

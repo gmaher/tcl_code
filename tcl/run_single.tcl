@@ -15,15 +15,15 @@ set gOptions(resliceDims) {64 64}
 global pathInfoFile
 set pathInfoFile [open "[pwd]/../pathInfo.txt" a]
 
-#generate_truth_groups $I $P $G
-generate_edge_groups $I $P $G
-generate_edge_groups $I $P $G $E "edge96"
+catch {generate_truth_groups $I $P $G}
+catch {generate_edge_groups $I $P $G}
+catch {generate_edge_groups $I $P $G $E "edge96"}
 
-#set S [string map {-cm -cm_seg} $I]
-#if {[file exists $S]} {
-#  puts "generating segmentation contours $S"
-#  generate_edge_groups $S $P $G 0 "seg3d"
-#}
+set S [string map {.mha _seg.mha} $I]
+if {[file exists $S]} {
+  puts "generating segmentation contours $S"
+  generate_edge_groups $S $P $G 0 "seg3d"
+}
 close $pathInfoFile
 mainGUIexit 1
 #exit

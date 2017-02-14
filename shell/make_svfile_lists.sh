@@ -44,7 +44,7 @@ done
 #cabg models
 
 for dir in $1*; do
-	num_images="$(find $dir -name "*cabg*_all.mha" | wc -l)"
+	num_images="$(find $dir -name "*cabg*-image.mha" | wc -l)"
 
 	num_groups="$(find $dir -name "*cabg*_all*groups" -type d | wc -l)"
 
@@ -61,7 +61,7 @@ for dir in $1*; do
 	# if ([ "$num_images" == "1" ] && [ "$num_groups" == "1" ]  &&
 	#  [ "$num_paths" == "1" ] && [ "$num_edge" == "1" ]);
 		then
-			find $dir -name "*cabg*_all.mha" >> $3/images.txt
+			find $dir -name "*cabg*-image.mha" >> $3/images.txt
 			find $dir -name "*cabg*_all*groups" -print -quit >> $3/groups.txt
 			find $dir -name "*cabg*_all.paths" -print -quit >> $3/paths.txt
 			find $dir -name "*-cm_${2}.mha" >> $3/edge.txt

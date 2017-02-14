@@ -168,7 +168,7 @@ def groupsToPoints(folder):
                 points.append((p[0],p[1],p[2]))
 
     return points
-    
+
 def reconstructSurface(folder):
     pointSource = vtk.vtkProgrammableSource()
 
@@ -550,6 +550,15 @@ def getNodeOrdering(C):
 			break
 
 	return ordering
+
+def VTKScreenshotPD(pds, views):
+    """
+    this function loads a list of polydata objects into a renderwindow and screenshots them
+
+    args:
+
+    returns:
+    """
 
 def contourToSeg(contour, origin, dims, spacing):
 	'''

@@ -43,13 +43,14 @@ pred_dir = config['learn_params']['pred_dir']
 
 THRESHOLD = float(config['learn_params']['threshold'])
 ISOVALUE = float(config['learn_params']['isovalue'])
-
+NUM_MODES = int(config['learn_params']['num_modes'])
 #make folder name for plots and make directory
 plot_dir = config['learn_params']['plot_dir']
 
 if not os.path.exists(os.path.abspath(plot_dir)):
     os.mkdir(os.path.abspath(plot_dir))
 
+vasc = util_data.VascData2D(dataDir)
 #############################################
 # Get model and path info
 #############################################
@@ -74,58 +75,69 @@ for i in range(len(paths)):
 ##############################################
 # Load segmentations, convert to contours
 ##############################################
-meta = np.load(dataDir+'metadata.npy')
-seg = np.load(pred_dir+'FCN.npy')
-seg = seg.reshape((seg.shape[:3]))
-seg_thresh = utility.threshold(seg,THRESHOLD)
-contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
-    meta[0,:,:], ISOVALUE)
+pred = ['ls', 'ls_seg', 'RSN', 'truth']
+for pred_type in pred:
+    if pred_type == 'RSN':
+        meta = np.load(dataDir+'metadata.npy')
+        seg = np.load(pred_dir+'FCN.npy')
+        seg = seg.reshape((seg.shape[:3]))
+        seg_thresh = utility.threshold(seg,THRESHOLD)
+        contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
+            meta[0,:,:], ISOVALUE)
+    if pred_type == 'ls':
+        contour = vasc.contours_ls
 
-##############################################
-# output to groups files for each model
-##############################################
-for m in model_dict.keys():
-    groups_dir = image_dir+m+'/'
-    utility.mkdir(groups_dir)
+    if pred_type == 'ls_seg':
+        contour = vasc.contours_seg
 
-    for p in model_dict[m].keys():
-        points = model_dict[m][p]
-        points = sorted(points, key=lambda x: int(x[1]))
+    if pred_type == 'truth':
+        contour = vasc.contours
 
-        f = open(groups_dir+p+'pred','w')
-        for t in points:
-            f.write('/group/{}/{}\n'.format(p,t[1]))
-            f.write(t[1]+'\n')
-            f.write("posId {}\n".format(t[1]))
+    ##############################################
+    # output to groups files for each model
+    ##############################################
+    for m in model_dict.keys():
+        groups_dir = image_dir+m+'.'+pred_type+'/'
+        utility.mkdir(groups_dir)
 
-            key = '{}.{}.{}'.format(m,p,t[1])
-            path_info = pinfo[key]
-            contour_index = t[0]
-            c = contour[contour_index]
+        for p in model_dict[m].keys():
+            points = model_dict[m][p]
+            points = sorted(points, key=lambda x: int(x[1]))
 
-            if c != []:
-                c = utility.smoothContour(c, num_modes=3)
-                cdenorm = utility.denormalizeContour(c,path_info[0],path_info[1],
-                    path_info[2])
+            f = open(groups_dir+p,'w')
+            for t in points:
+                contour_index = t[0]
+                c = contour[contour_index]
+                key = '{}.{}.{}'.format(m,p,t[1])
+                path_info = pinfo[key]
 
-            for cp in cdenorm:
-                f.write('{} {} {}\n'.format(cp[0],cp[1],cp[2]))
-            f.write('\n')
+                if c != [] and len(c) > 1:
+                    c = utility.smoothContour(c, num_modes=NUM_MODES)
+                    cdenorm = utility.denormalizeContour(c,path_info[0],path_info[1],
+                        path_info[2])
+
+                    f.write('/group/{}/{}\n'.format(p,t[1]))
+                    f.write(t[1]+'\n')
+                    f.write("posId {}\n".format(t[1]))
+
+                    for cp in cdenorm:
+                        f.write('{} {} {}\n'.format(cp[0],cp[1],cp[2]))
+                    f.write('\n')
+            f.close()
+
+        #group contents file
+        f = open(groups_dir+'group_contents.tcl','w')
+        f.write("""# geodesic_groups_file 2.1
+    #
+    # Group Stuff
+    #
+
+    proc group_autoload {} {
+        global gFilenames
+        set grpdir $gFilenames(groups_dir)\n""")
+
+        for p in model_dict[m].keys():
+            f.write('   group_readProfiles {'+p+'} [file join $grpdir {'+p+'}]\n')
+
+        f.write('}')
         f.close()
-
-    #group contents file
-    f = open(groups_dir+'group_contents.tcl','w')
-    f.write("""# geodesic_groups_file 2.1
-#
-# Group Stuff
-#
-
-proc group_autoload {} {
-    global gFilenames
-    set grpdir $gFilenames(groups_dir)\n""")
-
-    for p in model_dict[m].keys():
-        f.write('   group_readProfiles {'+p+'pred} [file join $grpdir {'+p+'pred}]\n')
-
-    f.write('}')
-    f.close()

@@ -352,54 +352,54 @@ def get_activation(x,name,model):
 
     return f([x])[0]
 
-hed = load_model(model_dir+'HED.h5')
-Y_hed = hed.predict(X_test)
-mask = get_activation(X_test,"mask",hed)
-inside_output = get_activation(X_test,"new-score-weighting",hed)
-merged = get_activation(X_test,'merged',hed)
-
-image_grid_plot([X_test]+Y_hed+[mask,inside_output,merged],
-['image','hed1','hed2','hed3','hed4','mask','inside_output','merged'],
-15,plot_dir+'/hed.png',(40,40))
-
-#I2INet
-i2i = load_model(model_dir+'I2INet.h5')
-Y_i2i = i2i.predict(X_test)
-mask = get_activation(X_test,"mask",hed)
-inside_output = get_activation(X_test,"new-score-weighting",hed)
-merged = get_activation(X_test,'merged',hed)
-
-#convfc
-fc = load_model(model_dir+'ConvFC.h5')
-Y_fc = fc.predict(X_test)
-
-plt.figure()
-plt.imshow(X_test[2,:,:,0])
-plt.colorbar()
-plt.savefig(plot_dir+'/hedimage.png')
-
-plt.figure()
-plt.imshow(mask[2,:,:,0])
-plt.colorbar()
-plt.savefig(plot_dir+'/hedmask.png')
-
-plt.figure()
-plt.imshow(inside_output[2,:,:,0])
-plt.colorbar()
-plt.savefig(plot_dir+'/hedinsideoutput.png')
-
-plt.figure()
-plt.imshow(merged[2,:,:,0])
-plt.colorbar()
-plt.savefig(plot_dir+'/hedmerged.png')
-
-image_grid_plot([X_test]+Y_i2i,
-['image','i2i1','i2i2'],
-15,plot_dir+'/i2i.png',(40,40))
-
-image_grid_plot([X_test]+Y_fc,
-['image','i2i1','i2i2'],
-15,plot_dir+'/fc.png',(40,40))
+# hed = load_model(model_dir+'HED.h5')
+# Y_hed = hed.predict(X_test)
+# mask = get_activation(X_test,"mask",hed)
+# inside_output = get_activation(X_test,"new-score-weighting",hed)
+# merged = get_activation(X_test,'merged',hed)
+#
+# image_grid_plot([X_test]+Y_hed+[mask,inside_output,merged],
+# ['image','hed1','hed2','hed3','hed4','mask','inside_output','merged'],
+# 15,plot_dir+'/hed.png',(40,40))
+#
+# #I2INet
+# i2i = load_model(model_dir+'I2INet.h5')
+# Y_i2i = i2i.predict(X_test)
+# mask = get_activation(X_test,"mask",hed)
+# inside_output = get_activation(X_test,"new-score-weighting",hed)
+# merged = get_activation(X_test,'merged',hed)
+#
+# #convfc
+# fc = load_model(model_dir+'ConvFC.h5')
+# Y_fc = fc.predict(X_test)
+#
+# plt.figure()
+# plt.imshow(X_test[2,:,:,0])
+# plt.colorbar()
+# plt.savefig(plot_dir+'/hedimage.png')
+#
+# plt.figure()
+# plt.imshow(mask[2,:,:,0])
+# plt.colorbar()
+# plt.savefig(plot_dir+'/hedmask.png')
+#
+# plt.figure()
+# plt.imshow(inside_output[2,:,:,0])
+# plt.colorbar()
+# plt.savefig(plot_dir+'/hedinsideoutput.png')
+#
+# plt.figure()
+# plt.imshow(merged[2,:,:,0])
+# plt.colorbar()
+# plt.savefig(plot_dir+'/hedmerged.png')
+#
+# image_grid_plot([X_test]+Y_i2i,
+# ['image','i2i1','i2i2'],
+# 15,plot_dir+'/i2i.png',(40,40))
+#
+# image_grid_plot([X_test]+Y_fc,
+# ['image','i2i1','i2i2'],
+# 15,plot_dir+'/fc.png',(40,40))
 
 #Radius scatter plot
 radius_vector = [utility.contourRadius(x) for x in contours_test]

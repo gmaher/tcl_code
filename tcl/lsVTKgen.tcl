@@ -272,6 +272,8 @@ proc get_image_name {fn} {
   set f [lindex [split $fn /] end]
   string map {-cm.mha ""} $f
 	string map {_all.mha ""} $f
+	string map {-image.mha ""} $f
+	return $f
 }
 
 proc get_group_points {grpName} {
@@ -386,6 +388,52 @@ proc group_names {} {
     return [array names gGroup]
 }
 
+proc model_loop {folder} {
+	set group_folders [glob -type d $folder*]
+
+	global fn
+	set fn [open "log.txt" "w"]
+	close $fn
+	foreach fold $group_folders {
+		model_groups $fold
+	}
+}
+
+proc model_groups {fold} {
+	global guiBOOLEANvars
+	global gFilenames
+
+	puts "loading surfaces $fold"
+	if {[llength [glob $fold/*]] <= 1} {
+		puts "empty groups folder continuing"
+		return 0
+	}
+
+	set gFilenames(groups_dir) $fold
+	createPREOPgrpLoadGroups
+	guiSV_group_update_tree
+
+	set groups [group_names]
+	set img [get_image_name $fold]
+	global fn
+
+	foreach grp $groups {
+    	set numSegs [llength [group_get $grp]]
+			if {$numSegs > 1} {
+				set fn [open "log.txt" "a"]
+				puts $img.$grp
+				puts $fn $img.$grp
+				close $fn
+				set guiBOOLEANvars(selected_groups) $grp
+				create_model_polydata $grp
+				repos_writeVtkPolyData -file $img.$grp.vtp -obj /models/PolyData/$grp -type ascii
+			}
+
+	}
+
+	close_files
+}
+
 proc create_model_polydata {model_name} {
   global gRen3d
   global guiPDvars
@@ -433,12 +481,17 @@ proc create_model_polydata {model_name} {
     }
 
     set vecFlag 0
+		global fn
 
     set numSegs [llength [group_get $grp]]
 
     set numOutPtsAlongLength [expr $sample_per_segment * $numSegs]
 
     set numPtsInLinearSampleAlongLength [expr $lin_multiplier *$numOutPtsAlongLength]
+
+		set fn [open "log.txt" "a"]
+		puts $fn $numSegs.$numOutPtsAlongLength.$numPtsInLinearSampleAlongLength
+		close $fn
 
     puts "num pts along length: $numPtsInLinearSampleAlongLength"
 
@@ -481,7 +534,7 @@ proc create_model_polydata {model_name} {
   #set_facenames_as_groupnames $myresult $names 0
 
   guiSV_model_add_faces_to_tree $kernel $model
-  guiSV_model_display_only_given_model $model 1
+  #guiSV_model_display_only_given_model $model 1
 
 	puts "Model creation $model_name complete"
   #tk_messageBox -title "Solid Unions Complete"  -type ok -message "Number of Free Edges: [lindex $rtnstr 0]\n (Free edges are okay for open surfaces)\n Number of Bad Edges: [lindex $rtnstr 1]"
