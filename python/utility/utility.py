@@ -634,7 +634,10 @@ def getImageReslice(img, ext, p, n, x):
     reslice.SetInputData(img)
     reslice.SetInterpolationModeToLinear()
 
-    y = np.cross(n,x)
+    #Get y axis and make sure it satisfies the left hand rule
+    tr = vtk.vtkTransform()
+    tr.RotateWXYZ(-90,n)
+    y = tr.TransformPoint(x)
 
     reslice.SetResliceAxesDirectionCosines(
         x[0],x[1],x[2],y[0],y[1],y[2],n[0],n[1],n[2])
