@@ -33,6 +33,12 @@ def parse_config(fn):
 
 	return config
 
+def multi_replace(s,exprlist):
+
+    for e in exprlist:
+        s = s.replace(e,'')
+    return s
+
 def query_file(folder, query_list):
 	'''
 	utility function to query a directory for a file
@@ -616,6 +622,16 @@ def VTKScreenshotPD(pds, elevations=[0], azimuths=[0], size=(600,600), fn='ren.p
     iren.TerminateApp()
     del renwin, iren
 
+def parsePathFile(fn):
+    """
+    parses a simvascular 2.0 path file
+    """
+    f = open(n).readlines()
+
+    paths={}
+
+    expr1 = ['set ', 'gPathPoints', '(',')','{','}',',name','\n']
+    expr2 = ['{','}','p ','t ', 'tx ', '(',') ', '\\\n',' ']
 def getImageReslice(img, ext, p, n, x):
     """
     gets slice of an image in the plane defined by p, n and x
