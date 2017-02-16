@@ -616,6 +616,42 @@ def VTKScreenshotPD(pds, elevations=[0], azimuths=[0], size=(600,600), fn='ren.p
     iren.TerminateApp()
     del renwin, iren
 
+def getImageReslice(img, ext, p, n, x):
+    """
+    gets slice of an image in the plane defined by p, n and x
+
+    args:
+        @a img: vtk image (3 dimensional)
+        @a ext: extent of the reslice plane [Xext,Yext]
+        @a p ((x,y,z)): origin of the plane
+        @a n ((x,y,z)): vector normal to plane
+        @a x ((x,y,z)): x-axis in the plane
+
+    returns:
+        ret (itk image): image in the slice plane
+    """
+    reslice = vtk.vtkImageReslice()
+    reslice.SetInputData(img)
+    reslice.SetInterpolationModeToLinear()
+
+    y = np.cross(n,x)
+
+    reslice.SetResliceAxesDirectionCosines(
+        x[0],x[1],x[2],y[0],y[1],y[2],n[0],n[1],n[2])
+    reslice.SetResliceAxesOrigin(p[0],p[1],p[2])
+
+    delta_min = min(img.GetSpacing())
+    px = delta_min*ext[0]
+    py = delta_min*ext[1]
+
+    reslice.SetOutputSpacing((delta_min,delta_min,delta_min))
+    reslice.SetOutputOrigin(-0.5*px,-0.5*py,0.0)
+    reslice.SetOutputExtent(0,ext[0],0,ext[1],0,0)
+
+    reslice.Update()
+
+    return VTKSPtoNumpy(reslice.GetOutput())
+
 def contourToSeg(contour, origin, dims, spacing):
 	'''
 	Converts an ordered set of points to a segmentation
