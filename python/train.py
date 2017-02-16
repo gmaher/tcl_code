@@ -36,7 +36,7 @@ output_dir = config['learn_params']['output_dir']
 model_dir = config['learn_params']['model_dir']
 pred_dir = config['learn_params']['pred_dir']
 plot_dir = config['learn_params']['plot_dir']
-
+mask = config['learn_params']['mask']=='True'
 utility.mkdir(output_dir)
 utility.mkdir(model_dir)
 utility.mkdir(pred_dir)
@@ -75,7 +75,7 @@ r_finetune = 0.5
 if model_to_train == 'FCN':
     net, net_f = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
     num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,
-    dense_size=dense_size, l2_reg=l2_reg, mask=True)
+    dense_size=dense_size, l2_reg=l2_reg, mask=mask)
     net.name ='FCN'
     net_f.name='FCN'
     net,train_loss,val_loss =\
@@ -97,7 +97,7 @@ if model_to_train == 'FCN_multi':
 if model_to_train == 'FCN_finetune':
     net,net_f = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
     num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,
-    dense_size=dense_size, l2_reg=l2_reg, mask=True)
+    dense_size=dense_size, l2_reg=l2_reg, mask=mask)
     net.name ='FCN_finetune'
 
     net,train_loss,val_loss =\
@@ -119,7 +119,7 @@ if model_to_train == 'FCN_finetune':
 if model_to_train == 'FC_branch':
     net = util_model.FC_branch(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
     num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,
-    dense_size=dense_size, l2_reg=l2_reg, mask=True)
+    dense_size=dense_size, l2_reg=l2_reg, mask=mask)
     net.name ='FC_branch'
 
     net,train_loss,val_loss =\
@@ -140,7 +140,7 @@ if model_to_train == 'ConvFC':
 
 if model_to_train == 'OBP_FCN':
     net,net_categorical = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter, output_channels=3,
-    dense_layers=dense_layers,dense_size=dense_size, obg=True,l2_reg=l2_reg)
+    dense_layers=dense_layers,dense_size=dense_size, obg=True,l2_reg=l2_reg, mask=mask)
     #have to manually compile net because it isn't directly trained
     net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
     net.name = 'OBP_FCN'
@@ -164,7 +164,7 @@ if model_to_train == 'OBG_FCN':
 
 if model_to_train == 'HED':
     #net = load_model('./models/hed_bsds_vasc.h5')
-    net = util_model.hed_keras(input_shape=input_shape, Wfilter=Wfilter, mask=True, Nfilters=Nfilters,
+    net = util_model.hed_keras(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
     dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0)
     #high learning rate
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*4,
@@ -173,7 +173,7 @@ if model_to_train == 'HED':
 
 if model_to_train == 'I2INet':
 
-    net = util_model.I2INet(input_shape=input_shape, Wfilter=Wfilter, mask=True, Nfilters=Nfilters,
+    net = util_model.I2INet(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
     dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
     #high learning rate
     downsampled_train = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_train.segs_tf])

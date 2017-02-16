@@ -86,6 +86,8 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_t
     if len(out.shape) == 5 or len(out.shape) == 2:
         out = out[0]
         out = out[inds].reshape(shape)
+    elif len(out.shape) == 3:
+        out = out
     elif out.shape[3] == 3:
         out = out[inds,:,:,1].reshape(shape)
     else:
@@ -225,10 +227,13 @@ add_pred_to_dict(PREDS,pred_dir+'ConvFC.npy','ConvFC','gray',inds,shape, Y_test)
 add_pred_to_dict(PREDS,pred_dir+'FCN_finetune.npy','RSN_finetune','m',inds,shape, Y_test)
 add_pred_to_dict(PREDS,pred_dir+'FCN_multi.npy','RSN_multi','c',inds,shape, Y_test)
 
+np.save(pred_dir+'mag_seg',vasc2d.mag_seg/255)
+add_pred_to_dict(PREDS,pred_dir+'mag_seg.npy','3D segmentation','yellow',inds,shape, Y_test)
+
 #load contours
 add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,inds,DX)
 add_contour_to_dict(PREDS,'level set edge map','purple',vasc2d.contours_edge,contours_test,inds,DX)
-add_contour_to_dict(PREDS,'level set segmentation','yellow',vasc2d.contours_seg,contours_test,inds,DX)
+#add_contour_to_dict(PREDS,'3D segmentation','yellow',vasc2d.contours_seg,contours_test,inds,DX)
 
 #load OBP by itself for vizualization purposes
 OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
@@ -270,14 +275,14 @@ OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
 15,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
-keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch', 'ConvFC', 'RSN_finetune', 'RSN_multi']
+keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch', 'ConvFC', 'RSN_finetune', 'RSN_multi', '3D segmentation']
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure segmentations for high error vessels
 inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.8]
-keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch']
+keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch', '3D segmentation']
 segs = [X_test[inds],Y_test[inds]]+[PREDS['seg'][k][inds] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 l = 10
@@ -288,7 +293,7 @@ image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 #Figure 2 contours
 #keys = ['level set', 'level set edge map', RSN, 'OBP_SN',
 #'OBG_RSN', 'HED','I2INet', 'FC_branch']
-keys = ['level set', 'level set segmentation', 'RSN','OBG_RSN', 'HED','I2INet', 'ConvFC', 'RSN_finetune', 'RSN_multi']
+keys = ['level set', '3D segmentation', 'RSN','OBG_RSN', 'HED','I2INet', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
 colors = ['yellow']+[PREDS['color'][k] for k in keys]
@@ -473,7 +478,7 @@ i2i_rad = [radiusErrorCount(PREDS['error']['I2INet'],radius_vector,rad_err_thres
 r]
 ls = [radiusErrorCount(PREDS['error']['level set'],radius_vector,rad_err_thresh,rad) for rad in
 r]
-ls_seg = [radiusErrorCount(PREDS['error']['level set segmentation'],radius_vector,rad_err_thresh,rad) for rad in
+ls_seg = [radiusErrorCount(PREDS['error']['3D segmentation'],radius_vector,rad_err_thresh,rad) for rad in
 r]
 sn_ft = [radiusErrorCount(PREDS['error']['RSN_finetune'],radius_vector,rad_err_thresh,rad) for rad in
 r]
@@ -490,7 +495,7 @@ plt.bar(ind+3*width,i2i_rad,width,color='orange', label='I2INet')
 plt.bar(ind+4*width,sn_ft,width,color='m', label='RSN_finetune')
 plt.bar(ind+5*width,sn_multi,width,color='c', label='RSN_multi')
 plt.bar(ind+6*width,ls,width,color='pink', label='level set')
-plt.bar(ind+7*width,ls_seg,width,color='green', label='level set segmentation')
+plt.bar(ind+7*width,ls_seg,width,color='green', label='3D segmentation')
 
 plt.ylim(0,1.0)
 plt.ylabel('Fraction of vessels with error below threshold')
@@ -592,3 +597,25 @@ plt.hist(ratios_true, bins=40, alpha=0.5, label='Ground truth')
 plt.xlabel('radius ratio')
 plt.legend()
 plt.savefig(plot_dir+'radiusratio.png')
+
+####################################
+# 3D errors
+####################################
+print "starting 3d analysis"
+vtk_dir = config['learn_params']['output_dir']+'vtk/'
+files = os.listdir(vtk_dir)
+files = [f for f in files if 'truth' in f]
+
+codes = ['RSN','ls_seg','ls']
+g = open(plot_dir+'jaccard3d.txt','w')
+# for c in codes:
+#     errs = []
+#     for f in files:
+#         mod = f.replace('truth',c)
+#         print f, mod
+#         p1 = utility.readVTKPD(vtk_dir+f)
+#         p2 = utility.readVTKPD(vtk_dir+mod)
+#         e = utility.jaccard3D(p1,p2)
+#         errs.append(e)
+#     g.write('{} : {}, {}\n'.format(c,np.mean(errs),np.std(errs)))
+g.close()

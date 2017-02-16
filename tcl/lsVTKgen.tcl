@@ -396,7 +396,9 @@ proc model_loop {folder} {
 	set fn [open "log.txt" "w"]
 	close $fn
 	foreach fold $group_folders {
-		model_groups $fold
+		catch {
+			model_groups $fold
+		}
 	}
 }
 

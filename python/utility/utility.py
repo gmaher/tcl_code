@@ -20,6 +20,8 @@ import configparser
 from keras.optimizers import Adam
 import util_data
 from scipy.interpolate import UnivariateSpline
+import SimpleITK as sitk
+from vtk.util import numpy_support
 
 def mkdir(fn):
     if not os.path.exists(os.path.abspath(fn)):
@@ -565,10 +567,9 @@ def addPdToRen(ren, pd):
 
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-
     ren.AddActor(actor)
 
-def VTKScreenshotPD(pds, views, fn):
+def VTKScreenshotPD(pds, elevations=[0], azimuths=[0], size=(600,600), fn='ren.png'):
     """
     this function loads a list of polydata objects into a renderwindow and screenshots them
 
@@ -579,23 +580,41 @@ def VTKScreenshotPD(pds, views, fn):
     ren = vtk.vtkRenderer()
     renwin = vtk.vtkRenderWindow()
     renwin.AddRenderer(ren)
+    renwin.SetSize(size[0], size[1])
 
     iren = vtk.vtkRenderWindowInteractor()
     iren.SetRenderWindow(renwin)
+
+    w2if = vtk.vtkWindowToImageFilter()
+    w2if.SetInput(renwin)
+
+    writer = vtk.vtkPNGWriter()
 
     for p in pds:
         addPdToRen(ren, p)
 
     iren.Initialize()
 
-    ren.ResetCamera()
-    ren.GetActiveCamera().Zoom(1.0)
-    ren.SetBackground(1,1,1)
-    renwin.Render()
+    for elevation in elevations:
+        for azimuth in azimuths:
+            ren.ResetCamera()
+            ren.GetActiveCamera().Zoom(1.0)
+            ren.GetActiveCamera().Elevation(elevation)
+            ren.GetActiveCamera().Azimuth(azimuth)
+            ren.SetBackground(1,1,1)
 
-    iren.Start()
+            renwin.Render()
 
-    return iren,renwin,ren
+            # screenshot code:
+            w2if.Update()
+
+            writer.SetFileName(fn[:-4]+'{}{}'.format(elevation,azimuth)+fn[-4:])
+            writer.SetInputData(w2if.GetOutput())
+            writer.Write()
+
+    renwin.Finalize()
+    iren.TerminateApp()
+    del renwin, iren
 
 def contourToSeg(contour, origin, dims, spacing):
 	'''
@@ -885,6 +904,102 @@ def confusionMatrix(ytrue,ypred, as_fraction=True):
 		totals = totals.reshape((-1,1))
 		H = H/(totals+1e-6)
 		return np.around(H,2)
+
+def pd_to_numpy_vol(pd, spacing=[1.,1.,1.], shape=None, origin=None, foreground_value=255, backgroud_value = 0):
+    if shape is None:
+        bnds = np.array(pd.GetBounds())
+        shape = np.ceil((bnds[1::2]-bnds[::2])/spacing).astype(int)+15
+    if origin is None:
+        origin = bnds[::2]+(bnds[1::2]-bnds[::2])/2
+
+    #make image
+    extent = np.zeros(6).astype(int)
+    extent[1::2] = np.array(shape)-1
+
+    imgvtk = vtk.vtkImageData()
+    imgvtk.SetSpacing(spacing)
+    imgvtk.SetOrigin(origin)
+    imgvtk.SetExtent(extent)
+    imgvtk.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
+
+    vtk_data_array = numpy_support.numpy_to_vtk(num_array=np.ones(shape[::-1]).ravel()*backgroud_value,  # ndarray contains the fitting result from the points. It is a 3D array
+                                                deep=True, array_type=vtk.VTK_FLOAT)
+
+    imgvtk.GetPointData().SetScalars(vtk_data_array)
+
+    #poly2 stencil
+    pol2stenc = vtk.vtkPolyDataToImageStencil()
+    pol2stenc.SetInputData(pd)
+    pol2stenc.SetOutputSpacing(spacing)
+    pol2stenc.SetOutputOrigin(origin)
+    pol2stenc.SetOutputWholeExtent(extent)
+    pol2stenc.Update()
+
+    #stencil to image
+    imgstenc = vtk.vtkImageStencil()
+    imgstenc.SetInputData(imgvtk)
+    imgstenc.SetStencilConnection(pol2stenc.GetOutputPort())
+    imgstenc.ReverseStencilOn()
+    imgstenc.SetBackgroundValue(foreground_value)
+    imgstenc.Update()
+
+    ndseg = numpy_support.vtk_to_numpy(imgstenc.GetOutputDataObject(0).GetPointData().GetArray(0))
+    return ndseg.reshape(shape[::-1])
+
+
+def pd_to_itk_image(pd, ref_img, foreground_value=255, backgroud_value = 0):
+    ndseg = pd_to_numpy_vol(pd, spacing=ref_img.GetSpacing(), shape=ref_img.GetSize(), origin=ref_img.GetOrigin() )
+    segitk = sitk.GetImageFromArray(ndseg.astype(np.int16))
+    segitk.CopyInformation(ref_img)
+    return segitk
+
+def jaccard3D_pd(pd1,pd2):
+    """
+    computes the jaccard distance error for two polydata objects
+
+    returns (error) float
+    """
+    union = vtk.vtkBooleanOperationPolyDataFilter()
+    union.SetOperationToUnion()
+    union.SetInputData(0,pd1)
+    union.SetInputData(1,pd2)
+    union.Update()
+    u = union.GetOutput()
+    massUnion = vtk.vtkMassProperties()
+    massUnion.SetInputData(u)
+
+    intersection = vtk.vtkBooleanOperationPolyDataFilter()
+    intersection.SetOperationToIntersection()
+    intersection.SetInputData(0,pd1)
+    intersection.SetInputData(1,pd2)
+    intersection.Update()
+    i = intersection.GetOutput()
+    massIntersection = vtk.vtkMassProperties()
+    massIntersection.SetInputData(i)
+
+    return 1 - massIntersection.GetVolume()/massUnion.GetVolume()
+
+def jaccard3D_pd_to_itk(pd1,pd2,ref_img):
+
+    img1 = pd_to_itk_image(pd1,ref_img)
+    img2 = pd_to_itk_image(pd2,ref_img)
+    return jaccard3D_itk(img1,img2)
+
+def jaccard3D_itk(img1,img2):
+    """
+    computes jaccard distance via itk images
+    """
+    i1 = img1>0
+    i2 = img2>0
+
+    filt = sitk.StatisticsImageFilter()
+
+    filt.Execute(i1|i2)
+    U = filt.GetSum()
+    filt.Execute(i1&i2)
+    I = filt.GetSum()
+
+    return 1.0 - float(I)/(U+1e-6)
 
 def train(net, lrates, batch_size, nb_epoch, x_train, y_train, x_val,y_val):
 	"""Trains a model on 2d vascular data (optionally with boundary data)

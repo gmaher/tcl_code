@@ -88,7 +88,11 @@ for pred_type in pred:
         contour = vasc.contours_ls
 
     if pred_type == 'ls_seg':
-        contour = vasc.contours_seg
+        meta = np.load(dataDir+'metadata.npy')
+        seg = vasc.mag_seg/255
+        seg_thresh = utility.threshold(seg,THRESHOLD)
+        contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
+            meta[0,:,:], ISOVALUE)
 
     if pred_type == 'truth':
         contour = vasc.contours
@@ -112,7 +116,8 @@ for pred_type in pred:
                 path_info = pinfo[key]
 
                 if c != [] and len(c) > 1:
-                    c = utility.smoothContour(c, num_modes=NUM_MODES)
+                    if pred_type != 'truth':
+                        c = utility.smoothContour(c, num_modes=NUM_MODES)
                     cdenorm = utility.denormalizeContour(c,path_info[0],path_info[1],
                         path_info[2])
 
