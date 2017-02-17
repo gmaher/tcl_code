@@ -22,6 +22,7 @@ import util_data
 from scipy.interpolate import UnivariateSpline
 import SimpleITK as sitk
 from vtk.util import numpy_support
+import re
 
 def mkdir(fn):
     if not os.path.exists(os.path.abspath(fn)):
@@ -626,13 +627,94 @@ def parsePathFile(fn):
     """
     parses a simvascular 2.0 path file
     """
-    f = open(n).readlines()
+    f = open(fn).readlines()
 
     paths={}
 
     expr1 = ['set ', 'gPathPoints', '(',')','{','}',',name','\n']
-    expr2 = ['{','}','p ','t ', 'tx ', '(',') ', '\\\n',' ']
-def getImageReslice(img, ext, p, n, x):
+    expr2 = ['{','}','p ','t ', 'tx ', '(', '\\\n',' ']
+
+    for i in range(len(f)):
+        if ',name' in f[i]:
+            s = f[i]
+            s = multi_replace(s,expr1)
+
+            s = s.split(' ')
+            if not paths.has_key(s[0]):
+                paths[s[0]] = {}
+                paths[s[0]]['name'] = s[1]
+            else:
+                paths[s[0]]['name'] = s[1]
+
+        if ',splinePts' in f[i]:
+            j = i+1
+            key = multi_replace(f[i],expr1).split(',')[0]
+            if not paths.has_key(key):
+                paths[key] = {}
+                paths[key]['points'] = []
+            else:
+                paths[key]['points'] = []
+
+            while 'tx' in f[j]:
+                s = f[j]
+                s = multi_replace(s,expr2).replace(')',',').split(',')[:-1]
+                s = [float(x) for x in s]
+                paths[key]['points'].append(s)
+
+                j = j+1
+            paths[key]['points'] = np.array(paths[key]['points'])
+
+    return paths
+
+def parseGroupFile(fn):
+    """
+    parses a simvascular groups file
+    """
+    f = open(fn).readlines()
+    f = [i.replace('\r\n','') for i in f]
+
+    nrmExpr = 'nrm {.*} '
+    posExpr = 'pos {.*} '
+    xhatExpr = 'xhat {.*} '
+
+    group = {}
+    for i in range(len(f)):
+        if 'xhat' in f[i]:
+            group_num = int(f[i-1])
+
+            s = f[i]
+
+            xhat_string = re.search(xhatExpr, s).group()
+            xhat_string = xhat_string.split('}')[0]
+            xhat = [float(x) for x in xhat_string[6:].split(' ')]
+
+            pos_string = re.search(posExpr, s).group()
+            pos_string = pos_string.split('}')[0]
+            pos = [float(x) for x in pos_string[5:].split(' ')]
+
+            nrm_string = re.search(nrmExpr, s).group()
+            nrm_string = nrm_string.split('}')[0]
+            nrm = [float(x) for x in nrm_string[5:].split(' ')]
+
+            print xhat, pos, nrm
+            group[group_num] = {}
+            group[group_num]['nrm'] = nrm
+            group[group_num]['pos'] = pos
+            group[group_num]['xhat'] = xhat
+            group[group_num]['points'] = []
+
+            j = i+1
+            while f[j] != '':
+                tup = [float(x) for x in f[j].split(' ')]
+                group[group_num]['points'].append(tup)
+                j = j+1
+
+            group[group_num]['points'] = np.array(group[group_num]['points'])
+            i = j
+
+    return group
+    
+def getImageReslice(img, ext, p, n, x, asnumpy=False):
     """
     gets slice of an image in the plane defined by p, n and x
 
@@ -668,8 +750,58 @@ def getImageReslice(img, ext, p, n, x):
     reslice.SetOutputExtent(0,ext[0],0,ext[1],0,0)
 
     reslice.Update()
+    #print asnumpy
+    if asnumpy:
+         return VTKSPtoNumpy(reslice.GetOutput())
+    else:
+        return reslice.GetOutput()
 
-    return VTKSPtoNumpy(reslice.GetOutput())
+def getAllImageSlices(img,paths,ext):
+    """
+    traverses points in an image and gets reslices at those points
+
+    args:
+        @a img (vtk image)
+        @a paths (dictionary): paths['id']['name'] = path name
+            paths['id']['points'] = array Nx9, (px,py,pz,nx,ny,nz,xx,xy,xz)
+    """
+    slices = []
+    for k in paths.keys():
+        for p in paths[k]['points']:
+            i =getImageReslice(img,ext,p[:3],p[3:6],p[6:9])
+            slices.append(i)
+    return slices
+
+def writeAllImageSlices(imgfn,pathfn,ext,output_dir):
+    reader = vtk.vtkMetaImageReader()
+    reader.SetFileName(imgfn)
+    reader.Update()
+    img = reader.GetOutput()
+
+    parsed_path = parsePathFile(pathfn)
+    slices = getAllImageSlices(img,parsed_path,ext)
+
+    writer = vtk.vtkJPEGWriter()
+
+    table = vtk.vtkLookupTable()
+    scalar_range = img.GetScalarRange()
+    table.SetRange(scalar_range[0], scalar_range[1]) # image intensity range
+    table.SetValueRange(0.0, 1.0) # from black to white
+    table.SetSaturationRange(0.0, 0.0) # no color saturation
+    table.SetRampToLinear()
+    table.Build()
+
+    # Map the image through the lookup table
+    color = vtk.vtkImageMapToColors()
+    color.SetLookupTable(table)
+
+    mkdir(output_dir)
+    for i in range(len(slices)):
+        color.SetInputData(slices[i])
+        writer.SetInputConnection(color.GetOutputPort())
+        writer.SetFileName(output_dir+'{}.jpg'.format(i))
+        writer.Update()
+        writer.Write()
 
 def contourToSeg(contour, origin, dims, spacing):
 	'''

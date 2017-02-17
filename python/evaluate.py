@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 import utility.util_data as util_data
 import matplotlib
-matplotlib.rcParams.update({'font.size': 15})
+matplotlib.rcParams.update({'font.size': 22})
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -291,9 +291,8 @@ if len(inds) < l:
 image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
 #Figure 2 contours
-#keys = ['level set', 'level set edge map', RSN, 'OBP_SN',
-#'OBG_RSN', 'HED','I2INet', 'FC_branch']
-keys = ['level set', '3D segmentation', 'RSN','OBG_RSN', 'HED','I2INet', 'ConvFC', 'RSN_finetune', 'RSN_multi']
+keys = ['level set', 'RSN', 'OBG_RSN', 'HED','I2INet',]
+#keys = ['level set', '3D segmentation', 'RSN','OBG_RSN', 'HED','I2INet', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
 colors = ['yellow']+[PREDS['color'][k] for k in keys]
@@ -318,7 +317,7 @@ for k in keys:
      label=k, linewidth=3)
 plt.xlabel('Jaccard distance')
 plt.ylabel('Cumulative error distribution, F(x)')
-lg = plt.legend(loc='center right', bbox_to_anchor=(1.7,0.5))
+lg = plt.legend(loc='center right', bbox_to_anchor=(1.5,0.5))
 plt.grid(b='on')
 plt.savefig(plot_dir+'IOU.png',bbox_extra_artists=(lg,), bbox_inches='tight')
 
@@ -484,24 +483,34 @@ sn_ft = [radiusErrorCount(PREDS['error']['RSN_finetune'],radius_vector,rad_err_t
 r]
 sn_multi = [radiusErrorCount(PREDS['error']['RSN_multi'],radius_vector,rad_err_thresh,rad) for rad in
 r]
-ind = np.array([0,3,6])
-width=0.3
+# ind = np.array([0,3,6])
+# width=0.3
+#
+# plt.figure()
+# plt.bar(ind,sn,width,color='r', label='RSN')
+# plt.bar(ind+width,obg,width,color='b', label='OBG_RSN')
+# plt.bar(ind+2*width,hed_rad,width,color='black', label='HED')
+# plt.bar(ind+3*width,i2i_rad,width,color='orange', label='I2INet')
+# plt.bar(ind+4*width,sn_ft,width,color='m', label='RSN_finetune')
+# plt.bar(ind+5*width,sn_multi,width,color='c', label='RSN_multi')
+# plt.bar(ind+6*width,ls,width,color='pink', label='level set')
+# plt.bar(ind+7*width,ls_seg,width,color='green', label='3D segmentation')
+
+ind = np.array([0,2,4])
+width=0.2
 
 plt.figure()
 plt.bar(ind,sn,width,color='r', label='RSN')
 plt.bar(ind+width,obg,width,color='b', label='OBG_RSN')
 plt.bar(ind+2*width,hed_rad,width,color='black', label='HED')
 plt.bar(ind+3*width,i2i_rad,width,color='orange', label='I2INet')
-plt.bar(ind+4*width,sn_ft,width,color='m', label='RSN_finetune')
-plt.bar(ind+5*width,sn_multi,width,color='c', label='RSN_multi')
-plt.bar(ind+6*width,ls,width,color='pink', label='level set')
-plt.bar(ind+7*width,ls_seg,width,color='green', label='3D segmentation')
+plt.bar(ind+4*width,ls,width,color='pink', label='level set')
 
 plt.ylim(0,1.0)
 plt.ylabel('Fraction of vessels with error below threshold')
 plt.xlabel('radius')
 plt.xticks(ind+width, ['0-0.3cm','0.3-1.0cm','1.0-2.5cm'])
-lg = plt.legend(loc='center right', bbox_to_anchor=(1.7,0.5))
+lg = plt.legend(loc='center right', bbox_to_anchor=(1.5,0.5))
 
 plt.savefig(plot_dir+'radiusBar.png',bbox_extra_artists=(lg,), bbox_inches='tight')
 
