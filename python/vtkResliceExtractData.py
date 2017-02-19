@@ -59,8 +59,8 @@ meta_data = [[],[],[]]
 segs = []
 f = open(output_dir+'pathinfo.txt','w')
 
-#for i in tqdm(range(len(mhas))):
-for i in range(2):
+for i in tqdm(range(len(mhas))):
+#for i in range(2):
     img = mhas[i]
     img_name = img.split('/')[-2]
 
