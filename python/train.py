@@ -66,6 +66,7 @@ Pw=Ph=int(config['learn_params']['image_dims'])
 input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)
 lrates = [lr,lr/10,lr/100,lr/1000]
+#lrates=[lr/10]
 l2_reg=0.1
 r_finetune = 0.5
 #lrates = [lr]

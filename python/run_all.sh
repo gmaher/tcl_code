@@ -11,17 +11,19 @@ python train.py HED options${1}.cfg
 
 python train.py I2INet options${1}.cfg
 
-python train.py FC_branch options${1}.cfg
+#python train.py FC_branch options${1}.cfg
 
-python train.py FCN_finetune options${1}.cfg
+#python train.py FCN_finetune options${1}.cfg
 
-python train.py FCN_multi options${1}.cfg
+#python train.py FCN_multi options${1}.cfg
 
 python train.py ConvFC options${1}.cfg
 
 python evaluate.py options${1}.cfg
 
 python make_models.py options${1}.cfg
+
+python vtkScreens.py options${1}.cfg
 # #options2
 # python train.py FCN options2.cfg
 #

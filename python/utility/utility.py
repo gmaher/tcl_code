@@ -162,6 +162,31 @@ def denormalizeContour(c,p,t,tx):
     res = np.array([p + k[0]*tx + k[1]*ty for k in c])
     return res[:-1]
 
+def normalizeContour(c,p,t,tx):
+    """
+    uses simvascular path info to transform contour into local 2d coordinates
+
+    args:
+        c (np array, (num points x 3)) - 3d contour to transform
+        p (np array 1x3) - 3d origin of contour
+        t (np array 1x3) - normal vector of 3d contour
+        tx (np array 1x3) - vector in 3d contour plane
+
+    returns:
+        res (np array, (num points x 3)) - 3d contour
+    """
+
+    c = list(c)
+
+    ty = np.cross(t,tx)
+    ty = ty/np.linalg.norm(ty)
+
+    c_p = [k-p for k in c]
+
+    res = np.array([(k.dot(tx), k.dot(ty)) for k in c_p])
+    #print '{}\n{}\n{}\n{}\n{}\n{}\n{}\n'.format(p,t,tx,ty,c,c_p,res)
+    return res
+
 def groupsToPoints(folder):
     files = os.listdir(folder)
     groups = []
@@ -672,7 +697,7 @@ def parseGroupFile(fn):
     """
     f = open(fn).readlines()
     f = [i.replace('\r\n','') for i in f]
-
+    f = [i.replace('\n','') for i in f]
     nrmExpr = 'nrm {.*} '
     posExpr = 'pos {.*} '
     xhatExpr = 'xhat {.*} '
@@ -688,32 +713,32 @@ def parseGroupFile(fn):
             xhat_string = xhat_string.split('}')[0]
             xhat = [float(x) for x in xhat_string[6:].split(' ')]
 
-            pos_string = re.search(posExpr, s).group()
-            pos_string = pos_string.split('}')[0]
-            pos = [float(x) for x in pos_string[5:].split(' ')]
+            # pos_string = re.search(posExpr, s).group()
+            # pos_string = pos_string.split('}')[0]
+            # pos = [float(x) for x in pos_string[5:].split(' ')]
 
             nrm_string = re.search(nrmExpr, s).group()
             nrm_string = nrm_string.split('}')[0]
             nrm = [float(x) for x in nrm_string[5:].split(' ')]
 
-            print xhat, pos, nrm
-            group[group_num] = {}
-            group[group_num]['nrm'] = nrm
-            group[group_num]['pos'] = pos
-            group[group_num]['xhat'] = xhat
-            group[group_num]['points'] = []
 
+            group[group_num] = {}
+            group[group_num]['contour'] = []
             j = i+1
             while f[j] != '':
+
                 tup = [float(x) for x in f[j].split(' ')]
-                group[group_num]['points'].append(tup)
+                group[group_num]['contour'].append(tup)
                 j = j+1
 
-            group[group_num]['points'] = np.array(group[group_num]['points'])
+            group[group_num]['contour'] = np.array(group[group_num]['contour'])
+
+            pos = np.mean(group[group_num]['contour'],axis=0)
+            group[group_num]['points'] = list(pos) + nrm + xhat
             i = j
 
     return group
-    
+
 def getImageReslice(img, ext, p, n, x, asnumpy=False):
     """
     gets slice of an image in the plane defined by p, n and x
@@ -756,7 +781,7 @@ def getImageReslice(img, ext, p, n, x, asnumpy=False):
     else:
         return reslice.GetOutput()
 
-def getAllImageSlices(img,paths,ext):
+def getAllImageSlices(img,paths,ext, asnumpy=False):
     """
     traverses points in an image and gets reslices at those points
 
@@ -767,9 +792,14 @@ def getAllImageSlices(img,paths,ext):
     """
     slices = []
     for k in paths.keys():
-        for p in paths[k]['points']:
-            i =getImageReslice(img,ext,p[:3],p[3:6],p[6:9])
+        if type(paths[k]['points'][0]) != list:
+            p = paths[k]['points']
+            i = getImageReslice(img,ext,p[:3],p[3:6],p[6:9], asnumpy)
             slices.append(i)
+        else:
+            for p in paths[k]['points']:
+                i =getImageReslice(img,ext,p[:3],p[3:6],p[6:9], asnumpy)
+                slices.append(i)
     return slices
 
 def writeAllImageSlices(imgfn,pathfn,ext,output_dir):
@@ -821,7 +851,7 @@ def contourToSeg(contour, origin, dims, spacing):
 	for j in range(0,dims[0]):
 	    for i in range(0,dims[1]):
 	        x = origin[0] + (j+0.5)*spacing[0]
-	        y = origin[1] + (i+0.5)*spacing[1]
+	        y = origin[1] - (i+0.5)*spacing[1]
 	        p = Point(x,y)
 
 	        if poly.contains(p):
@@ -848,6 +878,7 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		xdims,ydims = segmentation.shape
 		xcenter = xdims/2
 		ycenter = ydims/2
+
 		dist = 1000
 		for i in range(0,len(contours)):
 			center = np.mean(contours[i],axis=0)
@@ -861,7 +892,7 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		contour = np.zeros((len(points),2))
 
 		for i in range(0,len(points)):
-			contour[i,1] = (points[i,0]+0.5)*spacing[1]+origin[1]
+			contour[i,1] = -(points[i,0]+0.5)*spacing[1]+origin[1]
 			contour[i,0] = (points[i,1]+0.5)*spacing[0]+origin[0]
 
 		returned_contours.append(contour)
@@ -983,11 +1014,11 @@ def threshold(x,value):
 
 def get_extents(meta):
 	extents = []
-	C,N,W = meta.shape
+	C,N = meta.shape
 	for i in range(0,N):
-		spacing = meta[0,i,:]
-		origin = meta[1,i,:]
-		dims = meta[2,i,:]
+		spacing = meta[0,i]
+		origin = meta[1,i]
+		dims = meta[2,i]
 
 		left = origin[0]
 		right = origin[0]+dims[0]*spacing[0]

@@ -28,11 +28,18 @@ class VascData2D:
         self.meta = np.load(self.metaString)
         self.contours = np.load(self.contourString)
         self.contours_ls = np.load(self.ls_string)
-        self.contours_edge = np.load(self.ls_edge)
-        self.contours_seg = np.load(self.ls_seg)
-        self.mag_seg = np.load(self.mag_seg_str)
+        #self.contours_edge = np.load(self.ls_edge)
+        #self.contours_seg = np.load(self.ls_seg)
+        #self.mag_seg = np.load(self.mag_seg_str)
         #self.im_seg = np.load(self.im_seg_str)
         self.data_dims = self.images.shape
+        data_dims = self.data_dims
+
+        if data_dims[1] == 1:
+            self.images = self.images[:,0,:,:]
+            self.data_dims = self.images.shape
+            print self.data_dims
+
 
         #Keras/Tf require channel dimension so need to add this
         print 'reshaping and normalizing images'
@@ -42,8 +49,8 @@ class VascData2D:
             self.data_dims[1], self.data_dims[2],1))
         self.images_norm = utility.normalize_images(self.images_tf)
 
-        self.mag_seg_tf = self.mag_seg.reshape((self.data_dims[0],
-            self.data_dims[1], self.data_dims[2],1))
+        # self.mag_seg_tf = self.mag_seg.reshape((self.data_dims[0],
+        #     self.data_dims[1], self.data_dims[2],1))
         #self.im_seg_tf = self.im_seg.reshape((self.data_dims[0],
         #    self.data_dims[1], self.data_dims[2],1))
 

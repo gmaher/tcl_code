@@ -72,8 +72,8 @@ def calc_accuracy(seg, seg_truth):
 
 def get_outputs(seg, seg_truth):
     seg_thresh = utility.threshold(seg,THRESHOLD)
-    contour = utility.listSegToContours(seg_thresh, meta_test[1,:,:],
-        meta_test[0,:,:], ISOVALUE)
+    contour = utility.listSegToContours(seg_thresh, meta_test[1,:],
+        meta_test[0,:], ISOVALUE)
     errs = utility.listAreaOverlapError(contour, contours_test)
     thresh,ts = utility.cum_error_dist(errs,DX)
     roc = roc_curve(np.ravel(Y_test),np.ravel(seg), pos_label=1)
@@ -141,7 +141,7 @@ def contour_plot(X_test, Clist, extent, labels, colors, start_index, Nplots, fil
                 print "failed contour"
                 h, = ax_contour[i,j].plot([0],[0], color=color,label=label,linewidth=6)
             else:
-                h, = ax_contour[i,j].plot(contour[:,0],-contour[:,1], color=color,label=label,linewidth=6)
+                h, = ax_contour[i,j].plot(contour[:,0],contour[:,1], color=color,label=label,linewidth=6)
             handles.append(h)
 
             [a.set_axis_off() for a in ax_contour[i, :]]
@@ -197,11 +197,11 @@ Y_test = vasc2d.segs_tf[inds]
 vasc2d.images_norm = vasc2d.images_norm[inds]
 vasc2d.segs_tf = vasc2d.segs_tf[inds]
 vasc2d.segs = vasc2d.segs[inds]
-vasc2d.mag_seg = vasc2d.mag_seg[inds]
+#vasc2d.mag_seg = vasc2d.mag_seg[inds]
 
 Ntest = X_test.shape[0]
 
-meta_test = vasc2d.meta[:,inds,:]
+meta_test = vasc2d.meta[:,inds]
 extents_test = utility.get_extents(meta_test)
 contours_test = [vasc2d.contours[i] for i in inds]
 
@@ -222,17 +222,17 @@ add_pred_to_dict(PREDS,pred_dir+'OBP_FCN.npy','OBP_SN','green',inds,shape,Y_test
 add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_RSN','blue',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'I2INet.npy','I2INet','orange',inds,shape, Y_test)
-add_pred_to_dict(PREDS,pred_dir+'FC_branch.npy','FC_branch','teal',inds,shape, Y_test)
+#add_pred_to_dict(PREDS,pred_dir+'FC_branch.npy','FC_branch','teal',inds,shape, Y_test)
 add_pred_to_dict(PREDS,pred_dir+'ConvFC.npy','ConvFC','gray',inds,shape, Y_test)
-add_pred_to_dict(PREDS,pred_dir+'FCN_finetune.npy','RSN_finetune','m',inds,shape, Y_test)
-add_pred_to_dict(PREDS,pred_dir+'FCN_multi.npy','RSN_multi','c',inds,shape, Y_test)
+#add_pred_to_dict(PREDS,pred_dir+'FCN_finetune.npy','RSN_finetune','m',inds,shape, Y_test)
+#add_pred_to_dict(PREDS,pred_dir+'FCN_multi.npy','RSN_multi','c',inds,shape, Y_test)
 
-np.save(pred_dir+'mag_seg',vasc2d.mag_seg/255)
-add_pred_to_dict(PREDS,pred_dir+'mag_seg.npy','3D segmentation','yellow',inds,shape, Y_test)
+#np.save(pred_dir+'mag_seg',vasc2d.mag_seg/255)
+#add_pred_to_dict(PREDS,pred_dir+'mag_seg.npy','3D segmentation','yellow',inds,shape, Y_test)
 
 #load contours
 add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,inds,DX)
-add_contour_to_dict(PREDS,'level set edge map','purple',vasc2d.contours_edge,contours_test,inds,DX)
+#add_contour_to_dict(PREDS,'level set edge map','purple',vasc2d.contours_edge,contours_test,inds,DX)
 #add_contour_to_dict(PREDS,'3D segmentation','yellow',vasc2d.contours_seg,contours_test,inds,DX)
 
 #load OBP by itself for vizualization purposes
@@ -255,10 +255,10 @@ X_test[plot_inds[3,:]],X_test[plot_inds[4,:]]],
 ['image','image','image','image','image'],
 5,plot_dir+'/images.png',(40,40))
 
-image_grid_plot([vasc2d.mag_seg[plot_inds[0,:]],vasc2d.mag_seg[plot_inds[1,:]],vasc2d.mag_seg[plot_inds[2,:]],
-vasc2d.mag_seg[plot_inds[3,:]],vasc2d.mag_seg[plot_inds[4,:]]],
-['image','image','image','image','image'],
-5,plot_dir+'/mag_seg.png',(40,40))
+# image_grid_plot([vasc2d.mag_seg[plot_inds[0,:]],vasc2d.mag_seg[plot_inds[1,:]],vasc2d.mag_seg[plot_inds[2,:]],
+# vasc2d.mag_seg[plot_inds[3,:]],vasc2d.mag_seg[plot_inds[4,:]]],
+# ['image','image','image','image','image'],
+# 5,plot_dir+'/mag_seg.png',(40,40))
 
 #plot lots of predicted segmentations
 seg = PREDS['seg']['RSN']
@@ -275,14 +275,14 @@ OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
 15,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
-keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch', 'ConvFC', 'RSN_finetune', 'RSN_multi', '3D segmentation']
+keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet', 'ConvFC']
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure segmentations for high error vessels
 inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.8]
-keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','FC_branch', '3D segmentation']
+keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','ConvFC']
 segs = [X_test[inds],Y_test[inds]]+[PREDS['seg'][k][inds] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 l = 10
@@ -424,7 +424,7 @@ plt.ylim(-0.2,1.2)
 plt.savefig(plot_dir+'ls_scatter.png')
 
 #Radius scatter plot
-pixel_vector = np.array(radius_vector)/np.array(meta_test[0,:,0])
+pixel_vector = np.array(radius_vector)/np.array([k[0] for k in meta_test[0,:]])
 plt.figure()
 plt.scatter(pixel_vector, PREDS['error']['RSN'])
 plt.xlabel('radius (pixels)')
@@ -477,12 +477,12 @@ i2i_rad = [radiusErrorCount(PREDS['error']['I2INet'],radius_vector,rad_err_thres
 r]
 ls = [radiusErrorCount(PREDS['error']['level set'],radius_vector,rad_err_thresh,rad) for rad in
 r]
-ls_seg = [radiusErrorCount(PREDS['error']['3D segmentation'],radius_vector,rad_err_thresh,rad) for rad in
-r]
-sn_ft = [radiusErrorCount(PREDS['error']['RSN_finetune'],radius_vector,rad_err_thresh,rad) for rad in
-r]
-sn_multi = [radiusErrorCount(PREDS['error']['RSN_multi'],radius_vector,rad_err_thresh,rad) for rad in
-r]
+#ls_seg = [radiusErrorCount(PREDS['error']['3D segmentation'],radius_vector,rad_err_thresh,rad) for rad in
+#r]
+#sn_ft = [radiusErrorCount(PREDS['error']['RSN_finetune'],radius_vector,rad_err_thresh,rad) for rad in
+#r]
+#sn_multi = [radiusErrorCount(PREDS['error']['RSN_multi'],radius_vector,rad_err_thresh,rad) for rad in
+#r]
 # ind = np.array([0,3,6])
 # width=0.3
 #
@@ -610,21 +610,21 @@ plt.savefig(plot_dir+'radiusratio.png')
 ####################################
 # 3D errors
 ####################################
-print "starting 3d analysis"
-vtk_dir = config['learn_params']['output_dir']+'vtk/'
-files = os.listdir(vtk_dir)
-files = [f for f in files if 'truth' in f]
-
-codes = ['RSN','ls_seg','ls']
-g = open(plot_dir+'jaccard3d.txt','w')
-# for c in codes:
-#     errs = []
-#     for f in files:
-#         mod = f.replace('truth',c)
-#         print f, mod
-#         p1 = utility.readVTKPD(vtk_dir+f)
-#         p2 = utility.readVTKPD(vtk_dir+mod)
-#         e = utility.jaccard3D(p1,p2)
-#         errs.append(e)
-#     g.write('{} : {}, {}\n'.format(c,np.mean(errs),np.std(errs)))
-g.close()
+# print "starting 3d analysis"
+# vtk_dir = config['learn_params']['output_dir']+'vtk/'
+# files = os.listdir(vtk_dir)
+# files = [f for f in files if 'truth' in f]
+#
+# codes = ['RSN','ls_seg','ls']
+# g = open(plot_dir+'jaccard3d.txt','w')
+# # for c in codes:
+# #     errs = []
+# #     for f in files:
+# #         mod = f.replace('truth',c)
+# #         print f, mod
+# #         p1 = utility.readVTKPD(vtk_dir+f)
+# #         p2 = utility.readVTKPD(vtk_dir+mod)
+# #         e = utility.jaccard3D(p1,p2)
+# #         errs.append(e)
+# #     g.write('{} : {}, {}\n'.format(c,np.mean(errs),np.std(errs)))
+# g.close()

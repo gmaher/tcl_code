@@ -75,7 +75,7 @@ for i in range(len(paths)):
 ##############################################
 # Load segmentations, convert to contours
 ##############################################
-pred = ['ls', 'ls_seg', 'RSN', 'truth']
+pred = ['ls', 'RSN', 'truth']
 for pred_type in pred:
     if pred_type == 'RSN':
         meta = np.load(dataDir+'metadata.npy')
@@ -87,12 +87,12 @@ for pred_type in pred:
     if pred_type == 'ls':
         contour = vasc.contours_ls
 
-    if pred_type == 'ls_seg':
-        meta = np.load(dataDir+'metadata.npy')
-        seg = vasc.mag_seg/255
-        seg_thresh = utility.threshold(seg,THRESHOLD)
-        contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
-            meta[0,:,:], ISOVALUE)
+    # if pred_type == 'ls_seg':
+    #     meta = np.load(dataDir+'metadata.npy')
+    #     seg = vasc.mag_seg/255
+    #     seg_thresh = utility.threshold(seg,THRESHOLD)
+    #     contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
+    #         meta[0,:,:], ISOVALUE)
 
     if pred_type == 'truth':
         contour = vasc.contours
