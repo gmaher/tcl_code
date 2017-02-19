@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 class VascData2D:
 
-    def __init__(self, dataDir):
+    def __init__(self, dataDir, normalize='max'):
         '''
         stores data strings and loads 2D vascular datasets
 
@@ -20,7 +20,7 @@ class VascData2D:
         self.ls_seg = dataDir+'ls_seg.npy'
         #self.im_seg_str = dataDir+'im_seg.npy'
         self.mag_seg_str = dataDir+'mag_seg.npy'
-
+        self.normalize = normalize
         print 'loading data'
         self.images = np.load(self.imString)
         self.images = self.images.astype(float)
@@ -47,8 +47,8 @@ class VascData2D:
             self.data_dims[1], self.data_dims[2],1))
         self.segs_tf = self.segs.reshape((self.data_dims[0],
             self.data_dims[1], self.data_dims[2],1))
-        self.images_norm = utility.normalize_images(self.images_tf)
-
+        #self.images_norm = utility.normalize_images(self.images_tf, normalize)
+        self.images_norm = self.images_tf
         # self.mag_seg_tf = self.mag_seg.reshape((self.data_dims[0],
         #     self.data_dims[1], self.data_dims[2],1))
         #self.im_seg_tf = self.im_seg.reshape((self.data_dims[0],

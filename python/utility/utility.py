@@ -311,22 +311,26 @@ def project_group(group, q, mu):
 
 	return (x,y)
 
-def normalize_images(images):
-	'''
-	Max/min normalizes a set of images
+def normalize_images(images, normalize='max'):
+    '''
+    Max/min normalizes a set of images
 
-	args:
-		@a images shape = (N,W,H,C) where C is number of channels
-	'''
-	N, Pw, Ph, C = images.shape
-	images_norm = np.zeros((N,Pw,Ph,C))
+    args:
+    	@a images shape = (N,W,H,C) where C is number of channels
+    '''
+    N, Pw, Ph, C = images.shape
+    images_norm = np.zeros((N,Pw,Ph,C))
 
-	maxs = np.amax(images, axis=(1,2,3))
-	mins = np.amin(images,axis=(1,2,3))
+    if normalize=='max':
+        maxs = np.amax(images, axis=(1,2,3))
+        mins = np.amin(images,axis=(1,2,3))
 
-	for i in range(0,N):
-	    images_norm[i,:] = (images[i]-mins[i])/(maxs[i]-mins[i]+1e-6)
-	return images_norm
+        for i in range(0,N):
+            images_norm[i,:] = (images[i]-mins[i])/(maxs[i]-mins[i]+1e-6)
+        return images_norm
+
+    if normalize=='mean':
+        pass
 
 def train_test_split(X,Y,split):
 	"""

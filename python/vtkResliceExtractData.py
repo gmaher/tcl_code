@@ -59,8 +59,8 @@ meta_data = [[],[],[]]
 segs = []
 f = open(output_dir+'pathinfo.txt','w')
 
-for i in tqdm(range(len(mhas))):
-
+#for i in tqdm(range(len(mhas))):
+for i in range(2):
     img = mhas[i]
     img_name = img.split('/')[-2]
 
@@ -74,6 +74,7 @@ for i in tqdm(range(len(mhas))):
     spacing = the_image.GetSpacing()
     dims = the_image.GetDimensions()
     origin = [-ext[0]*spacing[0]/2,ext[1]*spacing[1]/2]
+    minmax = the_image.GetScalarRange()
 
     for grp in group_files:
 
@@ -92,7 +93,9 @@ for i in tqdm(range(len(mhas))):
             f.write('{} {} {} p ({},{},{}) t ({},{},{}) tx ({},{},{})\n'
             .format(img_name,grp,k,p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8]))
 
-        images = images + utility.getAllImageSlices(the_image, group_dict, ext, True)
+        tmpimages = utility.getAllImageSlices(the_image, group_dict, ext, True)
+        tmpimages = [(k-minmax[0])/(minmax[1]-minmax[0]+1e-5) for k in tmpimages]
+        images = images + tmpimages
 
     for j in range(len(contours)):
         meta_data[0].append(spacing)
