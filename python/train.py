@@ -43,11 +43,11 @@ utility.mkdir(pred_dir)
 utility.mkdir(plot_dir)
 
 vasc_train = util_data.VascData2D(dataDir)
-vasc_train.createOBG(border_width=1)
+#vasc_train.createOBG(border_width=1)
 vasc_val = util_data.VascData2D(valDir)
-vasc_val.createOBG(border_width=1)
+#vasc_val.createOBG(border_width=1)
 vasc_test = util_data.VascData2D(testDir)
-vasc_test.createOBG(border_width=1)
+#vasc_test.createOBG(border_width=1)
 
 ##############################
 # Neural network construction
@@ -60,8 +60,8 @@ threshold = 0.3
 output_channels = 1
 dense_size = 100
 dense_layers = 1
-nb_epoch=10
-batch_size=128
+nb_epoch=3
+batch_size=64
 Pw=Ph=int(config['learn_params']['image_dims'])
 input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)

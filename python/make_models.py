@@ -54,7 +54,7 @@ vasc = util_data.VascData2D(dataDir)
 #############################################
 # Get model and path info
 #############################################
-pinfo = utility.parsePathInfo(dataDir+'../../pathInfo.txt')
+pinfo = utility.parsePathInfo(dataDir+'../pathInfo.txt')
 
 paths = open(dataDir+'names.txt').readlines()
 paths = [s.split('.') for s in paths]

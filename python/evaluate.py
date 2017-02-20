@@ -218,8 +218,8 @@ shape = (Ntest,Pw,Ph)
 
 #Load all predictions
 add_pred_to_dict(PREDS,pred_dir+'FCN.npy','RSN','red',inds,shape,Y_test)
-add_pred_to_dict(PREDS,pred_dir+'OBP_FCN.npy','OBP_SN','green',inds,shape,Y_test)
-add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_RSN','blue',inds,shape,Y_test)
+#add_pred_to_dict(PREDS,pred_dir+'OBP_FCN.npy','OBP_SN','green',inds,shape,Y_test)
+#add_pred_to_dict(PREDS,pred_dir+'OBG_FCN.npy','OBG_RSN','blue',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'I2INet.npy','I2INet','orange',inds,shape, Y_test)
 #add_pred_to_dict(PREDS,pred_dir+'FC_branch.npy','FC_branch','teal',inds,shape, Y_test)
@@ -236,7 +236,7 @@ add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,in
 #add_contour_to_dict(PREDS,'3D segmentation','yellow',vasc2d.contours_seg,contours_test,inds,DX)
 
 #load OBP by itself for vizualization purposes
-OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
+#OBP_FCN_out = np.load(pred_dir+'OBP_FCN.npy')[inds]
 
 #############################
 # Visualize results
@@ -261,28 +261,28 @@ X_test[plot_inds[3,:]],X_test[plot_inds[4,:]]],
 # 5,plot_dir+'/mag_seg.png',(40,40))
 
 #plot lots of predicted segmentations
-seg = PREDS['seg']['RSN']
+seg = PREDS['seg']['I2INet']
 image_grid_plot([seg[plot_inds[0,:]],seg[plot_inds[1,:]],seg[plot_inds[2,:]],
 seg[plot_inds[3,:]],seg[plot_inds[4,:]]],
 ['image','image','image','image','image'],
 5,plot_dir+'/predicted_segmentations.png',(40,40))
 
-#Figure 0 OBP plot
-vasc2d.createOBG(border_width=1)
-image_grid_plot([X_test,Y_test,vasc2d.obg[:,:,:,1],vasc2d.obg[:,:,:,2],
-OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
-['image','user segmentation','object','boundary','OBP_SN segmentation','OBG_SN boundary'],
-15,plot_dir+'/OBP.png',(40,40))
+# #Figure 0 OBP plot
+# vasc2d.createOBG(border_width=1)
+# image_grid_plot([X_test,Y_test,vasc2d.obg[:,:,:,1],vasc2d.obg[:,:,:,2],
+# OBP_FCN_out[:,:,:,1],OBP_FCN_out[:,:,:,2]],
+# ['image','user segmentation','object','boundary','OBP_SN segmentation','OBG_SN boundary'],
+# 15,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
-keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet', 'ConvFC']
+keys_seg = ['RSN','HED','I2INet', 'ConvFC']
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure segmentations for high error vessels
 inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.8]
-keys_seg = ['RSN','OBP_SN','OBG_RSN','HED','I2INet','ConvFC']
+keys_seg = ['RSN','HED','I2INet','ConvFC']
 segs = [X_test[inds],Y_test[inds]]+[PREDS['seg'][k][inds] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 l = 10
@@ -291,7 +291,7 @@ if len(inds) < l:
 image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
 #Figure 2 contours
-keys = ['level set', 'RSN', 'OBG_RSN', 'HED','I2INet',]
+keys = ['level set', 'RSN', 'HED','I2INet',]
 #keys = ['level set', '3D segmentation', 'RSN','OBG_RSN', 'HED','I2INet', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
@@ -356,11 +356,11 @@ def get_activation(x,name,model):
 
     return f([x])[0]
 
-# hed = load_model(model_dir+'HED.h5')
-# Y_hed = hed.predict(X_test)
-# mask = get_activation(X_test,"mask",hed)
-# inside_output = get_activation(X_test,"new-score-weighting",hed)
-# merged = get_activation(X_test,'merged',hed)
+hed = load_model(model_dir+'HED.h5')
+Y_hed = hed.predict(X_test)
+mask = get_activation(X_test,"mask",hed)
+inside_output = get_activation(X_test,"new-score-weighting",hed)
+merged = get_activation(X_test,'merged',hed)
 #
 # image_grid_plot([X_test]+Y_hed+[mask,inside_output,merged],
 # ['image','hed1','hed2','hed3','hed4','mask','inside_output','merged'],
@@ -377,25 +377,25 @@ def get_activation(x,name,model):
 # fc = load_model(model_dir+'ConvFC.h5')
 # Y_fc = fc.predict(X_test)
 #
-# plt.figure()
-# plt.imshow(X_test[2,:,:,0])
-# plt.colorbar()
-# plt.savefig(plot_dir+'/hedimage.png')
-#
-# plt.figure()
-# plt.imshow(mask[2,:,:,0])
-# plt.colorbar()
-# plt.savefig(plot_dir+'/hedmask.png')
-#
-# plt.figure()
-# plt.imshow(inside_output[2,:,:,0])
-# plt.colorbar()
-# plt.savefig(plot_dir+'/hedinsideoutput.png')
-#
-# plt.figure()
-# plt.imshow(merged[2,:,:,0])
-# plt.colorbar()
-# plt.savefig(plot_dir+'/hedmerged.png')
+plt.figure()
+plt.imshow(X_test[2,:,:,0])
+plt.colorbar()
+plt.savefig(plot_dir+'/hedimage.png')
+
+plt.figure()
+plt.imshow(mask[2,:,:,0])
+plt.colorbar()
+plt.savefig(plot_dir+'/hedmask.png')
+
+plt.figure()
+plt.imshow(inside_output[2,:,:,0])
+plt.colorbar()
+plt.savefig(plot_dir+'/hedinsideoutput.png')
+
+plt.figure()
+plt.imshow(merged[2,:,:,0])
+plt.colorbar()
+plt.savefig(plot_dir+'/hedmerged.png')
 #
 # image_grid_plot([X_test]+Y_i2i,
 # ['image','i2i1','i2i2'],
@@ -469,8 +469,8 @@ rad_err_thresh = 0.25
 
 sn = [radiusErrorCount(PREDS['error']['RSN'],radius_vector,rad_err_thresh,rad) for rad in
 r]
-obg = [radiusErrorCount(PREDS['error']['OBG_RSN'],radius_vector,rad_err_thresh,rad) for rad in
-r]
+# obg = [radiusErrorCount(PREDS['error']['OBG_RSN'],radius_vector,rad_err_thresh,rad) for rad in
+# r]
 hed_rad = [radiusErrorCount(PREDS['error']['HED'],radius_vector,rad_err_thresh,rad) for rad in
 r]
 i2i_rad = [radiusErrorCount(PREDS['error']['I2INet'],radius_vector,rad_err_thresh,rad) for rad in
@@ -501,10 +501,10 @@ width=0.2
 
 plt.figure()
 plt.bar(ind,sn,width,color='r', label='RSN')
-plt.bar(ind+width,obg,width,color='b', label='OBG_RSN')
-plt.bar(ind+2*width,hed_rad,width,color='black', label='HED')
-plt.bar(ind+3*width,i2i_rad,width,color='orange', label='I2INet')
-plt.bar(ind+4*width,ls,width,color='pink', label='level set')
+# plt.bar(ind+width,obg,width,color='b', label='OBG_RSN')
+plt.bar(ind+1*width,hed_rad,width,color='black', label='HED')
+plt.bar(ind+2*width,i2i_rad,width,color='orange', label='I2INet')
+plt.bar(ind+3*width,ls,width,color='pink', label='level set')
 
 plt.ylim(0,1.0)
 plt.ylabel('Fraction of vessels with error below threshold')
@@ -522,8 +522,8 @@ rad_err_thresh = 0.25
 
 sn_pix = [radiusErrorCount(PREDS['error']['RSN'],pixel_vector,rad_err_thresh,rad) for rad in
 rpix]
-obg_pix = [radiusErrorCount(PREDS['error']['OBG_RSN'],pixel_vector,rad_err_thresh,rad) for rad in
-rpix]
+# obg_pix = [radiusErrorCount(PREDS['error']['OBG_RSN'],pixel_vector,rad_err_thresh,rad) for rad in
+# rpix]
 hed_rad_pix = [radiusErrorCount(PREDS['error']['HED'],pixel_vector,rad_err_thresh,rad) for rad in
 rpix]
 i2i_rad_pix = [radiusErrorCount(PREDS['error']['I2INet'],pixel_vector,rad_err_thresh,rad) for rad in
@@ -536,10 +536,10 @@ width=0.3
 
 plt.figure()
 plt.bar(ind,sn_pix,width,color='r', label='RSN')
-plt.bar(ind+width,obg_pix,width,color='b', label='OBG_RSN')
-plt.bar(ind+2*width,hed_rad_pix,width,color='black', label='HED')
-plt.bar(ind+3*width,i2i_rad_pix,width,color='orange', label='I2INet')
-plt.bar(ind+4*width,ls_pix,width,color='pink', label='level set')
+# plt.bar(ind+width,obg_pix,width,color='b', label='OBG_RSN')
+plt.bar(ind+1*width,hed_rad_pix,width,color='black', label='HED')
+plt.bar(ind+2*width,i2i_rad_pix,width,color='orange', label='I2INet')
+plt.bar(ind+3*width,ls_pix,width,color='pink', label='level set')
 
 plt.ylim(0,1.0)
 plt.ylabel('Fraction of vessels with error below threshold')
