@@ -21,6 +21,19 @@ class VascData2D:
         #self.im_seg_str = dataDir+'im_seg.npy'
         self.mag_seg_str = dataDir+'mag_seg.npy'
         self.normalize = normalize
+        self.names = open(dataDir+'names.txt').readlines()
+        self.img_names = [k.split('.')[0] for k in self.names]
+        self.ct = open(dataDir+'../../ct_images.list').readlines()
+        self.ct = [k.replace('\n','') for k in self.ct]
+        self.mr = open(dataDir+'../../mr_images.list').readlines()
+        self.mr = [k.replace('\n','') for k in self.mr]
+
+        self.ct_inds = [i for i in range(len(self.names)) \
+            if any([self.img_names[i] == k for k in self.ct])]
+
+        self.mr_inds = [i for i in range(len(self.names)) \
+            if any([self.img_names[i] == k for k in self.mr])]
+
         print 'loading data'
         self.images = np.load(self.imString)
         self.images = self.images.astype(float)
@@ -40,15 +53,15 @@ class VascData2D:
             self.data_dims = self.images.shape
             print self.data_dims
 
-
+        self.normalize_modality()
         #Keras/Tf require channel dimension so need to add this
         print 'reshaping and normalizing images'
         self.images_tf = self.images.reshape((self.data_dims[0],
             self.data_dims[1], self.data_dims[2],1))
         self.segs_tf = self.segs.reshape((self.data_dims[0],
             self.data_dims[1], self.data_dims[2],1))
-        #self.images_norm = utility.normalize_images(self.images_tf, normalize)
-        self.images_norm = self.images_tf
+        self.images_norm = utility.normalize_images(self.images_tf, normalize)
+        #self.images_norm = self.images_tf
         # self.mag_seg_tf = self.mag_seg.reshape((self.data_dims[0],
         #     self.data_dims[1], self.data_dims[2],1))
         #self.im_seg_tf = self.im_seg.reshape((self.data_dims[0],
@@ -67,3 +80,17 @@ class VascData2D:
 
         for i in tqdm(range(0,len(self.segs))):
             self.obg[i,:] = utility.segToOBG(self.segs_tf[i],border_width)
+
+    def normalize_modality(self):
+        xct = self.images[self.ct_inds]
+        bone = xct > 700
+        xct[bone] = 0
+        self.images[self.ct_inds] = xct
+
+        #ctmax = np.amax(self.images[self.ct_inds])
+        #ctmin = np.amin(self.images[self.ct_inds])
+        #self.images[self.ct_inds] = (self.images[self.ct_inds]-ctmin)/(ctmax-ctmin)
+
+        #mrmax = np.amax(self.images[self.mr_inds])
+        #mrmin = np.amin(self.images[self.mr_inds])
+        #self.images[self.mr_inds] = (self.images[self.mr_inds]-mrmin)/(mrmax-mrmin)
