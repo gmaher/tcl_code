@@ -56,11 +56,12 @@ contours3D = []
 names = []
 contours = []
 meta_data = [[],[],[]]
+minmaxes = []
 segs = []
 f = open(output_dir+'pathinfo.txt','w')
 
-#for i in tqdm(range(len(mhas))):
-for i in range(2):
+for i in tqdm(range(len(mhas))):
+#for i in range(6):
     img = mhas[i]
     img_name = img.split('/')[-2]
 
@@ -94,22 +95,25 @@ for i in range(2):
             .format(img_name,grp,k,p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8]))
 
         tmpimages = utility.getAllImageSlices(the_image, group_dict, ext, True)
-        tmpimages = [(k-minmax[0])/(minmax[1]-minmax[0]+1e-5) for k in tmpimages]
+        #tmpimages = [(k-minmax[0])/(minmax[1]-minmax[0]+1e-5) for k in tmpimages]
         images = images + tmpimages
 
     for j in range(len(contours)):
         meta_data[0].append(spacing)
         meta_data[1].append(origin)
         meta_data[2].append([ext[0]+1,ext[1]+1,1])
+        minmaxes.append(minmax)
 
 f.close()
 for i in tqdm(range(len(contours))):
     segs.append(utility.contourToSeg(contours[i], meta_data[1][i],\
     meta_data[2][i], meta_data[0][i]))
 
-for i in range(0,10):
+for i in range(0,50):
     k = np.random.randint(0,len(contours))
     plt.figure()
+    spacing = meta_data[0][k]
+    origin = meta_data[1][k]
     plt.imshow(segs[k],extent=[origin[0], origin[0]+ext[0]*spacing[0],\
         -origin[1],-origin[1]+ext[1]*spacing[1]])
     plt.plot(contours[k][:,0],contours[k][:,1], linewidth=3, color='g')
@@ -117,6 +121,7 @@ for i in range(0,10):
 
 
 meta_data = np.array(meta_data)
+minmaxes=np.array(minmaxes)
 segs = np.array(segs)
 images = np.array(images)
 split_inds = {}
@@ -157,6 +162,7 @@ for k in dirs.keys():
     #np.save(dirs[k]+'images_seg', im_seg[split_inds[k]])
     np.save(dirs[k]+'mag_seg', mag_seg[split_inds[k]])
     np.save(dirs[k]+'metadata', meta_data[:,split_inds[k]])
+    np.save(dirs[k]+'minmaxes', minmaxes[split_inds[k]])
     np.save(dirs[k]+'contours', [contours[i] for i in split_inds[k]])
     np.save(dirs[k]+'ls_image', [contours_ls[i] for i in split_inds[k]])
     #np.save(dirs[k]+'ls_edge', [contours_edge[i] for i in split_inds[k]])

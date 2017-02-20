@@ -13,3 +13,4 @@ python/output
 *.png
 *.vtp
 *.pyc
+utility/*.pyc

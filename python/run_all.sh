@@ -3,9 +3,9 @@
 #options
 python train.py FCN options${1}.cfg
 
-python train.py OBP_FCN options${1}.cfg
+#python train.py OBP_FCN options${1}.cfg
 
-python train.py OBG_FCN options${1}.cfg
+#python train.py OBG_FCN options${1}.cfg
 
 python train.py HED options${1}.cfg
 
@@ -23,7 +23,7 @@ python evaluate.py options${1}.cfg
 
 python make_models.py options${1}.cfg
 
-python vtkScreens.py options${1}.cfg
+#python vtkScreens.py options${1}.cfg
 # #options2
 # python train.py FCN options2.cfg
 #
