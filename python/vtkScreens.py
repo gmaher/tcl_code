@@ -35,19 +35,19 @@ codes = list(set(codes))
 
 xangles = [0,90,180]
 yangles = [0,90,180]
-for code in codes:
-    files = [f for f in pd_files if code in f]
-    pds = [utility.readVTKPD(vtk_dir+f) for f in files]
-
-    utility.mkdir(screen_dir)
-    utility.mkdir(screen_dir+code)
-
-    for x in xangles:
-        for y in yangles:
-
-
-            fn = screen_dir+code+'/{}{}{}.png'.format(code,x,y)
-            utility.VTKScreenshotPD(pds,elevations=[x],azimuths=[y],fn=fn)
+#for code in codes:
+#    files = [f for f in pd_files if code in f]
+#    pds = [utility.readVTKPD(vtk_dir+f) for f in files]
+#
+#    utility.mkdir(screen_dir)
+#    utility.mkdir(screen_dir+code)
+#
+#    for x in xangles:
+#        for y in yangles:
+#
+#
+#            fn = screen_dir+code+'/{}{}{}.png'.format(code,x,y)
+#            utility.VTKScreenshotPD(pds,elevations=[x],azimuths=[y],fn=fn)
 
 print "starting 3d analysis"
 vtk_dir = config['learn_params']['output_dir']+'vtk/'

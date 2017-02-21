@@ -72,14 +72,21 @@ def calc_accuracy(seg, seg_truth):
     return (acc, mean_acc)
 
 def get_outputs(seg, seg_truth):
+    print seg.shape, seg_truth.shape
     seg_thresh = utility.threshold(seg,THRESHOLD)
+    print seg_thresh.shape
     contour = utility.listSegToContours(seg_thresh, meta_test[1,:],
         meta_test[0,:], ISOVALUE)
     errs = utility.listAreaOverlapError(contour, contours_test)
     thresh,ts = utility.cum_error_dist(errs,DX)
     roc = roc_curve(np.ravel(Y_test),np.ravel(seg), pos_label=1)
 
-    dorf = [hd(seg_thresh[i],seg_truth[i]) for i in range(len(seg_truth))]
+    dorf = []
+    for i in range(len(seg_truth)):
+	if np.sum(seg_thresh[i,:,:]) > 0 and np.sum(seg_truth[i,:,:,0]) > 0:
+		e= hd(seg_thresh[i,:,:],seg_truth[i,:,:,0],meta_test[0,i][0])
+		dorf.append(e)
+
     acc,mean_acc = calc_accuracy(seg, seg_truth)
     return (contour,errs,thresh,roc,acc,mean_acc,dorf)
 
@@ -217,6 +224,7 @@ PREDS['color'] = {}
 PREDS['error'] = {}
 PREDS['acc'] = {}
 PREDS['mean_acc'] = {}
+PREDS['dorf'] = {}
 shape = (Ntest,Pw,Ph)
 
 #Load all predictions
@@ -294,7 +302,7 @@ if len(inds) < l:
 image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
 #Figure 2 contours
-keys = ['level set', 'RSN', 'HED','I2INet',]
+keys = ['level set', 'RSN', 'HED','I2INet','ConvFC']
 #keys = ['level set', '3D segmentation', 'RSN','OBG_RSN', 'HED','I2INet', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
