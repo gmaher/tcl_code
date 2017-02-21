@@ -291,7 +291,7 @@ if len(inds) < l:
 image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
 #Figure 2 contours
-keys = ['level set', 'RSN', 'HED','I2INet',]
+keys = ['level set', 'RSN', 'HED','I2INet','ConvFC']
 #keys = ['level set', '3D segmentation', 'RSN','OBG_RSN', 'HED','I2INet', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
