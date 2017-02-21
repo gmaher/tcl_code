@@ -21,6 +21,7 @@ import matplotlib.pylab as pylab
 import os
 from sklearn.metrics import roc_curve
 import configparser
+from medpy.metric.binary import hd
 
 np.random.seed(0)
 
@@ -78,8 +79,9 @@ def get_outputs(seg, seg_truth):
     thresh,ts = utility.cum_error_dist(errs,DX)
     roc = roc_curve(np.ravel(Y_test),np.ravel(seg), pos_label=1)
 
+    dorf = [hd(seg_thresh[i],seg_truth[i]) for i in range(len(seg_truth))]
     acc,mean_acc = calc_accuracy(seg, seg_truth)
-    return (contour,errs,thresh,roc,acc,mean_acc)
+    return (contour,errs,thresh,roc,acc,mean_acc,dorf)
 
 def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_truth):
     out = np.load(pred_string)
@@ -93,7 +95,7 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_t
     else:
         out = out[inds].reshape(shape)
 
-    contour,errs,thresh,roc,acc,mean_acc = get_outputs(out,seg_truth)
+    contour,errs,thresh,roc,acc,mean_acc,dorf = get_outputs(out,seg_truth)
 
     pred_dict['seg'][pred_code] = out
     pred_dict['contour'][pred_code] = contour
@@ -103,6 +105,7 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_t
     pred_dict['color'][pred_code] = pred_color
     pred_dict['acc'][pred_code] = acc
     pred_dict['mean_acc'][pred_code] = mean_acc
+    pred_dict['dorf'][pred_code] = dorf
 
 def add_contour_to_dict(pred_dict,pred_code,pred_color,contours,contours_test,inds,DX):
     ls_test = [contours[i] for i in inds]
@@ -346,6 +349,8 @@ f.write('\n')
 f.write('jaccard distance,'+','.join([str(np.mean(PREDS['error'][k])) for k in PREDS['error']]))
 f.write('\n')
 f.write('IOU,'+','.join([str(1-np.mean(PREDS['error'][k])) for k in PREDS['error']]))
+f.write('\n')
+f.write('Hausdorf,'+','.join([str(np.mean(PREDS['dorf'][k])) for k in PREDS['dorf']]))
 f.close()
 
 #HED Plot
