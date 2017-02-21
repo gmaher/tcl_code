@@ -23,9 +23,9 @@ class VascData2D:
         self.normalize = normalize
         self.names = open(dataDir+'names.txt').readlines()
         self.img_names = [k.split('.')[0] for k in self.names]
-        self.ct = open(dataDir+'../../ct_images.list').readlines()
+        self.ct = open(dataDir+'../../../ct_images.list').readlines()
         self.ct = [k.replace('\n','') for k in self.ct]
-        self.mr = open(dataDir+'../../mr_images.list').readlines()
+        self.mr = open(dataDir+'../../../mr_images.list').readlines()
         self.mr = [k.replace('\n','') for k in self.mr]
 
         self.ct_inds = [i for i in range(len(self.names)) \
@@ -53,7 +53,7 @@ class VascData2D:
             self.data_dims = self.images.shape
             print self.data_dims
 
-        self.normalize_modality()
+        #self.normalize_modality()
         #Keras/Tf require channel dimension so need to add this
         print 'reshaping and normalizing images'
         self.images_tf = self.images.reshape((self.data_dims[0],

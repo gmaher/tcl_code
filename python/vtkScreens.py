@@ -32,8 +32,8 @@ codes = [p.split('.') for p in pd_files if '.vtp' in p]
 codes = [p[0]+'.'+p[1] for p in codes]
 codes = list(set(codes))
 
-xangles = [0,50,90, 120, 180,270]
-yangles = [0,90,180,270]
+xangles = [0,90,180]
+yangles = [0,90,180]
 for code in codes:
     files = [f for f in pd_files if code in f]
     pds = [utility.readVTKPD(vtk_dir+f) for f in files]
@@ -41,8 +41,12 @@ for code in codes:
     utility.mkdir(screen_dir)
     utility.mkdir(screen_dir+code)
 
-    fn = screen_dir+code+'/{}.png'.format(code)
-    utility.VTKScreenshotPD(pds,elevations=xangles,azimuths=yangles,fn=fn)
+    for x in xangles:
+        for y in yangles:
+
+
+            fn = screen_dir+code+'/{}{}{}.png'.format(code,x,y)
+            utility.VTKScreenshotPD(pds,elevations=[x],azimuths=[y],fn=fn)
 
 print "starting 3d analysis"
 vtk_dir = config['learn_params']['output_dir']+'vtk/'
@@ -52,7 +56,7 @@ mhas = open(output_dir+'images.txt').readlines()
 mhas = [i.replace('\n','') for i in mhas]
 img_file = 'blah'
 
-codes = ['RSN','ls_seg','ls']
+codes = ['I2INet','ls']
 g = open(plot_dir+'jaccard3d.txt','w')
 for c in codes:
 

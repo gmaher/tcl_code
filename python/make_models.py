@@ -54,7 +54,7 @@ vasc = util_data.VascData2D(dataDir)
 #############################################
 # Get model and path info
 #############################################
-pinfo = utility.parsePathInfo(dataDir+'../pathInfo.txt')
+pinfo = utility.parsePathInfo(dataDir+'../../pathInfo.txt')
 
 paths = open(dataDir+'names.txt').readlines()
 paths = [s.split('.') for s in paths]
@@ -75,11 +75,11 @@ for i in range(len(paths)):
 ##############################################
 # Load segmentations, convert to contours
 ##############################################
-pred = ['ls', 'RSN', 'truth']
+pred = ['ls', 'I2INet', 'truth']
 for pred_type in pred:
-    if pred_type == 'RSN':
+    if pred_type == 'I2INet':
         meta = np.load(dataDir+'metadata.npy')
-        seg = np.load(pred_dir+'FCN.npy')
+        seg = np.load(pred_dir+'I2INet.npy')
         seg = seg.reshape((seg.shape[:3]))
         seg_thresh = utility.threshold(seg,THRESHOLD)
         contour = utility.listSegToContours(seg_thresh, meta[1,:,:],

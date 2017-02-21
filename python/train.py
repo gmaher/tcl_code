@@ -60,8 +60,8 @@ threshold = 0.3
 output_channels = 1
 dense_size = 100
 dense_layers = 1
-nb_epoch=3
-batch_size=64
+nb_epoch=6
+batch_size=256
 Pw=Ph=int(config['learn_params']['image_dims'])
 input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)

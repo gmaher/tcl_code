@@ -47,10 +47,10 @@ output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False, l2_reg=0.
         d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
         border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
 
-    dout = BatchNormalization(mode=2)(d)
+    d = BatchNormalization(mode=2)(d)
     dout = Convolution2D(output_channels,
     Wfilter,Wfilter,activation='linear', border_mode='same',
-    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(dout)
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
 
     if obg:
         d_softmax_input = Reshape((input_shape[0]*input_shape[1],output_channels))(dout)
