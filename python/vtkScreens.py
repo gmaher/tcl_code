@@ -7,6 +7,7 @@ import os
 from sklearn.metrics import roc_curve
 import configparser
 import SimpleITK as sitk
+from medpy.metrics.binary import hd
 np.random.seed(0)
 
 DX = 0.01
@@ -57,10 +58,12 @@ mhas = [i.replace('\n','') for i in mhas]
 img_file = 'blah'
 
 codes = ['I2INet','ls']
-g = open(plot_dir+'jaccard3d.txt','w')
+g = open(plot_dir+'3derrs.txt','w')
+g.write('code, jacc_mean, jacc_std, hausdorf\n')
 for c in codes:
 
     errs = []
+    dorf = []
     for f in files:
         mod = f.replace('truth',c)
 
@@ -75,5 +78,11 @@ for c in codes:
         p2 = utility.readVTKPD(vtk_dir+mod)
         e = utility.jaccard3D_pd_to_itk(p1,p2,ref_img)
         errs.append(e)
-    g.write('{} : {}, {}\n'.format(c,np.mean(errs),np.std(errs)))
+
+        np1 = pd_to_numpy_vol(p1, spacing=ref_img.GetSpacing(), shape=ref_img.GetSize(), origin=ref_img.GetOrigin() )
+        np2 = pd_to_numpy_vol(p2, spacing=ref_img.GetSpacing(), shape=ref_img.GetSize(), origin=ref_img.GetOrigin() )
+        if np.sum(np1) > 0 and np.sum(np2) > 0:
+            e = hd(np1,np2)
+            dorf.append(e)
+    g.write('{} : {}, {}, {}\n'.format(c,np.mean(errs),np.std(errs),np.mean(dorf)))
 g.close()
