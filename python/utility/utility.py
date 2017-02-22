@@ -23,7 +23,7 @@ from scipy.interpolate import UnivariateSpline
 import SimpleITK as sitk
 from vtk.util import numpy_support
 import re
-
+from emd import emd
 def mkdir(fn):
     if not os.path.exists(os.path.abspath(fn)):
         os.mkdir(os.path.abspath(fn))
@@ -852,8 +852,8 @@ def contourToSeg(contour, origin, dims, spacing):
 	poly = Polygon(contour)
 	seg = np.zeros((dims[0],dims[1]))
 
-	for j in range(0,dims[0]):
-	    for i in range(0,dims[1]):
+	for j in range(0,int(dims[0])):
+	    for i in range(0,int(dims[1])):
 	        x = origin[0] + (j+0.5)*spacing[0]
 	        y = origin[1] + (i+0.5)*spacing[1]
 	        p = Point(x,y)
@@ -1030,6 +1030,21 @@ def get_extents(meta):
 		top = origin[0]+dims[0]*spacing[0]
 		extents.append([left,right,bottom,top])
 	return extents
+
+def EMDSeg(truth, pred, dx=1.0):
+    """
+    computes the earht mover's distance between to segmentations
+
+    args:
+        truth,pred - numpy array (HxW)
+
+    returns:
+        earth mover distance over > 0 entries
+    """
+    inds_truth = np.array((truth > 0).nonzero()).T
+    inds_pred = np.array((pred > 0).nonzero()).T
+
+    return emd(inds_truth,inds_pred)*dx
 
 def areaOverlapError(truth, edge):
 	'''

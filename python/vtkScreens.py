@@ -7,7 +7,10 @@ import os
 from sklearn.metrics import roc_curve
 import configparser
 import SimpleITK as sitk
-from medpy.metrics.binary import hd
+from medpy.metric.binary import hd, assd, ravd, dc
+from joblib import Parallel, delayed
+import multiprocessing
+
 np.random.seed(0)
 
 DX = 0.01
@@ -33,9 +36,9 @@ codes = [p.split('.') for p in pd_files if '.vtp' in p]
 codes = [p[0]+'.'+p[1] for p in codes]
 codes = list(set(codes))
 
-xangles = [0,90,180]
-yangles = [0,90,180]
-#for code in codes:
+xangles = [0,90]
+yangles = [0,90]
+# for code in codes:
 #    files = [f for f in pd_files if code in f]
 #    pds = [utility.readVTKPD(vtk_dir+f) for f in files]
 #
@@ -49,21 +52,12 @@ yangles = [0,90,180]
 #            fn = screen_dir+code+'/{}{}{}.png'.format(code,x,y)
 #            utility.VTKScreenshotPD(pds,elevations=[x],azimuths=[y],fn=fn)
 
-print "starting 3d analysis"
-vtk_dir = config['learn_params']['output_dir']+'vtk/'
-files = os.listdir(vtk_dir)
-files = [f for f in files if 'truth' in f]
-mhas = open(output_dir+'images.txt').readlines()
-mhas = [i.replace('\n','') for i in mhas]
-img_file = 'blah'
-
-codes = ['I2INet','ls']
-g = open(plot_dir+'3derrs.txt','w')
-g.write('code, jacc_mean, jacc_std, hausdorf\n')
-for c in codes:
-
+def process_model(c,files,mhas):
     errs = []
     dorf = []
+    asd = []
+    ravd_arr = []
+    dc_arr = []
     for f in files:
         mod = f.replace('truth',c)
 
@@ -79,10 +73,41 @@ for c in codes:
         e = utility.jaccard3D_pd_to_itk(p1,p2,ref_img)
         errs.append(e)
 
-        np1 = pd_to_numpy_vol(p1, spacing=ref_img.GetSpacing(), shape=ref_img.GetSize(), origin=ref_img.GetOrigin() )
-        np2 = pd_to_numpy_vol(p2, spacing=ref_img.GetSpacing(), shape=ref_img.GetSize(), origin=ref_img.GetOrigin() )
+        np1 = utility.pd_to_numpy_vol(p1, spacing=ref_img.GetSpacing(), shape=ref_img.GetSize(), origin=ref_img.GetOrigin() )
+        np2 = utility.pd_to_numpy_vol(p2, spacing=ref_img.GetSpacing(), shape=ref_img.GetSize(), origin=ref_img.GetOrigin() )
         if np.sum(np1) > 0 and np.sum(np2) > 0:
-            e = hd(np1,np2)
+            e = hd(np1,np2, ref_img.GetSpacing()[0])
             dorf.append(e)
-    g.write('{} : {}, {}, {}\n'.format(c,np.mean(errs),np.std(errs),np.mean(dorf)))
+
+            e_asd = assd(np1,np2, ref_img.GetSpacing()[0])
+            asd.append(e_asd)
+
+            e_ravd = abs(ravd(np1,np2))
+            ravd_arr.append(e_asd)
+
+            e_dc = dc(np1,np2)
+            dc_arr.append(e_dc)
+
+    return '{} : {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n'.format(\
+    c,np.mean(errs),np.std(errs),np.mean(dorf),np.std(dorf),np.mean(asd),\
+    np.std(asd), np.mean(ravd_arr),np.std(ravd_arr),np.mean(dc_arr),np.std(dc_arr))
+
+print "starting 3d analysis"
+vtk_dir = config['learn_params']['output_dir']+'vtk/'
+files = os.listdir(vtk_dir)
+files = [f for f in files if 'truth' in f]
+mhas = open(output_dir+'images.txt').readlines()
+mhas = [i.replace('\n','') for i in mhas]
+img_file = 'blah'
+
+codes = ['I2INet','ls', 'HED', 'I2INetFC', 'HEDFC']
+g = open(plot_dir+'3derrs.txt','w')
+g.write('code, jacc_mean, jacc_std, mean hausdorf, std hausdorf, assd, assd_std, ravd, ravdstd, dice, dice std\n')
+
+num_cores = multiprocessing.cpu_count()
+
+results = Parallel(n_jobs=num_cores)(delayed(process_model)(i,files,mhas) for i in codes)
+
+for s in results:
+    g.write(s)
 g.close()

@@ -75,7 +75,7 @@ for i in range(len(paths)):
 ##############################################
 # Load segmentations, convert to contours
 ##############################################
-pred = ['ls', 'I2INet', 'truth']
+pred = ['HED','ls', 'I2INet', 'truth', 'HEDFC', 'I2INetFC', 'I2INetFCMask']
 for pred_type in pred:
     if pred_type == 'I2INet':
         meta = np.load(dataDir+'metadata.npy')
@@ -84,6 +84,39 @@ for pred_type in pred:
         seg_thresh = utility.threshold(seg,THRESHOLD)
         contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
             meta[0,:,:], ISOVALUE)
+
+    if pred_type == 'HED':
+        meta = np.load(dataDir+'metadata.npy')
+        seg = np.load(pred_dir+'HED.npy')
+        seg = seg.reshape((seg.shape[:3]))
+        seg_thresh = utility.threshold(seg,THRESHOLD)
+        contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
+            meta[0,:,:], ISOVALUE)
+
+    if pred_type == 'HEDFC':
+        meta = np.load(dataDir+'metadata.npy')
+        seg = np.load(pred_dir+'HEDFC.npy')
+        seg = seg.reshape((seg.shape[:3]))
+        seg_thresh = utility.threshold(seg,THRESHOLD)
+        contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
+            meta[0,:,:], ISOVALUE)
+
+    if pred_type == 'I2INetFC':
+        meta = np.load(dataDir+'metadata.npy')
+        seg = np.load(pred_dir+'I2INetFC.npy')
+        seg = seg.reshape((seg.shape[:3]))
+        seg_thresh = utility.threshold(seg,THRESHOLD)
+        contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
+            meta[0,:,:], ISOVALUE)
+
+    if pred_type == 'I2INetFCMask':
+        meta = np.load(dataDir+'metadata.npy')
+        seg = np.load(pred_dir+'I2INetFCMask.npy')
+        seg = seg.reshape((seg.shape[:3]))
+        seg_thresh = utility.threshold(seg,THRESHOLD)
+        contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
+            meta[0,:,:], ISOVALUE)
+
     if pred_type == 'ls':
         contour = vasc.contours_ls
 
@@ -116,7 +149,7 @@ for pred_type in pred:
                 path_info = pinfo[key]
 
                 if c != [] and len(c) > 1:
-                    if pred_type != 'truth':
+                    if pred_type != 'ls' and pred_type != 'truth':
                         c = utility.smoothContour(c, num_modes=NUM_MODES)
                     cdenorm = utility.denormalizeContour(c,path_info[0],path_info[1],
                         path_info[2])

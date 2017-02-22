@@ -216,25 +216,102 @@ num_conv=2, mask=True, l2_reg=0):
     #model.layers[-1].trainable = False
     return model
 
-def hed_dense(hed,input_shape=(64,64,1),dense_size=4096):
-    x = Input(shape=input_shape)
+def hed_dense(input_shape=(64,64,1), Wfilter=3, Nfilters=32, dense_layers=1, dense_size=64,
+num_conv=2, mask=True, l2_reg=0):
+    inp = Input(shape=input_shape)
 
-    out_list = hed(x)
-    # o_list = []
-    # for i in range(0,5):
-    #     o = Reshape((input_shape[0]*input_shape[1],))(out_list[i+1])
-    #     o = Dense(dense_size, activation='relu')(o)
-    #     o = Dense(input_shape[0]*input_shape[1], activation='relu')(o)
-    #     o = Reshape(input_shape)(o)
-    #     o_list.append(o)
+    #conv1
+    x = Convolution2D(64,3,3,activation='relu', border_mode='same', name='conv1_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(inp)
+    x = BatchNormalization(mode=2)(x)
+    x = Convolution2D(64,3,3,activation='linear', border_mode='same', name='conv1_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
+    out1 = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='score-dsn1',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = Activation('relu')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='pool1')(x)
 
-    out = merge(out_list,mode='concat', concat_axis=3)
-    o = Flatten()(out)
-    o = Dense(dense_size, activation='relu')(o)
-    o = Dense(input_shape[0]*input_shape[1], activation='relu')(o)
-    o = Reshape(input_shape)(o)
-    out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same')(o)
-    model = Model(x, out)
+    #conv2
+    x = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv2_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
+    x = Convolution2D(128,3,3,activation='linear', border_mode='same', name='conv2_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
+    out2 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn2',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    out2 = UpSampling2D(size=(2,2), name='upsample2')(out2)
+    out2 = Activation('sigmoid', name='sigmoid-dsn2')(out2)
+    x = Activation('relu')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='pool2')(x)
+
+    #conv3
+    x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
+    x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    x = BatchNormalization(mode=2)(x)
+    x = Convolution2D(256,3,3,activation='linear', border_mode='same', name='conv3_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    out3 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn3',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    out3 = UpSampling2D(size=(4,4), name='upsample3')(out3)
+    out3 = Activation('sigmoid', name='sigmoid-dsn3')(out3)
+    # x = Activation('relu')(x)
+    # x = MaxPooling2D((2, 2), strides=(2, 2), name='pool3')(x)
+    #
+    # #conv4
+    # x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv4_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv4_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # x = Convolution2D(512,3,3,activation='linear', border_mode='same', name='conv4_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # out4 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # out4 = UpSampling2D(size=(8,8), name='upsample4')(out4)
+    # out4 = Activation('sigmoid', name='sigmoid-dsn4')(out4)
+    # x = Activation('relu')(x)
+    # x = MaxPooling2D((2, 2), strides=(2, 2), name='pool4')(x)
+    #
+    # #conv5
+    # x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv5_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # x = Convolution2D(512,3,3,activation='relu', border_mode='same', name='conv5_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # x = Convolution2D(512,3,3,activation='linear', border_mode='same', name='conv5_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # out5 = Convolution2D(1,1,1,activation='linear', border_mode='same', name='score-dsn5', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    # out5 = UpSampling2D(size=(16,16), name='upsample5')(out5)
+    # out5 = Activation('sigmoid', name='sigmoid-dsn5')(out5)
+
+    #Merge all outputs
+    out = merge([out1,out2,out3], mode='concat', concat_axis=3)
+    out = BatchNormalization(mode=2)(out)
+    out = Convolution2D(3,1,1,activation='relu', border_mode='same', name='new-score-weighting_pre', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
+    out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='new-score-weighting', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(out)
+
+
+    m = Flatten()(out)
+
+    for i in range(0,dense_layers):
+    	m = Dense(dense_size, activation='relu',
+        W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    m = Dense(input_shape[0]*input_shape[1], activation='relu',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    d = Reshape(input_shape, name="mask")(m)
+
+    #merge
+    #d = merge([out,m], mode='mul', name='merged')
+
+    #finetune
+    for i in range(0,num_conv):
+        d = BatchNormalization(mode=2)(d)
+        d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
+        border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+
+    out = Convolution2D(1,Wfilter,Wfilter,activation='sigmoid',
+    border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    #weights to initialize final layer to be simple average
+    arr = np.asarray([1.0/3,1.0/3,1.0/3])
+    arr = arr.reshape((1,1,3,1))
+    bias = np.asarray([0.0])
+
+    model = Model(inp,[out,out1,out2,out3])
+    #model.layers[-1].set_weights([arr,bias])
+    #model.layers[-1].trainable = False
     return model
 
 def I2INet(input_shape=(64,64,1), Wfilter=3, Nfilters=32, dense_layers=1, dense_size=64,
@@ -308,6 +385,194 @@ num_conv=2, mask=True, l2_reg=0, batchnorm=True):
 
         out = Convolution2D(1,Wfilter,Wfilter,activation='sigmoid',
         border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    #weights to initialize final layer to be simple average
+    arr = np.asarray([1.0/3,1.0/3,1.0/3])
+    arr = arr.reshape((1,1,3,1))
+    bias = np.asarray([0.0])
+
+    model = Model(inp,[out,s_out_1])
+    #model.layers[-1].set_weights([arr,bias])
+    #model.layers[-1].trainable = False
+    return model
+
+def I2INet_dense(input_shape=(64,64,1), Wfilter=3, Nfilters=32, dense_layers=1, dense_size=64,
+num_conv=2, mask=True, l2_reg=0, batchnorm=True):
+    inp = Input(shape=input_shape)
+
+    #conv1
+    x = Convolution2D(64,3,3,activation='relu', border_mode='same', name='conv1_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(inp)
+    if batchnorm: x = BatchNormalization(mode=2)(x)
+    out1 = Convolution2D(64,3,3,activation='relu', border_mode='same', name='conv1_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: out1 = BatchNormalization(mode=2)(out1)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='pool1')(out1)
+
+    #conv2
+    x = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv2_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: x = BatchNormalization(mode=2)(x)
+    out2 = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv2_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: out2 = BatchNormalization(mode=2)(out2)
+
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='pool2')(x)
+
+    #conv3
+    x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: x = BatchNormalization(mode=2)(x)
+    x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: x = BatchNormalization(mode=2)(x)
+    x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+
+    out3 = UpSampling2D(size=(2,2), name='upsample1')(x)
+
+    #Second branch
+    s = merge([out3,out2], mode='concat', concat_axis=3)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(256,1,1,activation='relu', border_mode='same', name='conv4_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv4_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv4_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    s_out_1 = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='conv4_4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+
+    s = UpSampling2D(size=(2,2), name='upsample2')(s)
+    s = merge([s,out1], mode='concat', concat_axis=3)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(128,1,1,activation='relu', border_mode='same', name='conv5_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(32,3,3,activation='relu', border_mode='same', name='conv5_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(32,3,3,activation='relu', border_mode='same', name='conv5_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='conv5_4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    #mask layer
+
+    m = Flatten()(out)
+
+    for i in range(0,dense_layers):
+    	m = Dense(dense_size, activation='relu',
+        W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    m = Dense(input_shape[0]*input_shape[1], activation='relu',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    d = Reshape(input_shape, name="mask")(m)
+
+    #merge
+    #d = merge([out,m], mode='mul', name='merged')
+
+    #finetune
+    for i in range(0,num_conv):
+        d = BatchNormalization(mode=2)(d)
+        d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
+        border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    out = Convolution2D(1,Wfilter,Wfilter,activation='sigmoid',
+    border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    #weights to initialize final layer to be simple average
+    arr = np.asarray([1.0/3,1.0/3,1.0/3])
+    arr = arr.reshape((1,1,3,1))
+    bias = np.asarray([0.0])
+
+    model = Model(inp,[out,s_out_1])
+    #model.layers[-1].set_weights([arr,bias])
+    #model.layers[-1].trainable = False
+    return model
+
+def I2INet_dense_mask(input_shape=(64,64,1), Wfilter=3, Nfilters=32, dense_layers=1, dense_size=64,
+num_conv=2, mask=True, l2_reg=0, batchnorm=True):
+    inp = Input(shape=input_shape)
+
+    #conv1
+    x = Convolution2D(64,3,3,activation='relu', border_mode='same', name='conv1_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(inp)
+    if batchnorm: x = BatchNormalization(mode=2)(x)
+    out1 = Convolution2D(64,3,3,activation='relu', border_mode='same', name='conv1_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: out1 = BatchNormalization(mode=2)(out1)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='pool1')(out1)
+
+    #conv2
+    x = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv2_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: x = BatchNormalization(mode=2)(x)
+    out2 = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv2_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: out2 = BatchNormalization(mode=2)(out2)
+
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='pool2')(x)
+
+    #conv3
+    x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: x = BatchNormalization(mode=2)(x)
+    x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+    if batchnorm: x = BatchNormalization(mode=2)(x)
+    x = Convolution2D(256,3,3,activation='relu', border_mode='same', name='conv3_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(x)
+
+    out3 = UpSampling2D(size=(2,2), name='upsample1')(x)
+
+    #Second branch
+    s = merge([out3,out2], mode='concat', concat_axis=3)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(256,1,1,activation='relu', border_mode='same', name='conv4_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv4_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(128,3,3,activation='relu', border_mode='same', name='conv4_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    s_out_1 = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='conv4_4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+
+    s = UpSampling2D(size=(2,2), name='upsample2')(s)
+    s = merge([s,out1], mode='concat', concat_axis=3)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(128,1,1,activation='relu', border_mode='same', name='conv5_1', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(32,3,3,activation='relu', border_mode='same', name='conv5_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    if batchnorm: s = BatchNormalization(mode=2)(s)
+    s = Convolution2D(32,3,3,activation='relu', border_mode='same', name='conv5_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='conv5_4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+
+    #mask layer
+    m = Flatten()(inp)
+
+    for i in range(0,dense_layers):
+    	m = Dense(dense_size, activation='relu',
+        W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    m = Dense(input_shape[0]*input_shape[1], activation='relu',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    m = Reshape(input_shape, name="mask")(m)
+
+    #merge
+    d = merge([out,m], mode='mul', name='merged')
+
+    #finetune
+    for i in range(0,num_conv):
+        d = BatchNormalization(mode=2)(d)
+        d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
+        border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    out = Convolution2D(1,Wfilter,Wfilter,activation='sigmoid',
+    border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    #FC out layer
+    m = Flatten()(out)
+
+    for i in range(0,dense_layers):
+    	m = Dense(dense_size, activation='relu',
+        W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    m = Dense(input_shape[0]*input_shape[1], activation='relu',
+    W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(m)
+
+    d = Reshape(input_shape, name="mask_2")(m)
+
+    #merge
+    #d = merge([out,m], mode='mul', name='merged')
+
+    #finetune
+    for i in range(0,num_conv):
+        d = BatchNormalization(mode=2)(d)
+        d = Convolution2D(Nfilters,Wfilter,Wfilter,activation='relu',
+        border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
+
+    out = Convolution2D(1,Wfilter,Wfilter,activation='sigmoid',
+    border_mode='same', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(d)
 
     #weights to initialize final layer to be simple average
     arr = np.asarray([1.0/3,1.0/3,1.0/3])
