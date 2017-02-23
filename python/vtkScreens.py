@@ -58,6 +58,7 @@ def process_model(c,files,mhas):
     asd = []
     ravd_arr = []
     dc_arr = []
+    vols = []
     for f in files:
         mod = f.replace('truth',c)
 
@@ -87,8 +88,15 @@ def process_model(c,files,mhas):
 
             e_dc = dc(np1,np2)
             dc_arr.append(e_dc)
+        vols.append(np.sum(np1)*ref_img.GetSpacing()[0])
+    np.save(output_dir+'{}.jaccard.npy'.format(c),errs)
+    np.save(output_dir+'{}.dorf.npy'.format(c),dorf)
+    np.save(output_dir+'{}.assd.npy'.format(c),asd)
+    np.save(output_dir+'{}.ravd.npy'.format(c),ravd_arr)
+    np.save(output_dir+'{}.dc.npy'.format(c),dc_arr)
+    np.save(output_dir+'{}.vols.npy'.format(c),vols)
 
-    return '{} : {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n'.format(\
+    return '{} , {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n'.format(\
     c,np.mean(errs),np.std(errs),np.mean(dorf),np.std(dorf),np.mean(asd),\
     np.std(asd), np.mean(ravd_arr),np.std(ravd_arr),np.mean(dc_arr),np.std(dc_arr))
 
@@ -100,7 +108,7 @@ mhas = open(output_dir+'images.txt').readlines()
 mhas = [i.replace('\n','') for i in mhas]
 img_file = 'blah'
 
-codes = ['I2INet','ls', 'HED', 'I2INetFC', 'HEDFC']
+codes = ['I2INet','ls', 'HED', 'I2INetFC', 'HEDFC', 'I2IVanilla','HEDVanilla']
 g = open(plot_dir+'3derrs.txt','w')
 g.write('code, jacc_mean, jacc_std, mean hausdorf, std hausdorf, assd, assd_std, ravd, ravdstd, dice, dice std\n')
 

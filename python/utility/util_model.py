@@ -442,10 +442,10 @@ num_conv=2, mask=True, l2_reg=0, batchnorm=True):
     s = Convolution2D(32,3,3,activation='relu', border_mode='same', name='conv5_2', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
     if batchnorm: s = BatchNormalization(mode=2)(s)
     s = Convolution2D(32,3,3,activation='relu', border_mode='same', name='conv5_3', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
-    out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='conv5_4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
+    i2i_out = Convolution2D(1,1,1,activation='sigmoid', border_mode='same', name='conv5_4', W_regularizer=l2(l2_reg), b_regularizer=l2(l2_reg))(s)
     #mask layer
 
-    m = Flatten()(out)
+    m = Flatten()(i2i_out)
 
     for i in range(0,dense_layers):
     	m = Dense(dense_size, activation='relu',
@@ -473,7 +473,7 @@ num_conv=2, mask=True, l2_reg=0, batchnorm=True):
     arr = arr.reshape((1,1,3,1))
     bias = np.asarray([0.0])
 
-    model = Model(inp,[out,s_out_1])
+    model = Model(inp,[out,i2i_out,s_out_1])
     #model.layers[-1].set_weights([arr,bias])
     #model.layers[-1].trainable = False
     return model

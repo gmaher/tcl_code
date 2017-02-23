@@ -91,8 +91,8 @@ def get_outputs(seg, seg_truth):
             e= hd(seg_thresh[i,:,:],seg_truth[i,:,:,0],meta_test[0,i][0])
             dorf.append(e)
 
-            #e_asd= assd(seg_thresh[i,:,:],seg_truth[i,:,:,0],meta_test[0,i][0])
-            #asdl.append(e_asd)
+            e_asd= assd(seg_thresh[i,:,:],seg_truth[i,:,:,0],meta_test[0,i][0])
+            asdl.append(e_asd)
             # if np.sum(seg_thresh[i,:,:]) < 600 and np.sum(seg_truth[i,:,:,0]) < 600:
             #     print i,np.sum(seg_thresh[i,:,:]),np.sum(seg_truth[i,:,:,0])
             #     e_emd = utility.EMDSeg(seg_truth[i,:,:,0],seg_thresh[i,:,:], meta_test[0,i][0])
@@ -102,7 +102,7 @@ def get_outputs(seg, seg_truth):
         dice.append(edc)
         prec.append(precision(seg_thresh[i,:,:],seg_truth[i,:,:,0]))
     acc,mean_acc = calc_accuracy(seg, seg_truth)
-    return (contour,errs,thresh,roc,pr,acc,mean_acc,dorf,dice, prec)
+    return (contour,errs,thresh,roc,pr,acc,mean_acc,dorf,dice, prec,asdl)
 
 def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_truth):
     out = np.load(pred_string)
@@ -116,7 +116,7 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_t
     else:
         out = out[inds].reshape(shape)
 
-    contour,errs,thresh,roc,pr,acc,mean_acc,dorf,dice,prec = get_outputs(out,seg_truth)
+    contour,errs,thresh,roc,pr,acc,mean_acc,dorf,dice,prec,asdl = get_outputs(out,seg_truth)
 
     pred_dict['seg'][pred_code] = out
     pred_dict['contour'][pred_code] = contour
@@ -128,7 +128,7 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_t
     pred_dict['acc'][pred_code] = acc
     pred_dict['mean_acc'][pred_code] = mean_acc
     pred_dict['dorf'][pred_code] = dorf
-    #pred_dict['asd'][pred_code] = asdl
+    pred_dict['asd'][pred_code] = asdl
     pred_dict['dc'][pred_code] = dice
     pred_dict['precision'][pred_code] = prec
 
@@ -170,7 +170,7 @@ def add_contour_to_dict(pred_dict,pred_code,pred_color,contours,contours_test,in
     pred_dict['contour'][pred_code] = ls_test
     pred_dict['color'][pred_code] = pred_color
     pred_dict['dorf'][pred_code] = dorf
-    #pred_dict['asd'][pred_code] = asdl
+    pred_dict['asd'][pred_code] = asdl
     pred_dict['dc'][pred_code] = dice
     pred_dict['precision'][pred_code] = prec
 
@@ -344,6 +344,8 @@ seg[plot_inds[3,:]],seg[plot_inds[4,:]]],
 
 #Figure 1 segmentations
 keys_seg = ['HED','I2I-2D', 'HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
+#keys_seg = ['HED','I2I-2D']
+
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
@@ -351,6 +353,8 @@ image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 #Figure segmentations for high error vessels
 inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.8]
 keys_seg = ['RSN','HED','I2I-2D','HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
+#keys = ['level set', 'HED','I2I-2D']
+
 segs = [X_test[inds],Y_test[inds]]+[PREDS['seg'][k][inds] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 l = 10
@@ -360,6 +364,8 @@ image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
 #Figure 2 contours
 keys = ['level set', 'HED','I2I-2D','HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
+#keys = ['level set', 'HED','I2I-2D']
+
 #keys = ['level set', '3D segmentation', 'RSN','OBG_RSN', 'HED','I2I-2D', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys
@@ -432,6 +438,8 @@ f.write('\n')
 f.write('DICE,'+','.join([str(np.mean(PREDS['dc'][k])) for k in keys]))
 f.write('\n')
 f.write('PREC,'+','.join([str(np.mean(PREDS['precision'][k])) for k in keys]))
+f.write('\n')
+f.write('ASSD,'+','.join([str(np.mean(PREDS['asd'][k])) for k in keys]))
 f.close()
 
 #HED Plot

@@ -194,8 +194,8 @@ if model_to_train == 'I2INet':
     downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
     downsampled_val /= np.max(downsampled_val)
 
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,vasc_train.segs_tf,downsampled_train],
+     vasc_val.images_norm,[vasc_val.segs_tf,vasc_val.segs_tf, downsampled_val])
     net.save(model_dir+'I2INet.h5')
 
 if model_to_train == 'I2INetFC':
@@ -211,8 +211,8 @@ if model_to_train == 'I2INetFC':
     downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
     downsampled_val /= np.max(downsampled_val)
 
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,vasc_train.segs_tf,downsampled_train],
+     vasc_val.images_norm,[vasc_val.segs_tf,vasc_val.segs_tf, downsampled_val])
     net.save(model_dir+'I2INetFC.h5')
 
 if model_to_train == 'I2INetFCMask':
@@ -228,8 +228,8 @@ if model_to_train == 'I2INetFCMask':
     downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
     downsampled_val /= np.max(downsampled_val)
 
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,vasc_train.segs_tf,downsampled_train],
+     vasc_val.images_norm,[vasc_val.segs_tf,vasc_val.segs_tf, downsampled_val])
     net.save(model_dir+'I2INetFCMask.h5')
 
 prediction = net.predict(vasc_test.images_norm)

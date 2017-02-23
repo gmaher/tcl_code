@@ -210,24 +210,51 @@ def get_activation(x,name,model):
 #I2INet
 i2i = load_model(model_dir+'I2INetFC.h5')
 Y_i2i = i2i.predict(X_test, batch_size=1)
-mask = get_activation(X_test[0:10],"mask",i2i)
-inside_output = get_activation(X_test[0:10],"conv5_4",i2i)
+mask = get_activation(X_test[0:30],"mask",i2i)
+inside_output = get_activation(X_test[0:30],"conv5_4",i2i)
 #merged = get_activation(X_test[0:10],'merged',i2i)
 #
-plt.figure()
-plt.imshow(X_test[2,:,:,0])
-plt.colorbar()
-plt.savefig(plot_dir+'/i2iimage.png')
 
-plt.figure()
-plt.imshow(mask[2,:,:,0])
-plt.colorbar()
-plt.savefig(plot_dir+'/i2imask.png')
+inner = ['batchnormalization_13','convolution2d_1','batchnormalization_14',\
+'convolution2d_2','batchnormalization_15','convolution2d_3','batchnormalization_16',\
+'convolution2d_4','batchnormalization_17','convolution2d_5','batchnormalization_18',\
+'convolution2d_6','convolution2d_7']
 
-plt.figure()
-plt.imshow(inside_output[2,:,:,0])
-plt.colorbar()
-plt.savefig(plot_dir+'/i2iinsideoutput.png')
+for i in range(30):
+    plt.figure()
+    plt.imshow(X_test[i,:,:,0],cmap='gray')
+    plt.colorbar()
+    plt.savefig(plot_dir+'/i2i/i2iimage{}.png'.format(i))
+
+    plt.figure()
+    plt.imshow(mask[i,:,:,0],cmap='gray')
+    plt.colorbar()
+    plt.savefig(plot_dir+'/i2i/i2imask{}.png'.format(i))
+
+    plt.figure()
+    plt.imshow(mask[i,:,:,0]*X_test[i,:,:,0],cmap='gray')
+    plt.colorbar()
+    plt.savefig(plot_dir+'/i2i/i2imask_merge{}.png'.format(i))
+
+    plt.figure()
+    plt.imshow(1-inside_output[i,:,:,0],cmap='gray')
+    plt.colorbar()
+    plt.savefig(plot_dir+'/i2i/i2iinsideoutput{}.png'.format(i))
+
+    plt.figure()
+    plt.imshow(Y_i2i[0][i,:,:,0],cmap='gray')
+    plt.colorbar()
+    plt.savefig(plot_dir+'/i2i/i2ipred{}.png'.format(i))
+x = X_test[29].reshape((1,64,64,1))
+# for s in inner:
+#
+#     inside_output = get_activation(x,s,i2i)
+#
+#     for i in range(inside_output.shape[3]):
+#             plt.figure()
+#             plt.imshow(inside_output[0,:,:,i],cmap='gray')
+#             plt.colorbar()
+#             plt.savefig(plot_dir+'/i2i/{}_{}.png'.format(s,i))
 
 # plt.figure()
 # plt.imshow(merged[2,:,:,0])

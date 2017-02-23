@@ -423,6 +423,7 @@ proc model_groups {fold} {
 	foreach grp $groups {
     	set numSegs [llength [group_get $grp]]
 			if {$numSegs > 1} {
+				catch {
 				set fn [open "log.txt" "a"]
 				puts $img.$grp
 				puts $fn $img.$grp
@@ -430,6 +431,7 @@ proc model_groups {fold} {
 				set guiBOOLEANvars(selected_groups) $grp
 				create_model_polydata $grp
 				repos_writeVtkPolyData -file $img.$grp.vtp -obj /models/PolyData/$grp -type ascii
+			}
 			}
 
 	}
