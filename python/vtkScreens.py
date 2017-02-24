@@ -108,7 +108,7 @@ mhas = open(output_dir+'images.txt').readlines()
 mhas = [i.replace('\n','') for i in mhas]
 img_file = 'blah'
 
-codes = ['I2INet','ls', 'HED', 'I2INetFC', 'HEDFC', 'I2IVanilla','HEDVanilla']
+codes = ['I2INet','ls', 'ls_seg', 'HED', 'I2INetFC', 'HEDFC', 'I2IVanilla','HEDVanilla']
 g = open(plot_dir+'3derrs.txt','w')
 g.write('code, jacc_mean, jacc_std, mean hausdorf, std hausdorf, assd, assd_std, ravd, ravdstd, dice, dice std\n')
 

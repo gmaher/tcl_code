@@ -589,6 +589,38 @@ def getNodeOrdering(C):
 
 	return ordering
 
+def vtkSmoothPD(pd,iters=15,relax=0.1):
+    smoothFilter = vtk.vtkSmoothPolyDataFilter()
+    smoothFilter.SetInputData(pd)
+    smoothFilter.SetNumberOfIterations(iters)
+    smoothFilter.SetRelaxationFactor(relax)
+    smoothFilter.FeatureEdgeSmoothingOff()
+    smoothFilter.BoundarySmoothingOn()
+    smoothFilter.Update()
+
+    #Update normals on newly smoothed polydata
+    normalGenerator = vtk.vtkPolyDataNormals()
+    normalGenerator.SetInputConnection(smoothFilter.GetOutputPort())
+    normalGenerator.ComputePointNormalsOn()
+    normalGenerator.ComputeCellNormalsOn()
+    normalGenerator.Update()
+
+    return normalGenerator.GetOutput()
+
+def vtkRemapImageColor(img, ranges=[0,2000],mapRange=[0,1.0],satRange=[0.0,0.0]):
+    table = vtk.vtkLookupTable()
+    table.SetRange(ranges) # image intensity range
+    table.SetValueRange(mapRange) # from black to white
+    table.SetSaturationRange(satRange) # no color saturation
+    table.SetRampToLinear()
+    table.Build()
+
+    # Map the image through the lookup table
+    color = vtk.vtkImageMapToColors()
+    color.SetLookupTable(table)
+    color.SetInputData(img)
+    color.Update()
+    return color.GetOutput()
 def addPdToRen(ren, pd):
     """
     adds a polydata object to a render window
