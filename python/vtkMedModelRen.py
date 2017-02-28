@@ -48,14 +48,14 @@ origin = img.GetOrigin()
 ranges = img.GetScalarRange()
 spacing = img.GetSpacing()
 dims = img.GetExtent()
-p = (0,0,0)
+p = (-70*spacing[0],-70*spacing[1],-50*spacing[2])
 # center = [origin[0]+spacing[0]*(float(dims[1]-dims[0]))/2,
 # origin[1]+spacing[1]*(float(dims[3]-dims[2])/2),
 # origin[2]+spacing[2]*(float(dims[5]-dims[4]))/2]
 centers = [0]*3
 centers[0] = [origin[0]+spacing[0]*(float(dims[1]-dims[0]))/2,
 origin[1]+spacing[1]*(float(dims[3]-dims[2])/2),
-origin[2]+spacing[2]*(float(dims[5]-dims[4]))/2]
+origin[2]+spacing[2]*(float(dims[5]-dims[4])/2)]
 
 centers[1] = [origin[0]+spacing[0]*(float(dims[1]-dims[0]))/2,
 origin[1]+spacing[1]*(float(dims[3]-dims[2])/2),

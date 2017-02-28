@@ -12,7 +12,7 @@ echo "Input arguments: $1 $2 $3"
 echo "Generating raw data using simvascular"
 SV="/home/marsdenlab/projects/JSV/sv_build/mysim"
 TCL="/home/marsdenlab/projects/tcl_code/tcl/run_models.tcl"
-OUT="/home/marsdenlab/projects/tcl_code/python/output/9/vtk"
+OUT="/home/marsdenlab/projects/tcl_code/python/output/10/vtk"
 cd $3
 
 cd $OUT

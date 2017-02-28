@@ -295,8 +295,8 @@ add_pred_to_dict(PREDS,pred_dir+'I2INetFCMask.npy','I2I-2DFC-C','teal',inds,shap
 #add_pred_to_dict(PREDS,pred_dir+'FCN_finetune.npy','RSN_finetune','m',inds,shape, Y_test)
 #add_pred_to_dict(PREDS,pred_dir+'FCN_multi.npy','RSN_multi','c',inds,shape, Y_test)
 
-#np.save(pred_dir+'mag_seg',vasc2d.mag_seg/255)
-#add_pred_to_dict(PREDS,pred_dir+'mag_seg.npy','3D segmentation','yellow',inds,shape, Y_test)
+np.save(pred_dir+'mag_seg',vasc2d.mag_seg/255)
+add_pred_to_dict(PREDS,pred_dir+'mag_seg.npy','3D segmentation','yellow',inds,shape, Y_test)
 
 #load contours
 add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,inds,DX)
@@ -344,7 +344,7 @@ seg[plot_inds[3,:]],seg[plot_inds[4,:]]],
 
 #Figure 1 segmentations
 keys_seg = ['HED','I2I-2D', 'HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
-#keys_seg = ['HED','I2I-2D']
+#keys_seg = ['HED','I2I-2D', '3D segmentation']
 
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
@@ -352,8 +352,8 @@ image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure segmentations for high error vessels
 inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.8]
-keys_seg = ['RSN','HED','I2I-2D','HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
-#keys = ['level set', 'HED','I2I-2D']
+#keys_seg = ['RSN','HED','I2I-2D','HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
+keys = ['level set', 'HED','I2I-2D', '3D segmentation']
 
 segs = [X_test[inds],Y_test[inds]]+[PREDS['seg'][k][inds] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
@@ -364,8 +364,9 @@ image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
 #Figure 2 contours
 keys = ['level set', 'HED','I2I-2D','HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
-#keys = ['level set', 'HED','I2I-2D']
+#keys = ['level set', 'HED','I2I-2D', '3D segmentation']
 
+PREDS['contour']['I2I-2DFC'] = [utility.smoothContour(c,num_modes=6) for c in PREDS['contour']['I2I-2DFC']]
 #keys = ['level set', '3D segmentation', 'RSN','OBG_RSN', 'HED','I2I-2D', 'ConvFC', 'RSN_finetune', 'RSN_multi']
 contours_to_plot = [contours_test]+[PREDS['contour'][k] for k in keys]
 labels = ['user']+keys

@@ -43,7 +43,11 @@ class VascData2D:
         self.contours_ls = np.load(self.ls_string)
         #self.contours_edge = np.load(self.ls_edge)
         #self.contours_seg = np.load(self.ls_seg)
-        #self.mag_seg = np.load(self.mag_seg_str)
+        self.mag_seg = np.load(self.mag_seg_str)
+        self.mag_seg[:,0:15,:] = 0
+        self.mag_seg[:,:,0:15] = 0
+        self.mag_seg[:,45:,:] = 0
+        self.mag_seg[:,:,45:] = 0
         #self.im_seg = np.load(self.im_seg_str)
         self.data_dims = self.images.shape
         data_dims = self.data_dims
@@ -62,8 +66,8 @@ class VascData2D:
             self.data_dims[1], self.data_dims[2],1))
         self.images_norm = utility.normalize_images(self.images_tf, normalize)
         #self.images_norm = self.images_tf
-        # self.mag_seg_tf = self.mag_seg.reshape((self.data_dims[0],
-        #     self.data_dims[1], self.data_dims[2],1))
+        self.mag_seg_tf = self.mag_seg.reshape((self.data_dims[0],
+             self.data_dims[1], self.data_dims[2],1))
         #self.im_seg_tf = self.im_seg.reshape((self.data_dims[0],
         #    self.data_dims[1], self.data_dims[2],1))
 
