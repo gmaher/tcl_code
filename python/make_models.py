@@ -75,7 +75,7 @@ for i in range(len(paths)):
 ##############################################
 # Load segmentations, convert to contours
 ##############################################
-pred = ['HED','ls', 'I2INet', 'truth', 'HEDFC', 'I2INetFC', 'I2INetFCMask', 'I2IVanilla', 'HEDVanilla']
+pred = ['HED','ls', 'I2INet', 'truth', 'HEDFC', 'I2INetFC', 'FCI2INet']
 for pred_type in pred:
     if pred_type == 'I2INet':
         meta = np.load(dataDir+'metadata.npy')
@@ -112,6 +112,14 @@ for pred_type in pred:
     if pred_type == 'I2INetFCMask':
         meta = np.load(dataDir+'metadata.npy')
         seg = np.load(pred_dir+'I2INetFCMask.npy')
+        seg = seg.reshape((seg.shape[:3]))
+        seg_thresh = utility.threshold(seg,THRESHOLD)
+        contour = utility.listSegToContours(seg_thresh, meta[1,:,:],
+            meta[0,:,:], ISOVALUE)
+
+    if pred_type == 'FCI2INet':
+        meta = np.load(dataDir+'metadata.npy')
+        seg = np.load(pred_dir+'FCI2INet.npy')
         seg = seg.reshape((seg.shape[:3]))
         seg_thresh = utility.threshold(seg,THRESHOLD)
         contour = utility.listSegToContours(seg_thresh, meta[1,:,:],

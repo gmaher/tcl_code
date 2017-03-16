@@ -110,7 +110,7 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_t
         out = out[0]
         out = out[inds].reshape(shape)
     elif len(out.shape) == 3:
-        out = out
+        out = out[inds]
     elif out.shape[3] == 3:
         out = out[inds,:,:,1].reshape(shape)
     else:
@@ -141,17 +141,20 @@ def add_contour_to_dict(pred_dict,pred_code,pred_color,contours,contours_test,in
     asdl = []
     dice = []
     prec = []
-    for i in tqdm(range(len(contours))):
+    for i in tqdm(range(len(ls_test))):
         dims = meta_test[2,i]
         spacing = meta_test[0,i]
         origin = meta_test[1,i]
-        if contours[i] != [] and len(contours[i]) > 2:
+        if ls_test[i] != [] and len(ls_test[i]) > 2:
             seg_truth = utility.contourToSeg(contours_test[i], origin, dims, spacing)
-            seg_thresh = utility.contourToSeg(contours[i], origin, dims, spacing)
+            seg_thresh = utility.contourToSeg(ls_test[i], origin, dims, spacing)
             if np.sum(seg_thresh) > 0.1 and np.sum(seg_truth) > 0.1:
                 e= hd(seg_thresh,seg_truth,meta_test[0,i][0])
                 dorf.append(e)
 
+                edc = dc(seg_thresh,seg_truth)
+                dice.append(edc)
+                prec.append(precision(seg_thresh,seg_truth))
                 #e_asd= assd(seg_thresh,seg_truth,meta_test[0,i][0])
                 #asdl.append(e_asd)
         else:
@@ -161,9 +164,10 @@ def add_contour_to_dict(pred_dict,pred_code,pred_color,contours,contours_test,in
             e_asd = np.sqrt(2)*32*meta_test[0,i][0]
             asdl.append(e_asd)
 
-        edc = dc(seg_thresh,seg_truth)
-        dice.append(edc)
-        prec.append(precision(seg_thresh,seg_truth))
+            dice.append(1.0)
+            prec.append(0.0)
+
+
 
     pred_dict['thresh'][pred_code] = thresh
     pred_dict['error'][pred_code] = errs
@@ -236,7 +240,7 @@ def image_grid_plot(imlist, labels, Nplots, fn, size=(20,20)):
 ###########################
 # Load data and preprocess
 ###########################
-vasc2d = util_data.VascData2D(dataDir)
+vasc2d = util_data.VascData2D(dataDir, rotate_data=False)
 
 N, Pw, Ph, C = vasc2d.images_tf.shape
 
@@ -289,7 +293,8 @@ add_pred_to_dict(PREDS,pred_dir+'HED.npy','HED','black',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'I2INet.npy','I2I-2D','orange',inds,shape, Y_test)
 add_pred_to_dict(PREDS,pred_dir+'HEDFC.npy','HEDFC','g',inds,shape,Y_test)
 add_pred_to_dict(PREDS,pred_dir+'I2INetFC.npy','I2I-2DFC','m',inds,shape, Y_test)
-add_pred_to_dict(PREDS,pred_dir+'I2INetFCMask.npy','I2I-2DFC-C','teal',inds,shape, Y_test)
+#add_pred_to_dict(PREDS,pred_dir+'I2INetFCMask.npy','FCI2I','teal',inds,shape, Y_test)
+add_pred_to_dict(PREDS,pred_dir+'FCI2INet.npy','FCI2I','teal',inds,shape, Y_test)
 #add_pred_to_dict(PREDS,pred_dir+'FC_branch.npy','FC_branch','teal',inds,shape, Y_test)
 #add_pred_to_dict(PREDS,pred_dir+'ConvFC.npy','ConvFC','gray',inds,shape, Y_test)
 #add_pred_to_dict(PREDS,pred_dir+'FCN_finetune.npy','RSN_finetune','m',inds,shape, Y_test)
@@ -343,7 +348,7 @@ seg[plot_inds[3,:]],seg[plot_inds[4,:]]],
 # 15,plot_dir+'/OBP.png',(40,40))
 
 #Figure 1 segmentations
-keys_seg = ['HED','I2I-2D', 'HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
+keys_seg = ['RSN','HED','I2I-2D', 'HEDFC', 'I2I-2DFC', 'FCI2I']
 #keys_seg = ['HED','I2I-2D', '3D segmentation']
 
 segs = [X_test,Y_test]+[PREDS['seg'][k] for k in keys_seg]
@@ -351,19 +356,28 @@ labels = ['image', 'user segmentation']+keys_seg
 image_grid_plot(segs,labels,5,plot_dir+'/segs.png',(40,40))
 
 #Figure segmentations for high error vessels
-inds = [i for i in range(X_test.shape[0]) if PREDS['error']['RSN'][i] > 0.8]
-#keys_seg = ['RSN','HED','I2I-2D','HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
-keys = ['level set', 'HED','I2I-2D', '3D segmentation']
+inds_high = [i for i in range(X_test.shape[0]) if PREDS['error']['I2I-2DFC'][i] > 0.8]
 
-segs = [X_test[inds],Y_test[inds]]+[PREDS['seg'][k][inds] for k in keys_seg]
+inds_big_rad = [i for i in range(X_test.shape[0]) if utility.contourRadius(PREDS['contour']['I2I-2DFC'][i]) > 0.5]
+#keys_seg = ['RSN','HED','I2I-2D','HEDFC', 'I2I-2DFC', 'FCI2I']
+keys = ['level set', 'RSN', 'HED','I2I-2D', '3D segmentation']
+
+segs = [X_test[inds_high],Y_test[inds_high]]+[PREDS['seg'][k][inds_high] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 l = 10
-if len(inds) < l:
-    l = len(inds)-1
+if len(inds_high) < l:
+    l = len(inds_high)-1
 image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
+segs = [X_test[inds_big_rad],Y_test[inds_big_rad]]+[PREDS['seg'][k][inds_big_rad] for k in keys_seg]
+labels = ['image', 'user segmentation']+keys_seg
+l = 10
+if len(inds_big_rad) < l:
+    l = len(inds_big_rad)-1
+image_grid_plot(segs,labels,l,plot_dir+'/segs_highrad.png',(40,40))
+
 #Figure 2 contours
-keys = ['level set', 'HED','I2I-2D','HEDFC', 'I2I-2DFC', 'I2I-2DFC-C']
+keys = ['level set', 'RSN', 'HED','I2I-2D','HEDFC', 'I2I-2DFC', 'FCI2I']
 #keys = ['level set', 'HED','I2I-2D', '3D segmentation']
 
 PREDS['contour']['I2I-2DFC'] = [utility.smoothContour(c,num_modes=6) for c in PREDS['contour']['I2I-2DFC']]
@@ -382,8 +396,11 @@ contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n3,4,plot_dir+'c
 contour_plot(X_test,contours_to_plot,extents_test,labels,colors,n4,4,plot_dir+'contours4.png',(20,14))
 
 #High error contours
-contours_to_plot = [[contours_test[i] for i in inds]]+[[PREDS['contour'][k][i] for i in inds] for k in keys]
-contour_plot(X_test[inds],contours_to_plot,extents_test,labels,colors,0,10,plot_dir+'contours_higherr.png',(20,20))
+contours_to_plot = [[contours_test[i] for i in inds_high]]+[[PREDS['contour'][k][i] for i in inds_high] for k in keys]
+contour_plot(X_test[inds_high],contours_to_plot,extents_test,labels,colors,0,10,plot_dir+'contours_higherr.png',(20,20))
+
+contours_to_plot = [[contours_test[i] for i in inds_big_rad]]+[[PREDS['contour'][k][i] for i in inds_big_rad] for k in keys]
+contour_plot(X_test[inds_big_rad],contours_to_plot,extents_test,labels,colors,0,l,plot_dir+'contours_highrad.png',(20,20))
 
 # #Figure 3, IOU
 plt.figure()
@@ -410,11 +427,11 @@ plt.savefig(plot_dir+'roc.png')
 # #Figure 5, PR
 plt.figure()
 for k in keys_seg:
-    plt.plot(PREDS['PR'][k][0],PREDS['PR'][k][1], color=PREDS['color'][k],
+    plt.plot(PREDS['PR'][k][1],PREDS['PR'][k][0], color=PREDS['color'][k],
      label=k, linewidth=2)
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.legend(loc='lower right')
+plt.legend(loc='lower left')
 plt.grid(b='on')
 plt.savefig(plot_dir+'PR.png')
 
@@ -562,9 +579,9 @@ sn = [radiusErrorCount(PREDS['error']['RSN'],radius_vector,rad_err_thresh,rad) f
 r]
 # obg = [radiusErrorCount(PREDS['error']['OBG_RSN'],radius_vector,rad_err_thresh,rad) for rad in
 # r]
-hed_rad = [radiusErrorCount(PREDS['error']['HED'],radius_vector,rad_err_thresh,rad) for rad in
+hed_rad = [radiusErrorCount(PREDS['error']['HEDFC'],radius_vector,rad_err_thresh,rad) for rad in
 r]
-i2i_rad = [radiusErrorCount(PREDS['error']['I2I-2D'],radius_vector,rad_err_thresh,rad) for rad in
+i2i_rad = [radiusErrorCount(PREDS['error']['I2I-2DFC'],radius_vector,rad_err_thresh,rad) for rad in
 r]
 ls = [radiusErrorCount(PREDS['error']['level set'],radius_vector,rad_err_thresh,rad) for rad in
 r]
@@ -593,8 +610,8 @@ width=0.2
 plt.figure()
 plt.bar(ind,sn,width,color='r', label='RSN')
 # plt.bar(ind+width,obg,width,color='b', label='OBG_RSN')
-plt.bar(ind+1*width,hed_rad,width,color='black', label='HED')
-plt.bar(ind+2*width,i2i_rad,width,color='orange', label='I2I-2D')
+plt.bar(ind+1*width,hed_rad,width,color='black', label='HEDFC')
+plt.bar(ind+2*width,i2i_rad,width,color='orange', label='I2I-FC')
 plt.bar(ind+3*width,ls,width,color='pink', label='level set')
 
 plt.ylim(0,1.0)
@@ -673,6 +690,7 @@ plt.savefig(plot_dir+'prob_std.png')
 #Compute radius change statistics
 
 names = open(dataDir+'names.txt').readlines()
+names = [names[i] for i in inds]
 names = [n.split('.') for n in names]
 names = [names[i] for i in range(len(names)) if PREDS['contour']['RSN'][i] != []]
 radius_vector = [utility.contourRadius(x) for x in PREDS['contour']['RSN'] if x != []]

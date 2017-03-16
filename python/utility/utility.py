@@ -329,6 +329,12 @@ def normalize_images(images, normalize='max'):
             images_norm[i,:] = (images[i]-mins[i])/(maxs[i]-mins[i]+1e-6)
         return images_norm
 
+    if normalize == 'global_max':
+        max_ = np.amax(images)
+        min_ = np.amin(images)
+
+        images_norm = (images-min_)/(max_-min_)
+        return images_norm
     if normalize=='mean':
         pass
 
@@ -828,7 +834,7 @@ def getAllImageSlices(img,paths,ext, asnumpy=False):
     """
     slices = []
     for k in paths.keys():
-        if type(paths[k]['points'][0]) != list:
+        if type(paths[k]['points'][0]) != list and type(paths[k]['points'][0]) != np.ndarray:
             p = paths[k]['points']
             i = getImageReslice(img,ext,p[:3],p[3:6],p[6:9], asnumpy)
             slices.append(i)
@@ -882,7 +888,7 @@ def contourToSeg(contour, origin, dims, spacing):
 		@a spacing: the physical size of each pixel
 	'''
 	poly = Polygon(contour)
-	seg = np.zeros((dims[0],dims[1]))
+	seg = np.zeros((int(dims[0]),int(dims[1])))
 
 	for j in range(0,int(dims[0])):
 	    for i in range(0,int(dims[1])):
@@ -938,6 +944,8 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
 		return []
 
 def smoothContour(c, num_modes=10):
+    if len(c) < 3:
+        return np.array([[0.0,0.0],[0.0,0.0]]).T
     x = c[:,0]
     y = c[:,1]
     mu = np.mean(c,axis=0)
@@ -1141,17 +1149,19 @@ def contourArea(contour):
 	return p.area
 
 def contourRadius(contour):
-	"""
-	calculates the radius of a list of a (x,y) points
+    """
+    calculates the radius of a list of a (x,y) points
 
-	args:
-		@a contour, numpy array (num points, 2)
-	"""
-	tup = zip(contour[:,0],contour[:,1])
+    args:
+    	@a contour, numpy array (num points, 2)
+    """
+    if len(contour) < 3:
+        return 0.0
+    tup = zip(contour[:,0],contour[:,1])
 
-	p = Polygon(tup)
+    p = Polygon(tup)
 
-	return np.sqrt(p.area/np.pi)
+    return np.sqrt(p.area/np.pi)
 
 def confusionMatrix(ytrue,ypred, as_fraction=True):
 	'''
@@ -1270,25 +1280,27 @@ def jaccard3D_itk(img1,img2):
 
     return 1.0 - float(I)/(U+1e-6)
 
-def train(net, lrates, batch_size, nb_epoch, x_train, y_train, x_val,y_val):
+def train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches, downsample=False, list=1):
 	"""Trains a model on 2d vascular data (optionally with boundary data)
 	"""
 	train_loss = []
 	val_loss = []
 	for lr in lrates:
 		opt = Adam(lr=lr)
-		if (type(y_train)==list) or (y_train.shape[3] == 1):
-			net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-			history = net.fit(x_train, y_train,batch_size=batch_size, nb_epoch=nb_epoch,
-			validation_data=(x_val,y_val))
-		else:
-			train = y_train.reshape((y_train.shape[0],-1,3))
-			val = y_val.reshape((y_val.shape[0],-1,3))
-			net.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
-			history = net.fit(x_train, train,batch_size=batch_size, nb_epoch=nb_epoch,
-			validation_data=(x_val,val))
-		train_loss = train_loss + history.history['loss']
-		val_loss = val_loss + history.history['val_loss']
+        for j in range(nb_batches):
+            
+    		if (type(y_train)==list) or (y_train.shape[3] == 1):
+    			net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+    			history = net.fit(x_train, y_train,batch_size=batch_size, nb_epoch=nb_epoch,
+    			validation_data=(x_val,y_val))
+    		else:
+    			train = y_train.reshape((y_train.shape[0],-1,3))
+    			val = y_val.reshape((y_val.shape[0],-1,3))
+    			net.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+    			history = net.fit(x_train, train,batch_size=batch_size, nb_epoch=nb_epoch,
+    			validation_data=(x_val,val))
+    		train_loss = train_loss + history.history['loss']
+    		val_loss = val_loss + history.history['val_loss']
 	return net, train_loss, val_loss
 #######################################################
 # Plotly stuff

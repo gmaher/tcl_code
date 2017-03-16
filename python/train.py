@@ -46,7 +46,7 @@ vasc_train = util_data.VascData2D(dataDir)
 #vasc_train.createOBG(border_width=1)
 vasc_val = util_data.VascData2D(valDir)
 #vasc_val.createOBG(border_width=1)
-vasc_test = util_data.VascData2D(testDir)
+vasc_test = util_data.VascData2D(testDir, rotate_data=False)
 #vasc_test.createOBG(border_width=1)
 
 ##############################
@@ -58,10 +58,10 @@ num_conv=6
 lr = 1e-3
 threshold = 0.3
 output_channels = 1
-dense_size = 100
+dense_size = 200
 dense_layers = 1
 nb_epoch=6
-batch_size=256
+batch_size=64
 Pw=Ph=int(config['learn_params']['image_dims'])
 input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)
@@ -194,8 +194,8 @@ if model_to_train == 'I2INet':
     downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
     downsampled_val /= np.max(downsampled_val)
 
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf,vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
+     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
     net.save(model_dir+'I2INet.h5')
 
 if model_to_train == 'I2INetFC':
@@ -211,8 +211,8 @@ if model_to_train == 'I2INetFC':
     downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
     downsampled_val /= np.max(downsampled_val)
 
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf,vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
+     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
     net.save(model_dir+'I2INetFC.h5')
 
 if model_to_train == 'I2INetFCMask':
@@ -228,12 +228,29 @@ if model_to_train == 'I2INetFCMask':
     downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
     downsampled_val /= np.max(downsampled_val)
 
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf,vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
+     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
     net.save(model_dir+'I2INetFCMask.h5')
 
+if model_to_train == 'FCI2INet':
+
+    net = util_model.FCI2INet(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
+    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
+    #high learning rate
+    downsampled_train = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_train.segs_tf])
+    downsampled_train = downsampled_train.reshape((vasc_train.segs_tf.shape[0],Pw/2,Ph/2,1))
+    downsampled_train /= np.max(downsampled_train)
+
+    downsampled_val = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_val.segs_tf])
+    downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
+    downsampled_val /= np.max(downsampled_val)
+
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
+     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net.save(model_dir+'FCI2INet.h5')
+
 prediction = net.predict(vasc_test.images_norm)
-if model_to_train == 'HED' or model_to_train == 'I2INet' or model_to_train == 'ConvFC':
+if "I2I" in model_to_train or model_to_train == 'HED' or model_to_train == "HEDFC" or model_to_train == 'I2INet' or model_to_train == 'ConvFC':
     prediction = prediction[0]
 
 np.save(pred_dir+'{}'.format(model_to_train), prediction)
@@ -244,21 +261,21 @@ plt.plot(range(0,len(val_loss)),val_loss, color='green', label='validation loss'
 plt.xlabel('epoch')
 plt.legend(loc='upper right')
 plt.savefig(plot_dir+'{}_loss.png'.format(model_to_train))
-###############################
-# confusion matrix
-###############################
-X_test = vasc_val.images_norm
-Y_pred = net.predict(X_test)
-if 'I2INet' in model_to_train or model_to_train == 'HED' or model_to_train == 'I2INet' or model_to_train == 'ConvFC' or model_to_train == 'I2INetFC' or model_to_train == 'HEDFC':
-    Y_pred = Y_pred[0]
-if Y_pred.shape[3] == 1:
-    Y_test = vasc_val.segs_tf
-else:
-    Y_test = vasc_val.obg
-
-Y_pred_flat = np.ravel(Y_pred)
-Y_pred_flat = utility.threshold(Y_pred_flat,0.3)
-
-Y_true_flat = np.ravel(Y_test)
-Conf_mat = utility.confusionMatrix(Y_true_flat, Y_pred_flat)
-print "Confusion matrix:\n {}".format(Conf_mat)
+# ###############################
+# # confusion matrix
+# ###############################
+# X_test = vasc_val.images_norm
+# Y_pred = net.predict(X_test)
+# if 'I2INet' in model_to_train or "HED" in model_to_train or model_to_train == 'HED' or model_to_train == 'I2INet' or model_to_train == 'ConvFC' or model_to_train == 'I2INetFC' or model_to_train == 'HEDFC':
+#     Y_pred = Y_pred[0]
+# if Y_pred.shape[3] == 1:
+#     Y_test = vasc_val.segs_tf
+# else:
+#     Y_test = vasc_val.obg
+#
+# Y_pred_flat = np.ravel(Y_pred)
+# Y_pred_flat = utility.threshold(Y_pred_flat,0.3)
+#
+# Y_true_flat = np.ravel(Y_test)
+# Conf_mat = utility.confusionMatrix(Y_true_flat, Y_pred_flat.astype(int))
+# print "Confusion matrix:\n {}".format(Conf_mat)

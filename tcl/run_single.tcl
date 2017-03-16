@@ -10,7 +10,7 @@ set G [lindex $argv 3]
 set E [lindex $argv 4]
 
 global gOptions
-set gOptions(resliceDims) {64 64}
+set gOptions(resliceDims) {256 256}
 
 global pathInfoFile
 set pathInfoFile [open "[pwd]/../pathInfo.txt" a]

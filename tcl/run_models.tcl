@@ -8,7 +8,7 @@ set G [lindex $argv 1]
 
 
 global gOptions
-set gOptions(resliceDims) {64 64}
+set gOptions(resliceDims) {256 256}
 
 
 

@@ -9,7 +9,13 @@ python train.py FCN options${1}.cfg
 
 python train.py HED options${1}.cfg
 
+python train.py HEDFC options${1}.cfg
+
 python train.py I2INet options${1}.cfg
+
+python train.py FCI2INet options${1}.cfg
+
+python train.py I2INetFC options${1}.cfg
 
 #python train.py FC_branch options${1}.cfg
 
@@ -17,7 +23,7 @@ python train.py I2INet options${1}.cfg
 
 #python train.py FCN_multi options${1}.cfg
 
-python train.py ConvFC options${1}.cfg
+#python train.py ConvFC options${1}.cfg
 
 python evaluate.py options${1}.cfg
 
