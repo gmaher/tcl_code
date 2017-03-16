@@ -1280,15 +1280,30 @@ def jaccard3D_itk(img1,img2):
 
     return 1.0 - float(I)/(U+1e-6)
 
-def train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches, downsample=False, list=1):
+def train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches, downsample=False, lists=1,rotate=True,translate=20,crop=64):
 	"""Trains a model on 2d vascular data (optionally with boundary data)
 	"""
 	train_loss = []
 	val_loss = []
+    x_val, y_val = vasc_val.get_subset(nb_batches,rotate=rotate,translate=translate,crop=crop)
 	for lr in lrates:
 		opt = Adam(lr=lr)
         for j in range(nb_batches):
-            
+            x_train, y_train = vasc_train.get_subset(nb_batches,rotate=rotate,translate=translate,crop=crop)
+            if lists > 1:
+                y_train = [y_train]*lists
+                y_val = [y_val]*lists
+            if downsample:
+                downsampled_train = np.array([scipy.misc.imresize(y[:,:,0],(crop/2,crop/2),'nearest') for y in y_train])
+                downsampled_train = downsampled_train.reshape((vasc_train.segs_tf.shape[0],crop/2,crop/2,1))
+                downsampled_train /= np.max(downsampled_train)
+
+                downsampled_val = np.array([scipy.misc.imresize(y[:,:,0],(crop/2,crop/2),'nearest') for y in y_val])
+                downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],crop/2,crop/2,1))
+                downsampled_val /= np.max(downsampled_val)
+
+                y_train = [y_train,downsampled_train]
+                y_val = [y_val,downsampled_val]
     		if (type(y_train)==list) or (y_train.shape[3] == 1):
     			net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
     			history = net.fit(x_train, y_train,batch_size=batch_size, nb_epoch=nb_epoch,
