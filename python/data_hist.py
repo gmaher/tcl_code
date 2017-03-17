@@ -35,10 +35,10 @@ model_dir = config['learn_params']['model_dir']
 pred_dir = config['learn_params']['pred_dir']
 plot_dir = config['learn_params']['plot_dir']
 mask = config['learn_params']['mask']=='True'
-
+Pw = int(config['learn_params']['image_dims'])
 vascMR = util_data.VascData2D('./data/64final/mr/train/')
 vascCT = util_data.VascData2D('./data/64final/ct/train/')
-vascALL = util_data.VascData2D('./data/64final/jameson/train/')
+vascALL = util_data.VascData2D(dataDir)
 
 vascMR_glob = util_data.VascData2D('./data/64final/mr/train/', 'global_max')
 vascCT_glob = util_data.VascData2D('./data/64final/ct/train/', 'global_max')
@@ -47,36 +47,49 @@ vascALL_glob = util_data.VascData2D('./data/64final/jameson/train/', 'global_max
 
 plt.figure()
 plt.hist(np.ravel(vascALL.images), bins=50)
-plt.savefig('./plots/hist_all.png')
+plt.savefig('{}hist_all.png'.format(plot_dir))
 
 plt.figure()
 plt.hist(np.ravel(vascMR.images), bins=50)
-plt.savefig('./plots/hist_mr.png')
+plt.savefig('{}hist_mr.png'.format(plot_dir))
 
 plt.figure()
 plt.hist(np.ravel(vascCT.images), bins=50)
-plt.savefig('./plots/hist_ct.png')
+plt.savefig('{}hist_ct.png'.format(plot_dir))
 
-plt.figure()
-plt.hist(np.ravel(vascALL.images_norm), bins=50)
-plt.savefig('./plots/hist_all_norm.png')
+# plt.figure()
+# plt.hist(np.ravel(vascALL.images_norm), bins=50)
+# plt.savefig('./{}/hist_all_norm.png')
+#
+# plt.figure()
+# plt.hist(np.ravel(vascMR.images_norm), bins=50)
+# plt.savefig('./{}/hist_mr_norm.png')
+#
+# plt.figure()
+# plt.hist(np.ravel(vascCT.images_norm), bins=50)
+# plt.savefig('./{}/hist_ct_norm.png')
+#
+# plt.figure()
+# plt.hist(np.ravel(vascALL_glob.images_norm), bins=50)
+# plt.savefig('./{}/hist_all_glob.png')
+#
+# plt.figure()
+# plt.hist(np.ravel(vascMR_glob.images_norm), bins=50)
+# plt.savefig('./{}/hist_mr_glob.png')
+#
+# plt.figure()
+# plt.hist(np.ravel(vascCT_glob.images_norm), bins=50)
+# plt.savefig('./{}/hist_ct_glob.png')
+x = vascALL.get_subset(1000,rotate=True, translate=20, crop=Pw)
 
-plt.figure()
-plt.hist(np.ravel(vascMR.images_norm), bins=50)
-plt.savefig('./plots/hist_mr_norm.png')
+for i in range(50):
+    i = np.random.randint(4000)
+    plt.figure()
+    plt.imshow(x[0][i,:,:,0])
+    plt.colorbar()
+    plt.savefig('{}{}_image.png'.format(plot_dir,i))
 
-plt.figure()
-plt.hist(np.ravel(vascCT.images_norm), bins=50)
-plt.savefig('./plots/hist_ct_norm.png')
-
-plt.figure()
-plt.hist(np.ravel(vascALL_glob.images_norm), bins=50)
-plt.savefig('./plots/hist_all_glob.png')
-
-plt.figure()
-plt.hist(np.ravel(vascMR_glob.images_norm), bins=50)
-plt.savefig('./plots/hist_mr_glob.png')
-
-plt.figure()
-plt.hist(np.ravel(vascCT_glob.images_norm), bins=50)
-plt.savefig('./plots/hist_ct_glob.png')
+    plt.figure()
+    plt.imshow(x[1][i,:,:,0])
+    plt.colorbar()
+    plt.savefig('{}{}_segs.png'.format(plot_dir,i))

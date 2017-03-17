@@ -60,7 +60,7 @@ threshold = 0.3
 output_channels = 1
 dense_size = 200
 dense_layers = 1
-nb_epoch=6
+nb_epoch=1
 batch_size=64
 Pw=Ph=int(config['learn_params']['image_dims'])
 input_shape = (Pw,Ph,1)
@@ -69,10 +69,14 @@ lrates = [lr,lr/10,lr/100,lr/1000]
 #lrates=[lr/10]
 l2_reg=0.1
 r_finetune = 0.5
+N = 2500
+nb_batches = 10
+translate = 5
 #lrates = [lr]
 ###############################
 # Training
 ###############################
+#train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches, downsample=False, lists=1,rotate=True,translate=20,crop=64)
 if model_to_train == 'FCN':
     net, net_f = util_model.FCN(input_shape=input_shape,Nfilters=Nfilters,Wfilter=Wfilter,
     num_conv_1=num_conv,num_conv_2=num_conv,dense_layers=dense_layers,
@@ -80,8 +84,7 @@ if model_to_train == 'FCN':
     net.name ='FCN'
     net_f.name='FCN'
     net,train_loss,val_loss =\
-        utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
-         vasc_val.images_norm,vasc_val.segs_tf)
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches=nb_batches, N=N, crop=Pw, translate=translate)
     net.save(model_dir+'FCN.h5')
     net_f.save(model_dir+'FCN_f.h5')
 
@@ -91,8 +94,7 @@ if model_to_train == 'FCN_multi':
     l2_reg=l2_reg)
 
     net,train_loss,val_loss =\
-        utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, vasc_train.segs_tf,
-         vasc_val.images_norm,vasc_val.segs_tf)
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches=nb_batches, N=N, crop=Pw, translate=translate)
     net.save(model_dir+'FCN_multi.h5')
 
 if model_to_train == 'FCN_finetune':
@@ -168,8 +170,8 @@ if model_to_train == 'HED':
     net = util_model.hed_keras(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
     dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0)
     #high learning rate
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*4,
-     vasc_val.images_norm,[vasc_val.segs_tf]*4)
+    net,train_loss,val_loss =\
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches=nb_batches, N=N, crop=Pw, translate=translate, lists=4)
     net.save(model_dir+'HED.h5')
 
 if model_to_train == 'HEDFC':
@@ -177,8 +179,8 @@ if model_to_train == 'HEDFC':
     net = util_model.hed_dense(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
     dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0)
     #high learning rate
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf]*4,
-     vasc_val.images_norm,[vasc_val.segs_tf]*4)
+    net,train_loss,val_loss =\
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches=nb_batches, N=N, crop=Pw, translate=translate, lists=4)
     net.save(model_dir+'HEDFC.h5')
 
 if model_to_train == 'I2INet':
@@ -186,16 +188,10 @@ if model_to_train == 'I2INet':
     net = util_model.I2INet(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
     dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
     #high learning rate
-    downsampled_train = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_train.segs_tf])
-    downsampled_train = downsampled_train.reshape((vasc_train.segs_tf.shape[0],Pw/2,Ph/2,1))
-    downsampled_train /= np.max(downsampled_train)
 
-    downsampled_val = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_val.segs_tf])
-    downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
-    downsampled_val /= np.max(downsampled_val)
-
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss =\
+        utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val,
+            nb_batches=nb_batches, N=N, crop=Pw, translate=translate, downsample=True, lists=1)
     net.save(model_dir+'I2INet.h5')
 
 if model_to_train == 'I2INetFC':
@@ -203,16 +199,9 @@ if model_to_train == 'I2INetFC':
     net = util_model.I2INet_dense(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
     dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
     #high learning rate
-    downsampled_train = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_train.segs_tf])
-    downsampled_train = downsampled_train.reshape((vasc_train.segs_tf.shape[0],Pw/2,Ph/2,1))
-    downsampled_train /= np.max(downsampled_train)
 
-    downsampled_val = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_val.segs_tf])
-    downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
-    downsampled_val /= np.max(downsampled_val)
-
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val,
+        nb_batches=nb_batches, N=N, crop=Pw, translate=translate, downsample=True, lists=1)
     net.save(model_dir+'I2INetFC.h5')
 
 if model_to_train == 'I2INetFCMask':
@@ -220,16 +209,9 @@ if model_to_train == 'I2INetFCMask':
     net = util_model.I2INet_dense_mask(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
     dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
     #high learning rate
-    downsampled_train = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_train.segs_tf])
-    downsampled_train = downsampled_train.reshape((vasc_train.segs_tf.shape[0],Pw/2,Ph/2,1))
-    downsampled_train /= np.max(downsampled_train)
 
-    downsampled_val = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_val.segs_tf])
-    downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
-    downsampled_val /= np.max(downsampled_val)
-
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val,
+        nb_batches=nb_batches, N=N, crop=Pw, translate=translate, downsample=True, lists=1)
     net.save(model_dir+'I2INetFCMask.h5')
 
 if model_to_train == 'FCI2INet':
@@ -237,19 +219,13 @@ if model_to_train == 'FCI2INet':
     net = util_model.FCI2INet(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
     dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
     #high learning rate
-    downsampled_train = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_train.segs_tf])
-    downsampled_train = downsampled_train.reshape((vasc_train.segs_tf.shape[0],Pw/2,Ph/2,1))
-    downsampled_train /= np.max(downsampled_train)
 
-    downsampled_val = np.array([scipy.misc.imresize(y[:,:,0],(Pw/2,Ph/2),'nearest') for y in vasc_val.segs_tf])
-    downsampled_val = downsampled_val.reshape((vasc_val.segs_tf.shape[0],Pw/2,Ph/2,1))
-    downsampled_val /= np.max(downsampled_val)
-
-    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train.images_norm, [vasc_train.segs_tf,downsampled_train],
-     vasc_val.images_norm,[vasc_val.segs_tf, downsampled_val])
+    net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val,
+        nb_batches=nb_batches, N=N, crop=Pw, translate=translate, downsample=True, lists=1)
     net.save(model_dir+'FCI2INet.h5')
 
-prediction = net.predict(vasc_test.images_norm)
+images_norm = vasc_test.get_all(crop=Pw)[0]
+prediction = net.predict(images_norm)
 if "I2I" in model_to_train or model_to_train == 'HED' or model_to_train == "HEDFC" or model_to_train == 'I2INet' or model_to_train == 'ConvFC':
     prediction = prediction[0]
 

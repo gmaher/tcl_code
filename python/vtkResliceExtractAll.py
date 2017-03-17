@@ -112,11 +112,11 @@ for i in tqdm(range(len(mhas))):
 
 f.close()
 
-segs = [segs[i] for i in range(0,len(segs),3)]
-images = [images[i] for i in range(0,len(images),3)]
-minmaxes = [minmaxes[i] for i in range(0,len(minmaxes),3)]
-meta_data = [[meta_data[0][i], meta_data[1][i], meta_data[2][i]] for i in range(0,len(meta_data[0]),3)]
-names = [names[i] for i in range(0,len(names),3)]
+segs = [segs[i] for i in range(0,len(segs),6)]
+images = [images[i] for i in range(0,len(images),6)]
+minmaxes = [minmaxes[i] for i in range(0,len(minmaxes),6)]
+meta_data = [[meta_data[0][i], meta_data[1][i], meta_data[2][i]] for i in range(0,len(meta_data[0]),6)]
+names = [names[i] for i in range(0,len(names),6)]
 meta_data = np.array(meta_data)
 minmaxes=np.array(minmaxes)
 segs = np.array(segs)

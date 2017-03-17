@@ -203,9 +203,9 @@ def contour_plot(X_test, Clist, extent, labels, colors, start_index, Nplots, fil
             ax_contour[i,j].imshow(x_test[:,:,0], extent=extent[start_index+i],cmap='gray')
             if contour == []:
                 print "failed contour"
-                h, = ax_contour[i,j].plot([0],[0], color=color,label=label,linewidth=6)
+                h, = ax_contour[i,j].plot([0],[0], color=color,label=label,linewidth=4)
             else:
-                h, = ax_contour[i,j].plot(contour[:,0],-contour[:,1], color=color,label=label,linewidth=6)
+                h, = ax_contour[i,j].plot(contour[:,0],-contour[:,1], color=color,label=label,linewidth=4)
             handles.append(h)
 
             [a.set_axis_off() for a in ax_contour[i, :]]
@@ -241,8 +241,10 @@ def image_grid_plot(imlist, labels, Nplots, fn, size=(20,20)):
 # Load data and preprocess
 ###########################
 vasc2d = util_data.VascData2D(dataDir, rotate_data=False)
+X_test = vasc2d.get_all()[0]
+Y_test = vasc2d.get_all()[1]
 
-N, Pw, Ph, C = vasc2d.images_tf.shape
+N, Pw, Ph, C = X_test.shape
 
 print "Images stats\n N={}, Width={}, Height={}".format(
     N,Pw,Ph)
@@ -255,18 +257,29 @@ if path_types != ['all']:
 else:
     inds = range(0,N)
 
-X_test = vasc2d.images_norm[inds]
-Y_test = vasc2d.segs_tf[inds]
+X_test = vasc2d.get_all()[0][inds]
+Y_test = vasc2d.get_all()[1][inds]
 
-vasc2d.images_norm = vasc2d.images_norm[inds]
-vasc2d.segs_tf = vasc2d.segs_tf[inds]
-vasc2d.segs = vasc2d.segs[inds]
-#vasc2d.mag_seg = vasc2d.mag_seg[inds]
+# vasc2d.images_norm = vasc2d.images_norm[inds]
+# vasc2d.segs_tf = vasc2d.segs_tf[inds]
+# vasc2d.segs = vasc2d.segs[inds]
+meta_test = vasc2d.meta[:,inds]
+extents_test = utility.get_extents(meta_test)
+
+if vasc2d.mag_seg != None:
+    vasc2d.mag_seg = vasc2d.mag_seg[inds]
+else:
+    vasc2d.mag_seg = Y_test
+
+if vasc2d.contours == None:
+    vasc2d.contours = utility.listSegToContours(vasc2d.segs, meta_test[1,:],
+        meta_test[0,:], ISOVALUE)
+
+    vasc2d.contours_ls = vasc2d.contours
 
 Ntest = X_test.shape[0]
 
-meta_test = vasc2d.meta[:,inds]
-extents_test = utility.get_extents(meta_test)
+
 contours_test = [vasc2d.contours[i] for i in inds]
 
 PREDS = {}

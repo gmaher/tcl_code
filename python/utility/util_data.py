@@ -164,3 +164,17 @@ class VascData2D:
             y = y[:,s[1]/2-crop/2:s[1]/2+crop/2,s[1]/2-crop/2:s[1]/2+crop/2]
 
         return (x,y)
+
+    def get_all(self, crop=None):
+        x = self.images
+        x = (x-self.min)/(self.max-self.min)
+        s = x.shape
+        x = x.reshape((s[0],s[1],s[2],1))
+        y = self.segs
+        y = y.reshape((s[0],s[1],s[2],1))
+
+        if crop != None:
+            x = x[:,s[1]/2-crop/2:s[1]/2+crop/2,s[1]/2-crop/2:s[1]/2+crop/2]
+            y = y[:,s[1]/2-crop/2:s[1]/2+crop/2,s[1]/2-crop/2:s[1]/2+crop/2]
+
+        return (x,y)
