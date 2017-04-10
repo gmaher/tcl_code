@@ -91,6 +91,15 @@ class VascData2D:
         # self.images = None
         # self.segs = None
 
+        if normalize == 'global_max':
+            self.images = (self.images-self.min)/(self.max-self.min)
+        if normalize == 'minmax':
+            if os.path.isfile(dataDir+'minmaxes.npy'):
+                minmaxes = np.load(dataDir+'minmaxes.npy')
+                self.images = (self.images-minmaxes[:,0].reshape((data_dims[0],1,1)))/((minmaxes[:,1]-minmaxes[:,0]).reshape((data_dims[0],1,1)))
+            else:
+                self.images = (self.images-self.min)/(self.max-self.min)
+
     def createOBG(self,border_width=1):
         '''
         converts segmentations to background/object/boundary labels
@@ -126,9 +135,9 @@ class VascData2D:
         for i in range(len(self.angles)):
             xrot[i] = rotate(x[i],self.angles[i], axes=(1,0), reshape=False)
 
-        x = np.vstack((x,xrot))
+        #x = np.vstack((x,xrot))
 
-        return x
+        return xrot
 
     def translate_images(self,x,translate, gen_moves=True):
         N = x.shape[0]
@@ -139,13 +148,14 @@ class VascData2D:
         for i in range(N):
             xret[i] = np.roll(x[i],(self.moves[i][0],self.moves[i][1]), axis=(1,2))
 
-        return np.vstack((x,xret))
-
+        #return np.vstack((x,xret))
+        return xret
+        
     def get_subset(self, N, rotate=False, translate=None, crop=None):
 
         inds = np.random.choice(self.data_dims[0], size=N, replace=False)
         x = self.images[inds]
-        x = (x-self.min)/(self.max-self.min)
+        #x = (x-self.min)/(self.max-self.min)
         s = x.shape
         x = x.reshape((s[0],s[1],s[2],1))
         y = self.segs[inds]
@@ -163,11 +173,12 @@ class VascData2D:
             x = x[:,s[1]/2-crop/2:s[1]/2+crop/2,s[1]/2-crop/2:s[1]/2+crop/2]
             y = y[:,s[1]/2-crop/2:s[1]/2+crop/2,s[1]/2-crop/2:s[1]/2+crop/2]
 
+        y = utility.threshold(y,0.5)
         return (x,y)
 
     def get_all(self, crop=None):
         x = self.images
-        x = (x-self.min)/(self.max-self.min)
+        #x = (x-self.min)/(self.max-self.min)
         s = x.shape
         x = x.reshape((s[0],s[1],s[2],1))
         y = self.segs
@@ -177,4 +188,5 @@ class VascData2D:
             x = x[:,s[1]/2-crop/2:s[1]/2+crop/2,s[1]/2-crop/2:s[1]/2+crop/2]
             y = y[:,s[1]/2-crop/2:s[1]/2+crop/2,s[1]/2-crop/2:s[1]/2+crop/2]
 
+        y = utility.threshold(y,0.5)
         return (x,y)

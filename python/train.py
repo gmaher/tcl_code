@@ -42,11 +42,11 @@ utility.mkdir(model_dir)
 utility.mkdir(pred_dir)
 utility.mkdir(plot_dir)
 
-vasc_train = util_data.VascData2D(dataDir)
+vasc_train = util_data.VascData2D(dataDir, 'minmax')
 #vasc_train.createOBG(border_width=1)
-vasc_val = util_data.VascData2D(valDir)
+vasc_val = util_data.VascData2D(valDir, 'minmax')
 #vasc_val.createOBG(border_width=1)
-vasc_test = util_data.VascData2D(testDir, rotate_data=False)
+vasc_test = util_data.VascData2D(testDir, 'minmax', rotate_data=False)
 #vasc_test.createOBG(border_width=1)
 
 ##############################
@@ -58,21 +58,35 @@ num_conv=6
 lr = 1e-3
 threshold = 0.3
 output_channels = 1
-dense_size = 200
+dense_size = 100
 dense_layers = 1
 nb_epoch=1
 batch_size=64
 Pw=Ph=int(config['learn_params']['image_dims'])
 input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)
-lrates = [lr,lr/10,lr/100,lr/1000]
+lrates = [lr,lr/10,lr/100]
 #lrates=[lr/10]
-l2_reg=0.1
+l2_reg=0.0
 r_finetune = 0.5
-N = 2500
+N = 5000
 nb_batches = 10
-translate = 5
-#lrates = [lr]
+translate = None
+if config['learn_params'].get('translate') == None:
+    translate = int(config['learn_params']['translate'])
+
+
+if config['learn_params'].get('loss_type') == None:
+    utility.LOSS_TYPE = 'binary'
+else:
+    utility.LOSS_TYPE = config['learn_params'].get('loss_type')
+
+if config['learn_params'].get('rotate') == None:
+    utility.ROTATE = None
+else:
+    utility.ROTATE = True
+
+#lrates = [lr, lr/10]
 ###############################
 # Training
 ###############################
@@ -185,8 +199,8 @@ if model_to_train == 'HEDFC':
 
 if model_to_train == 'I2INet':
 
-    net = util_model.I2INet(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
-    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
+    net = util_model.I2INet(input_shape=input_shape, Wfilter=Wfilter, mask=False, Nfilters=Nfilters,
+    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=False)
     #high learning rate
 
     net,train_loss,val_loss =\
@@ -197,7 +211,7 @@ if model_to_train == 'I2INet':
 if model_to_train == 'I2INetFC':
 
     net = util_model.I2INet_dense(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
-    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
+    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=False)
     #high learning rate
 
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val,
@@ -207,7 +221,7 @@ if model_to_train == 'I2INetFC':
 if model_to_train == 'I2INetFCMask':
 
     net = util_model.I2INet_dense_mask(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
-    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
+    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=False)
     #high learning rate
 
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val,
@@ -217,7 +231,7 @@ if model_to_train == 'I2INetFCMask':
 if model_to_train == 'FCI2INet':
 
     net = util_model.FCI2INet(input_shape=input_shape, Wfilter=Wfilter, mask=mask, Nfilters=Nfilters,
-    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=True)
+    dense_layers=dense_layers, dense_size=dense_size, num_conv=num_conv, l2_reg=0.0, batchnorm=False)
     #high learning rate
 
     net,train_loss,val_loss = utility.train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val,

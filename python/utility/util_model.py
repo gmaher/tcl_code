@@ -2,9 +2,13 @@ from keras.models import Model
 from keras.layers import Input, Convolution2D, BatchNormalization, Dense, merge
 from keras.layers import Reshape, Flatten, UpSampling2D
 from keras.layers import MaxPooling2D, Activation
+from keras.layers import Conv3D, AveragePooling3D, UpSampling3D
 from keras.optimizers import Adam
 from keras.regularizers import l2
 import numpy as np
+import tensorflow as tf
+
+
 def FCN(input_shape=(64,64,1), Nfilters=32, Wfilter=3,num_conv_1=3, num_conv_2=3,
 output_channels=1, mask=True, dense_layers=1,dense_size=64, obg=False, l2_reg=0.0):
     '''
@@ -722,3 +726,64 @@ output_channels=1, dense_layers=1,dense_size=64, l2_reg=0.0):
 
     FCN = Model(x,[m,dout])
     return FCN
+
+def I2INet3D(input_shape=(64,64,64,1), Nfilters=32, l2_reg=0.0):
+
+    inp = Input(shape=input_shape)
+
+    #First convolution layer
+    x = Conv3D(Nfilters,size=(3,3,3), activation='relu')(inp)
+    x = Conv3D(Nfilters,size=(3,3,3), activation='relu')(x)
+    out_1 = x
+    x = AveragePooling3D()(x)
+
+    #second convolution layer
+    Nfilter2 = 4*Nfilters
+    x = Conv3D(Nfilter2,size=(3,3,3), activation='relu')(x)
+    x = Conv3D(Nfilter2,size=(3,3,3), activation='relu')(x)
+    out_2 = x
+    x = AveragePooling3D()(x)
+
+    #third convolution layer
+    Nfilter3 = 8*Nfilters
+    x = Conv3D(Nfilter3,size=(3,3,3), activation='relu')(x)
+    x = Conv3D(Nfilter3,size=(3,3,3), activation='relu')(x)
+    x = Conv3D(Nfilter3,size=(3,3,3), activation='relu')(x)
+    out_3 = x
+    x = AveragePooling3D()(x)
+
+    #fourth convolution layer
+    Nfilter4 = 16*Nfilters
+    x = Conv3D(Nfilter4,size=(3,3,3), activation='relu')(x)
+    x = Conv3D(Nfilter4,size=(3,3,3), activation='relu')(x)
+    x = Conv3D(Nfilter4,size=(3,3,3), activation='relu')(x)
+    out_4 = UpSampling3D()(x)
+
+    ####################
+    # Second branch
+    ####################
+    s = merge([out_3,out4], mode='concat', concat_axis=4)
+    x = Conv3D(Nfilter4, size=(1,1,1), activation='relu')(s)
+    x = Conv3D(Nfilter3, size=(3,3,3), activation='relu')(x)
+    x = Conv3D(Nfilter3, size=(3,3,3), activation='relu')(x)
+    s_out_1 = Conv3D(1, size=(1,1,1), activation='sigmoid')(x)
+
+    #second upsample
+    x = UpSampling3D()(x)
+    s = merge([out_2,x], mode='concat', concat_axis=4)
+    x = Conv3D(Nfilter3, size=(1,1,1), activation='relu')(s)
+    x = Conv3D(Nfilter2, size=(3,3,3), activation='relu')(x)
+    x = Conv3D(Nfilter2, size=(3,3,3), activation='relu')(x)
+    s_out_2 = Conv3D(1, size=(1,1,1), activation='sigmoid')(x)
+
+    #final upsample
+    x = UpSampling3D()(x)
+    s = merge([out_1,x], mode='concat', concat_axis=4)
+    x = Conv3D(Nfilter2, size=(1,1,1), activation='relu')(s)
+    x = Conv3D(Nfilters, size=(3,3,3), activation='relu')(x)
+    x = Conv3D(Nfilters, size=(3,3,3), activation='relu')(x)
+    s_out_3 = Conv3D(1, size=(1,1,1), activation='sigmoid')(x)
+
+    i2i = model(inp,[s_out_3,s_out_2,s_out_1])
+
+    return i2i

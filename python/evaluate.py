@@ -106,7 +106,9 @@ def get_outputs(seg, seg_truth):
 
 def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_truth):
     out = np.load(pred_string)
-    if len(out.shape) == 5 or len(out.shape) == 2:
+    if len(out) < max(inds):
+        out = out.reshape(shape)
+    elif len(out.shape) == 5 or len(out.shape) == 2:
         out = out[0]
         out = out[inds].reshape(shape)
     elif len(out.shape) == 3:
@@ -133,7 +135,10 @@ def add_pred_to_dict(pred_dict,pred_string,pred_code,pred_color,inds,shape,seg_t
     pred_dict['precision'][pred_code] = prec
 
 def add_contour_to_dict(pred_dict,pred_code,pred_color,contours,contours_test,inds,DX):
-    ls_test = [contours[i] for i in inds]
+    if len(contours) >= max(inds):
+        ls_test = [contours[i] for i in inds]
+    else:
+        ls_test = contours
     errs = utility.listAreaOverlapError(ls_test, contours_test)
     thresh,ts = utility.cum_error_dist(errs,DX)
 
@@ -141,31 +146,31 @@ def add_contour_to_dict(pred_dict,pred_code,pred_color,contours,contours_test,in
     asdl = []
     dice = []
     prec = []
-    for i in tqdm(range(len(ls_test))):
-        dims = meta_test[2,i]
-        spacing = meta_test[0,i]
-        origin = meta_test[1,i]
-        if ls_test[i] != [] and len(ls_test[i]) > 2:
-            seg_truth = utility.contourToSeg(contours_test[i], origin, dims, spacing)
-            seg_thresh = utility.contourToSeg(ls_test[i], origin, dims, spacing)
-            if np.sum(seg_thresh) > 0.1 and np.sum(seg_truth) > 0.1:
-                e= hd(seg_thresh,seg_truth,meta_test[0,i][0])
-                dorf.append(e)
-
-                edc = dc(seg_thresh,seg_truth)
-                dice.append(edc)
-                prec.append(precision(seg_thresh,seg_truth))
-                #e_asd= assd(seg_thresh,seg_truth,meta_test[0,i][0])
-                #asdl.append(e_asd)
-        else:
-            e = np.sqrt(2)*32*meta_test[0,i][0]
-            dorf.append(e)
-
-            e_asd = np.sqrt(2)*32*meta_test[0,i][0]
-            asdl.append(e_asd)
-
-            dice.append(1.0)
-            prec.append(0.0)
+    # for i in tqdm(range(len(ls_test))):
+    #     dims = meta_test[2,i]
+    #     spacing = meta_test[0,i]
+    #     origin = meta_test[1,i]
+    #     if ls_test[i] != [] and len(ls_test[i]) > 2:
+    #         seg_truth = utility.contourToSeg(contours_test[i], origin, dims, spacing)
+    #         seg_thresh = utility.contourToSeg(ls_test[i], origin, dims, spacing)
+    #         if np.sum(seg_thresh) > 0.1 and np.sum(seg_truth) > 0.1:
+    #             e= hd(seg_thresh,seg_truth,meta_test[0,i][0])
+    #             dorf.append(e)
+    #
+    #             edc = dc(seg_thresh,seg_truth)
+    #             dice.append(edc)
+    #             prec.append(precision(seg_thresh,seg_truth))
+    #             #e_asd= assd(seg_thresh,seg_truth,meta_test[0,i][0])
+    #             #asdl.append(e_asd)
+    #     else:
+    #         e = np.sqrt(2)*32*meta_test[0,i][0]
+    #         dorf.append(e)
+    #
+    #         e_asd = np.sqrt(2)*32*meta_test[0,i][0]
+    #         asdl.append(e_asd)
+    #
+    #         dice.append(1.0)
+    #         prec.append(0.0)
 
 
 
@@ -241,8 +246,8 @@ def image_grid_plot(imlist, labels, Nplots, fn, size=(20,20)):
 # Load data and preprocess
 ###########################
 vasc2d = util_data.VascData2D(dataDir, rotate_data=False)
-X_test = vasc2d.get_all()[0]
-Y_test = vasc2d.get_all()[1]
+X_test = vasc2d.get_all(crop=image_dims)[0]
+Y_test = vasc2d.get_all(crop=image_dims)[1]
 
 N, Pw, Ph, C = X_test.shape
 
@@ -257,22 +262,25 @@ if path_types != ['all']:
 else:
     inds = range(0,N)
 
-X_test = vasc2d.get_all()[0][inds]
-Y_test = vasc2d.get_all()[1][inds]
+X_test = X_test[inds]
+Y_test = Y_test[inds]
 
 # vasc2d.images_norm = vasc2d.images_norm[inds]
 # vasc2d.segs_tf = vasc2d.segs_tf[inds]
 # vasc2d.segs = vasc2d.segs[inds]
-meta_test = vasc2d.meta[:,inds]
+if len(vasc2d.meta) == 3:
+    meta_test = vasc2d.meta[:,inds]
+else:
+    meta_test = vasc2d.meta[inds,:].T
 extents_test = utility.get_extents(meta_test)
 
-if vasc2d.mag_seg != None:
+if hasattr(vasc2d, 'mag_seg'):
     vasc2d.mag_seg = vasc2d.mag_seg[inds]
 else:
     vasc2d.mag_seg = Y_test
 
-if vasc2d.contours == None:
-    vasc2d.contours = utility.listSegToContours(vasc2d.segs, meta_test[1,:],
+if not hasattr(vasc2d, 'contours'):
+    vasc2d.contours = utility.listSegToContours(Y_test[:,:,:,0], meta_test[1,:],
         meta_test[0,:], ISOVALUE)
 
     vasc2d.contours_ls = vasc2d.contours
@@ -280,7 +288,7 @@ if vasc2d.contours == None:
 Ntest = X_test.shape[0]
 
 
-contours_test = [vasc2d.contours[i] for i in inds]
+contours_test = vasc2d.contours
 
 PREDS = {}
 PREDS['seg'] = {}
@@ -327,6 +335,31 @@ add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,in
 #############################
 # Visualize results
 #############################
+#plot all contour plots
+names = open(dataDir+'names.txt').readlines()
+names = [n.replace('\n','') for n in names]
+names = [n.replace('ls','') for n in names]
+utility.mkdir(plot_dir+'boundaries')
+for i in range(Ntest):
+    plt.figure()
+    plt.imshow(X_test[i,:,:,0],extent=extents_test[i], cmap='gray')
+    plt.plot(contours_test[i][:,0],-contours_test[i][:,1], color='red',linewidth=3)
+    plt.savefig(plot_dir+'boundaries/'+names[i]+'.png')
+    plt.close()
+
+    plt.figure()
+    plt.imshow(X_test[i,:,:,0],extent=extents_test[i], cmap='gray')
+    plt.plot(vasc2d.contours_ls[i][:,0],-vasc2d.contours_ls[i][:,1], color='b',linewidth=3)
+    plt.savefig(plot_dir+'boundaries/'+names[i].replace('truth','ls')+'.png')
+    plt.close()
+
+    if len(PREDS['contour']['I2I-2DFC'][i]) > 2:
+        plt.figure()
+        plt.imshow(X_test[i,:,:,0],extent=extents_test[i], cmap='gray')
+        plt.plot(PREDS['contour']['I2I-2DFC'][i][:,0],-PREDS['contour']['I2I-2DFC'][i][:,1], color='g',linewidth=3)
+        plt.savefig(plot_dir+'boundaries/'+names[i].replace('truth','I2INetFC')+'.png')
+    plt.close('all')
+
 #Plot lots of images
 plot_inds = np.random.randint(Ntest,size=(5,5))
 #plot_inds[4,4] = 1380
@@ -380,14 +413,18 @@ labels = ['image', 'user segmentation']+keys_seg
 l = 10
 if len(inds_high) < l:
     l = len(inds_high)-1
-image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
+
+if l > 0:
+    image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
 segs = [X_test[inds_big_rad],Y_test[inds_big_rad]]+[PREDS['seg'][k][inds_big_rad] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 l = 10
 if len(inds_big_rad) < l:
     l = len(inds_big_rad)-1
-image_grid_plot(segs,labels,l,plot_dir+'/segs_highrad.png',(40,40))
+
+if l > 0:
+    image_grid_plot(segs,labels,l,plot_dir+'/segs_highrad.png',(40,40))
 
 #Figure 2 contours
 keys = ['level set', 'RSN', 'HED','I2I-2D','HEDFC', 'I2I-2DFC', 'FCI2I']
@@ -457,21 +494,21 @@ f.write('\n')
 f.write('mean accuracy,'+','.join([str(PREDS['mean_acc'][k]) for k in PREDS['mean_acc']]))
 f.close()
 
-f = open(plot_dir+'contour_acc.csv','w')
-f.write(','+','.join(keys))
-f.write('\n')
-f.write('jaccard distance,'+','.join([str(np.mean(PREDS['error'][k])) for k in keys]))
-f.write('\n')
-f.write('IOU,'+','.join([str(1-np.mean(PREDS['error'][k])) for k in keys]))
-f.write('\n')
-f.write('Hausdorf,'+','.join([str(np.mean(PREDS['dorf'][k])) for k in keys]))
-f.write('\n')
-f.write('DICE,'+','.join([str(np.mean(PREDS['dc'][k])) for k in keys]))
-f.write('\n')
-f.write('PREC,'+','.join([str(np.mean(PREDS['precision'][k])) for k in keys]))
-f.write('\n')
-f.write('ASSD,'+','.join([str(np.mean(PREDS['asd'][k])) for k in keys]))
-f.close()
+# f = open(plot_dir+'contour_acc.csv','w')
+# f.write(','+','.join(keys))
+# f.write('\n')
+# f.write('jaccard distance,'+','.join([str(np.mean(PREDS['error'][k])) for k in keys]))
+# f.write('\n')
+# f.write('IOU,'+','.join([str(1-np.mean(PREDS['error'][k])) for k in keys]))
+# f.write('\n')
+# f.write('Hausdorf,'+','.join([str(np.mean(PREDS['dorf'][k])) for k in keys]))
+# f.write('\n')
+# f.write('DICE,'+','.join([str(np.mean(PREDS['dc'][k])) for k in keys]))
+# f.write('\n')
+# f.write('PREC,'+','.join([str(np.mean(PREDS['precision'][k])) for k in keys]))
+# f.write('\n')
+# f.write('ASSD,'+','.join([str(np.mean(PREDS['asd'][k])) for k in keys]))
+# f.close()
 
 #HED Plot
 from keras import backend as K

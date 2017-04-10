@@ -38,7 +38,7 @@ mask = config['learn_params']['mask']=='True'
 Pw = int(config['learn_params']['image_dims'])
 vascMR = util_data.VascData2D('./data/64final/mr/train/')
 vascCT = util_data.VascData2D('./data/64final/ct/train/')
-vascALL = util_data.VascData2D(dataDir)
+vascALL = util_data.VascData2D(dataDir, 'minmax')
 
 vascMR_glob = util_data.VascData2D('./data/64final/mr/train/', 'global_max')
 vascCT_glob = util_data.VascData2D('./data/64final/ct/train/', 'global_max')
@@ -83,7 +83,7 @@ plt.savefig('{}hist_ct.png'.format(plot_dir))
 x = vascALL.get_subset(1000,rotate=True, translate=20, crop=Pw)
 
 for i in range(50):
-    i = np.random.randint(4000)
+    i = np.random.randint(1000)
     plt.figure()
     plt.imshow(x[0][i,:,:,0])
     plt.colorbar()
@@ -93,3 +93,27 @@ for i in range(50):
     plt.imshow(x[1][i,:,:,0])
     plt.colorbar()
     plt.savefig('{}{}_segs.png'.format(plot_dir,i))
+
+# for i in range(4,4000,1000):
+#
+#     plt.figure()
+#     plt.imshow(x[0][i,:,:,0])
+#     plt.colorbar()
+#     plt.savefig('{}_series_{}_image.png'.format(plot_dir,i))
+#
+#     plt.figure()
+#     plt.imshow(x[1][i,:,:,0])
+#     plt.colorbar()
+#     plt.savefig('{}_series_{}_segs.png'.format(plot_dir,i))
+#
+# for i in range(20,4000,1000):
+#
+#     plt.figure()
+#     plt.imshow(x[0][i,:,:,0])
+#     plt.colorbar()
+#     plt.savefig('{}_series_{}_image.png'.format(plot_dir,i))
+#
+#     plt.figure()
+#     plt.imshow(x[1][i,:,:,0])
+#     plt.colorbar()
+#     plt.savefig('{}_series_{}_segs.png'.format(plot_dir,i))

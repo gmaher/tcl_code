@@ -21,5 +21,8 @@ paste images.txt paths.txt groups.txt edge.txt | while read I P G E; do
   sleep 200
 done
 
+for f in *-cm.mha.*; do mv "$f" "${f/-cm.mha./}"; done
+
+for f in *-image.mha*; do mv "$f" "${f/-image/}"; done
 #
 #$1 $2

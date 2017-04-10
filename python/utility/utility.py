@@ -25,6 +25,8 @@ from vtk.util import numpy_support
 import re
 from emd import emd
 import scipy
+import tensorflow as tf
+
 def mkdir(fn):
     if not os.path.exists(os.path.abspath(fn)):
         os.mkdir(os.path.abspath(fn))
@@ -902,47 +904,47 @@ def contourToSeg(contour, origin, dims, spacing):
 	return seg
 
 def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5):
-	'''
-	converts a segmentation in numpy format to a contour (ordered list of points)
+    '''
+    converts a segmentation in numpy format to a contour (ordered list of points)
 
-	args:
-		@a segmentation: numpy array, shape=(xdims,ydims), binary segmentation image
-		@a origin: origin of the image
-		@a spacing: physical size of each pixel
+    args:
+    	@a segmentation: numpy array, shape=(xdims,ydims), binary segmentation image
+    	@a origin: origin of the image
+    	@a spacing: physical size of each pixel
 
-	notes:
-		itk spacing is in terms of (x,y) and skimage contour gives points as
-		(rows,columns) so the first column returned by skimage must be converted
-		using the y spacing and the second column using the x spacing
-	'''
-	contours = measure.find_contours(segmentation, isovalue)
-	index = 0
-	if len(contours) > 1:
-		xdims,ydims = segmentation.shape
-		xcenter = xdims/2
-		ycenter = ydims/2
+    notes:
+    	itk spacing is in terms of (x,y) and skimage contour gives points as
+    	(rows,columns) so the first column returned by skimage must be converted
+    	using the y spacing and the second column using the x spacing
+    '''
+    contours = measure.find_contours(segmentation, isovalue)
+    index = 0
+    if len(contours) > 1:
+    	xdims,ydims = segmentation.shape
+    	xcenter = xdims/2
+    	ycenter = ydims/2
 
-		dist = 1000
-		for i in range(0,len(contours)):
-			center = np.mean(contours[i],axis=0)
-			new_dist = np.sqrt((xcenter-center[1])**2 + (ycenter-center[0])**2)
-			if new_dist < dist:
-				dist = new_dist
-				index = i
-	returned_contours = []
-	for c in contours:
-		points = c
-		contour = np.zeros((len(points),2))
+    	dist = 1000
+    	for i in range(0,len(contours)):
+    		center = np.mean(contours[i],axis=0)
+    		new_dist = np.sqrt((xcenter-center[1])**2 + (ycenter-center[0])**2)
+    		if new_dist < dist:
+    			dist = new_dist
+    			index = i
+    returned_contours = []
+    for c in contours:
+    	points = c
+    	contour = np.zeros((len(points),2))
 
-		for i in range(0,len(points)):
-			contour[i,1] = (points[i,0]+0.5)*spacing[1]+origin[1]
-			contour[i,0] = (points[i,1]+0.5)*spacing[0]+origin[0]
+    	for i in range(0,len(points)):
+    		contour[i,1] = (points[i,0]+0.5)*spacing[1]+origin[1]
+    		contour[i,0] = (points[i,1]+0.5)*spacing[0]+origin[0]
 
-		returned_contours.append(contour)
-	if len(returned_contours) > 0:
-		return returned_contours[index]
-	else:
-		return []
+    	returned_contours.append(contour)
+    if len(returned_contours) > 0:
+    	return returned_contours[index]
+    else:
+    	return []
 
 def smoothContour(c, num_modes=10):
     if len(c) < 3:
@@ -1059,7 +1061,7 @@ def threshold(x,value):
 
 def get_extents(meta):
 	extents = []
-	C,N,W = meta.shape
+	N = len(meta[0])
 	for i in range(0,N):
 		spacing = meta[0,i]
 		origin = meta[1,i]
@@ -1088,25 +1090,29 @@ def EMDSeg(truth, pred, dx=1.0):
     return emd(inds_truth,inds_pred)*dx
 
 def areaOverlapError(truth, edge):
-	'''
-	Function to calculate the area of overlap error between two contours
+    '''
+    Function to calculate the area of overlap error between two contours
 
-	args:
-		@a truth: numpy array, shape=(num points,2)
-		@a edge: same as truth
-	'''
-	truth_tups = zip(truth[:,0],truth[:,1])
-	edge_tups = zip(edge[:,0],edge[:,1])
+    args:
+    	@a truth: numpy array, shape=(num points,2)
+    	@a edge: same as truth
+    '''
+    if truth==[] or edge==[]:
+        return 1.0
+    if len(truth)<3 or len(edge)<3:
+        return 1.0
+    truth_tups = zip(truth[:,0],truth[:,1])
+    edge_tups = zip(edge[:,0],edge[:,1])
 
-	t = Polygon(truth_tups)
-	e = Polygon(edge_tups)
-	if not (e.is_valid and t.is_valid):
-		print "invalid geometry, error = 1.0"
-		return 1.0
-	Aunion = e.union(t).area
-	Aintersection = e.intersection(t).area
+    t = Polygon(truth_tups)
+    e = Polygon(edge_tups)
+    if not (e.is_valid and t.is_valid):
+    	print "invalid geometry, error = 1.0"
+    	return 1.0
+    Aunion = e.union(t).area
+    Aintersection = e.intersection(t).area
 
-	return 1.0-float(Aintersection)/Aunion
+    return 1.0-float(Aintersection)/Aunion
 
 def listAreaOverlapError(Y_pred,Y_truth):
 	'''
@@ -1281,14 +1287,48 @@ def jaccard3D_itk(img1,img2):
 
     return 1.0 - float(I)/(U+1e-6)
 
+EPS = 1e-5
+def balanced_cross_entropy(ytrue,ytarget):
+    n1 = tf.reduce_sum(ytrue)
+    n0 = tf.reduce_sum(1-ytrue)
+    beta0 = tf.to_float(n1)/(n1+n0)
+    beta1 = tf.to_float(n0)/(n1+n0)
+
+    loss_mat = beta0*(ytrue-1)*tf.log(1-ytarget+EPS) - beta1*ytrue*tf.log(ytarget+EPS)
+
+    return tf.reduce_mean(loss_mat)
+
+def scaled_cross_entropy(ytrue,ytarget):
+
+    beta0 = 1.0
+    beta1 = 10.0
+
+    loss_mat = beta0*(ytrue-1)*tf.log(1-ytarget+EPS) - beta1*ytrue*tf.log(ytarget+EPS)
+
+    return tf.reduce_mean(loss_mat)
+
 def train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches, N=1000, downsample=False, lists=1,rotate=True,translate=20,crop=64):
     """Trains a model on 2d vascular data (optionally with boundary data)
     """
     train_loss = []
     val_loss = []
+    x_train, y_train = vasc_train.get_subset(N,rotate=ROTATE,translate=translate,crop=crop)
 
     for lr in lrates:
     	opt = Adam(lr=lr)
+        if (type(y_train)==list) or (y_train.shape[3] == 1):
+            if LOSS_TYPE == 'binary':
+                net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+            elif LOSS_TYPE == 'balanced':
+                net.compile(optimizer=opt, loss=balanced_cross_entropy, metrics=['accuracy'])
+            elif LOSS_TYPE == 'scaled':
+                net.compile(optimizer=opt, loss=scaled_cross_entropy, metrics=['accuracy'])
+            else:
+                raise RuntimeError('LOSS_TYPE Wrongly defined in train()')
+        else:
+        	train = y_train.reshape((y_train.shape[0],-1,3))
+        	val = y_val.reshape((y_val.shape[0],-1,3))
+        	net.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
         for j in range(nb_batches):
             print "Batch {}, lr {}".format(j,lr)
             x_val, y_val = vasc_val.get_subset(vasc_val.images.shape[0],rotate=False,translate=None,crop=crop)
@@ -1308,13 +1348,13 @@ def train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches, N
                 y_train = [y_train,downsampled_train]
                 y_val = [y_val,downsampled_val]
             if (type(y_train)==list) or (y_train.shape[3] == 1):
-                net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+                #net.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
                 history = net.fit(x_train, y_train,batch_size=batch_size, nb_epoch=nb_epoch,
                 validation_data=(x_val,y_val))
             else:
             	train = y_train.reshape((y_train.shape[0],-1,3))
             	val = y_val.reshape((y_val.shape[0],-1,3))
-            	net.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+            	#net.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
             	history = net.fit(x_train, train,batch_size=batch_size, nb_epoch=nb_epoch,
             	validation_data=(x_val,val))
     		train_loss = train_loss + history.history['loss']
