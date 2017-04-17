@@ -79,8 +79,8 @@ def get_outputs(seg, seg_truth):
         meta_test[0,:], ISOVALUE)
     errs = utility.listAreaOverlapError(contour, contours_test)
     thresh,ts = utility.cum_error_dist(errs,DX)
-    roc = roc_curve(np.ravel(Y_test),np.ravel(seg), pos_label=1)
-    pr = precision_recall_curve(np.ravel(Y_test),np.ravel(seg), pos_label=1)
+    roc = roc_curve(np.ravel(seg_truth),np.ravel(seg), pos_label=1)
+    pr = precision_recall_curve(np.ravel(seg_truth),np.ravel(seg), pos_label=1)
     dorf = []
     emd = []
     asdl = []
@@ -245,7 +245,7 @@ def image_grid_plot(imlist, labels, Nplots, fn, size=(20,20)):
 ###########################
 # Load data and preprocess
 ###########################
-vasc2d = util_data.VascData2D(dataDir, rotate_data=False)
+vasc2d = util_data.VascData2D(dataDir, normalize='minmax',rotate_data=False)
 X_test = vasc2d.get_all(crop=image_dims)[0]
 Y_test = vasc2d.get_all(crop=image_dims)[1]
 
@@ -321,8 +321,8 @@ add_pred_to_dict(PREDS,pred_dir+'FCI2INet.npy','FCI2I','teal',inds,shape, Y_test
 #add_pred_to_dict(PREDS,pred_dir+'FCN_finetune.npy','RSN_finetune','m',inds,shape, Y_test)
 #add_pred_to_dict(PREDS,pred_dir+'FCN_multi.npy','RSN_multi','c',inds,shape, Y_test)
 
-np.save(pred_dir+'mag_seg',vasc2d.mag_seg/255)
-add_pred_to_dict(PREDS,pred_dir+'mag_seg.npy','3D segmentation','yellow',inds,shape, Y_test)
+# np.save(pred_dir+'mag_seg',vasc2d.mag_seg/255)
+# add_pred_to_dict(PREDS,pred_dir+'mag_seg.npy','3D segmentation','yellow',inds,shape, Y_test)
 
 #load contours
 add_contour_to_dict(PREDS,'level set','pink',vasc2d.contours_ls,contours_test,inds,DX)
@@ -341,6 +341,21 @@ names = [n.replace('\n','') for n in names]
 names = [n.replace('ls','') for n in names]
 utility.mkdir(plot_dir+'boundaries')
 for i in range(Ntest):
+    plt.figure()
+    plt.imshow(X_test[i,:,:,0],extent=extents_test[i], cmap='gray')
+    plt.savefig(plot_dir+'boundaries/'+names[i]+'_image.png')
+    plt.close()
+
+    plt.figure()
+    plt.imshow(Y_test[i,:,:,0],extent=extents_test[i], cmap='gray')
+    plt.savefig(plot_dir+'boundaries/'+names[i]+'_seg.png')
+    plt.close()
+
+    plt.figure()
+    plt.imshow(PREDS['seg']['I2I-2DFC'][i,:,:],extent=extents_test[i], cmap='gray')
+    plt.savefig(plot_dir+'boundaries/'+names[i]+'_segI2INetFC.png')
+    plt.close()
+
     plt.figure()
     plt.imshow(X_test[i,:,:,0],extent=extents_test[i], cmap='gray')
     plt.plot(contours_test[i][:,0],-contours_test[i][:,1], color='red',linewidth=3)
@@ -406,7 +421,7 @@ inds_high = [i for i in range(X_test.shape[0]) if PREDS['error']['I2I-2DFC'][i] 
 
 inds_big_rad = [i for i in range(X_test.shape[0]) if utility.contourRadius(PREDS['contour']['I2I-2DFC'][i]) > 0.5]
 #keys_seg = ['RSN','HED','I2I-2D','HEDFC', 'I2I-2DFC', 'FCI2I']
-keys = ['level set', 'RSN', 'HED','I2I-2D', '3D segmentation']
+keys = ['level set', 'RSN', 'HED','I2I-2D']
 
 segs = [X_test[inds_high],Y_test[inds_high]]+[PREDS['seg'][k][inds_high] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
@@ -739,32 +754,32 @@ plt.savefig(plot_dir+'prob_std.png')
 
 #Compute radius change statistics
 
-names = open(dataDir+'names.txt').readlines()
-names = [names[i] for i in inds]
-names = [n.split('.') for n in names]
-names = [names[i] for i in range(len(names)) if PREDS['contour']['RSN'][i] != []]
-radius_vector = [utility.contourRadius(x) for x in PREDS['contour']['RSN'] if x != []]
-radius_vector_true = [utility.contourRadius(contours_test[i]) for i in range(Ntest) if
- PREDS['contour']['RSN'][i] != []]
-vs = sorted(zip(radius_vector,names), key=lambda x:(x[1][0]+x[1][1],int(x[1][2])))
-radius = [vs[i][0] for i in range(len(vs))]
-paths = [vs[i][1][0]+vs[i][1][1] for i in range(len(vs))]
-vs = sorted(zip(radius_vector_true,names), key=lambda x:(x[1][0]+x[1][1],int(x[1][2])))
-radius_true = [vs[i][0] for i in range(len(vs))]
-
-ratios = []
-ratios_true = []
-for i in range(len(radius)-1):
-    if paths[i] == paths[i+1]:
-        ratios.append(float(radius[i])/radius[i+1])
-        ratios_true.append(float(radius_true[i])/radius_true[i+1])
-
-plt.figure()
-plt.hist(ratios, bins=40, alpha=0.5, label='RSN')
-plt.hist(ratios_true, bins=40, alpha=0.5, label='Ground truth')
-plt.xlabel('radius ratio')
-plt.legend()
-plt.savefig(plot_dir+'radiusratio.png')
+# names = open(dataDir+'names.txt').readlines()
+# names = [names[i] for i in inds]
+# names = [n.split('.') for n in names]
+# names = [names[i] for i in range(len(names)) if PREDS['contour']['RSN'][i] != []]
+# radius_vector = [utility.contourRadius(x) for x in PREDS['contour']['RSN'] if x != []]
+# radius_vector_true = [utility.contourRadius(contours_test[i]) for i in range(Ntest) if
+#  PREDS['contour']['RSN'][i] != []]
+# vs = sorted(zip(radius_vector,names), key=lambda x:(x[1][0]+x[1][1],int(x[1][2])))
+# radius = [vs[i][0] for i in range(len(vs))]
+# paths = [vs[i][1][0]+vs[i][1][1] for i in range(len(vs))]
+# vs = sorted(zip(radius_vector_true,names), key=lambda x:(x[1][0]+x[1][1],int(x[1][2])))
+# radius_true = [vs[i][0] for i in range(len(vs))]
+#
+# ratios = []
+# ratios_true = []
+# for i in range(len(radius)-1):
+#     if paths[i] == paths[i+1]:
+#         ratios.append(float(radius[i])/radius[i+1])
+#         ratios_true.append(float(radius_true[i])/radius_true[i+1])
+#
+# plt.figure()
+# plt.hist(ratios, bins=40, alpha=0.5, label='RSN')
+# plt.hist(ratios_true, bins=40, alpha=0.5, label='Ground truth')
+# plt.xlabel('radius ratio')
+# plt.legend()
+# plt.savefig(plot_dir+'radiusratio.png')
 
 ####################################
 # 3D errors
@@ -787,3 +802,31 @@ plt.savefig(plot_dir+'radiusratio.png')
 # #         errs.append(e)
 # #     g.write('{} : {}, {}\n'.format(c,np.mean(errs),np.std(errs)))
 # g.close()
+
+############################
+# Path perturbation analysis
+############################
+translations = [1,3,5,7,10]
+net = load_model(model_dir+'I2INetFC.h5')
+prs = []
+
+f = open(plot_dir+'translations.csv','w')
+f.write('translation, hausdorf, dice, assd, precision\n')
+for t in translations:
+    print t
+    X,Y = vasc2d.get_subset(N=Ntest,translate=t,crop=image_dims)
+    ypred = net.predict(X)[0]
+    contour,errs,thresh,roc,pr,acc,mean_acc,dorf,dice, prec,asdl = get_outputs(ypred[:,:,:,0], Y)
+    f.write('{}, {}, {}, {}, {}\n'.format(t,dorf,dice,asdl,prec))
+    prs.append(pr)
+
+f.close()
+
+colors = ['b','r','g','k','y']
+plt.figure()
+for i in range(len(translations)):
+    plt.plot(prs[i][1],prs[i][0], label=str(translations[i])+' pixels', linewidth=2, color=colors[i])
+plt.legend()
+plt.xlabel('recall')
+plt.ylabel('precision')
+plt.savefig(plot_dir+'pr_translations.png',dpi=500)

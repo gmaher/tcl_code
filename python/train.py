@@ -67,12 +67,12 @@ input_shape = (Pw,Ph,1)
 opt = Adam(lr=lr)
 lrates = [lr,lr/10,lr/100]
 #lrates=[lr/10]
-l2_reg=0.0
+l2_reg=0.1
 r_finetune = 0.5
-N = 5000
+N = 10000
 nb_batches = 10
 translate = None
-if config['learn_params'].get('translate') == None:
+if not (config['learn_params'].get('translate') == None):
     translate = int(config['learn_params']['translate'])
 
 

@@ -321,12 +321,12 @@ def normalize_images(images, normalize='max'):
     args:
     	@a images shape = (N,W,H,C) where C is number of channels
     '''
-    N, Pw, Ph, C = images.shape
-    images_norm = np.zeros((N,Pw,Ph,C))
+    N, Pw, Ph = images.shape
+    images_norm = np.zeros((N,Pw,Ph))
 
     if normalize=='max':
-        maxs = np.amax(images, axis=(1,2,3))
-        mins = np.amin(images,axis=(1,2,3))
+        maxs = np.amax(images, axis=(1,2))
+        mins = np.amin(images,axis=(1,2))
 
         for i in range(0,N):
             images_norm[i,:] = (images[i]-mins[i])/(maxs[i]-mins[i]+1e-6)
@@ -1307,6 +1307,22 @@ def scaled_cross_entropy(ytrue,ytarget):
 
     return tf.reduce_mean(loss_mat)
 
+def roi_cross_entropy(ytrue,ytarget):
+
+    beta0 = 1.0
+    beta1 = 1.0
+    roi = 50
+
+    shape = ytarget.get_shape()
+    midx = shape[1]/2
+    midy = shape[2]/2
+    mask = np.zeros(shape[1:])
+    mask[midx-roi/2:midx+roi:2,midy-roi/2:midy+roi/2,:] = 1.0
+
+    loss_mat = beta0*(ytrue-1)*tf.log(1-ytarget+EPS) - beta1*ytrue*tf.log(ytarget+EPS)
+    loss_mat = loss_mat*mask
+    return tf.reduce_mean(loss_mat)
+
 def train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches, N=1000, downsample=False, lists=1,rotate=True,translate=20,crop=64):
     """Trains a model on 2d vascular data (optionally with boundary data)
     """
@@ -1323,6 +1339,8 @@ def train(net, lrates, batch_size, nb_epoch, vasc_train, vasc_val, nb_batches, N
                 net.compile(optimizer=opt, loss=balanced_cross_entropy, metrics=['accuracy'])
             elif LOSS_TYPE == 'scaled':
                 net.compile(optimizer=opt, loss=scaled_cross_entropy, metrics=['accuracy'])
+            elif LOSS_TYPE == 'roi':
+                net.compile(optimizer=opt, loss=roi_cross_entropy, metrics=['accuracy'])
             else:
                 raise RuntimeError('LOSS_TYPE Wrongly defined in train()')
         else:

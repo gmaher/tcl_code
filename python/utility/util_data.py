@@ -98,7 +98,7 @@ class VascData2D:
                 minmaxes = np.load(dataDir+'minmaxes.npy')
                 self.images = (self.images-minmaxes[:,0].reshape((data_dims[0],1,1)))/((minmaxes[:,1]-minmaxes[:,0]).reshape((data_dims[0],1,1)))
             else:
-                self.images = (self.images-self.min)/(self.max-self.min)
+                self.images = utility.normalize_images(self.images)
 
     def createOBG(self,border_width=1):
         '''
@@ -150,7 +150,7 @@ class VascData2D:
 
         #return np.vstack((x,xret))
         return xret
-        
+
     def get_subset(self, N, rotate=False, translate=None, crop=None):
 
         inds = np.random.choice(self.data_dims[0], size=N, replace=False)
@@ -174,7 +174,8 @@ class VascData2D:
             y = y[:,s[1]/2-crop/2:s[1]/2+crop/2,s[1]/2-crop/2:s[1]/2+crop/2]
 
         y = utility.threshold(y,0.5)
-        return (x,y)
+        sums = np.sum(y,axis=(1,2,3))
+        return (x[sums>1],y[sums>1])
 
     def get_all(self, crop=None):
         x = self.images
