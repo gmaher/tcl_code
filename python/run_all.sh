@@ -25,7 +25,7 @@ python train.py I2INetFC options${1}.cfg
 
 #python train.py ConvFC options${1}.cfg
 
-python evaluate.py options${1}.cfg
+#python evaluate.py options${1}.cfg
 
 #python make_models.py options${1}.cfg
 

@@ -423,22 +423,22 @@ inds_big_rad = [i for i in range(X_test.shape[0]) if utility.contourRadius(PREDS
 #keys_seg = ['RSN','HED','I2I-2D','HEDFC', 'I2I-2DFC', 'FCI2I']
 keys = ['level set', 'RSN', 'HED','I2I-2D']
 
-segs = [X_test[inds_high],Y_test[inds_high]]+[PREDS['seg'][k][inds_high] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 l = 10
 if len(inds_high) < l:
     l = len(inds_high)-1
 
 if l > 0:
+    segs = [X_test[inds_high],Y_test[inds_high]]+[PREDS['seg'][k][inds_high] for k in keys_seg]
     image_grid_plot(segs,labels,l,plot_dir+'/segs_higherr.png',(40,40))
 
-segs = [X_test[inds_big_rad],Y_test[inds_big_rad]]+[PREDS['seg'][k][inds_big_rad] for k in keys_seg]
 labels = ['image', 'user segmentation']+keys_seg
 l = 10
 if len(inds_big_rad) < l:
     l = len(inds_big_rad)-1
 
 if l > 0:
+    segs = [X_test[inds_big_rad],Y_test[inds_big_rad]]+[PREDS['seg'][k][inds_big_rad] for k in keys_seg]
     image_grid_plot(segs,labels,l,plot_dir+'/segs_highrad.png',(40,40))
 
 #Figure 2 contours
@@ -817,7 +817,7 @@ for t in translations:
     X,Y = vasc2d.get_subset(N=Ntest,translate=t,crop=image_dims)
     ypred = net.predict(X)[0]
     contour,errs,thresh,roc,pr,acc,mean_acc,dorf,dice, prec,asdl = get_outputs(ypred[:,:,:,0], Y)
-    f.write('{}, {}, {}, {}, {}\n'.format(t,dorf,dice,asdl,prec))
+    f.write('{}, {}, {}, {}, {}\n'.format(t,np.mean(dorf),np.mean(dice),np.mean(asdl),np.mean(prec)))
     prs.append(pr)
 
 f.close()
