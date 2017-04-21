@@ -26,6 +26,8 @@ import re
 from emd import emd
 import scipy
 import tensorflow as tf
+from skimage.filters import gaussian
+from skimage.segmentation import active_contour
 
 def mkdir(fn):
     if not os.path.exists(os.path.abspath(fn)):
@@ -945,6 +947,18 @@ def segToContour(segmentation, origin=[0.0,0.0], spacing=[1.0,1.0], isovalue=0.5
     	return returned_contours[index]
     else:
     	return []
+
+def snake(img,origin=[0.0,0.0],r=0.3):
+    s = np.linspace(0, 2*np.pi, 50)
+    x = origin[0] + r*np.cos(s)
+    y = origin[1] + r*np.sin(s)
+    init = np.array([x, y]).T
+
+
+    snake = active_contour(gaussian(img, 3),
+                           init, alpha=0.015, beta=10, gamma=0.001)
+
+    return snake
 
 def smoothContour(c, num_modes=10):
     if len(c) < 3:

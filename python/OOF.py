@@ -57,6 +57,7 @@ for i in tqdm(range(len(mhas))):
         n = tup[1]
         x = tup[2]
         im = utility.getImageReslice(the_image, ext, p, n, x, asnumpy=True)[0]
+        im = im[range(ext[0],-1,0-1),:]
         im_dict[l] = im
 
 
