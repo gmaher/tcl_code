@@ -806,6 +806,44 @@ plt.savefig(plot_dir+'prob_std.png')
 ############################
 # Path perturbation analysis
 ############################
+def get_contour_out(contours,contours_test):
+
+    errs = utility.listAreaOverlapError(ls_test, contours_test)
+    thresh,ts = utility.cum_error_dist(errs,0.05)
+
+    dorf = []
+    asdl = []
+    dice = []
+    prec = []
+    origin = [Pw/2,Pw/2]
+    spacing = [1.0,1.0]
+    dims = [Pw,Pw]
+    for i in tqdm(range(len(contours))):
+
+        if contours[i] != [] and len(contours[i]) > 2:
+            seg_truth = utility.contourToSeg(contours_test[i], origin, dims, spacing)
+            seg_thresh = utility.contourToSeg(contours[i], origin, dims, spacing)
+            if np.sum(seg_thresh) > 0.1 and np.sum(seg_truth) > 0.1:
+                e= hd(seg_thresh,seg_truth,1.0)
+                dorf.append(e)
+
+                edc = dc(seg_thresh,seg_truth)
+                dice.append(edc)
+                prec.append(precision(seg_thresh,seg_truth))
+                e_asd= assd(seg_thresh,seg_truth,1.0)
+                asdl.append(e_asd)
+        else:
+            e = 1.0
+            dorf.append(e)
+
+            e_asd = 1.0
+            asdl.append(e_asd)
+
+            dice.append(1.0)
+            prec.append(0.0)
+
+    return thresh,errs,ls_test,pred_color,dorf,asdl,dice,prec
+
 translations = [1,3,5,7,10]
 net = load_model(model_dir+'I2INetFC.h5')
 prs = []

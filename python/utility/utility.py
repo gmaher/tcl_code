@@ -23,7 +23,7 @@ from scipy.interpolate import UnivariateSpline
 import SimpleITK as sitk
 from vtk.util import numpy_support
 import re
-from emd import emd
+#from emd import emd
 import scipy
 import tensorflow as tf
 from skimage.filters import gaussian

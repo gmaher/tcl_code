@@ -5,11 +5,11 @@ import matplotlib.animation as animation
 L = 1.0
 T = 50.0
 dx = 1.0/50
-dt = 1.0/1000
+dt = 1.0/5000
 c = 1.5
 x = np.arange(-L,L+dx,dx)
 u = 2*x**2-c
-diff = 0.002
+diff = 0.007
 I = np.zeros_like(x)
 I[int(0.5/dx)] = 1.0
 I[int(1.5/dx)] = 1.0
@@ -22,9 +22,8 @@ line2, = ax.plot(x,I)
 sols=[]
 
 def speed(I, dx):
-    didx = dudx(I,dx)
 
-    return 1.0/(1+1000*np.abs(didx))
+    return 1.0/(1+1000*np.abs(I))
 
 def dudx(u,dx):
     v = u.copy()
