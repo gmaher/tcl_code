@@ -20,7 +20,7 @@ ext = [63, 63]
 # Get model names
 #############################
 output_dir = '/home/marsdenlab/projects/tcl_code/python/output/9/'
-data_dir = '/home/marsdenlab/projects/tcl_code/python/data/OOF/'
+data_dir = '/home/marsdenlab/projects/tcl_code/python/data/OOF_2/'
 #############################
 # Start processing data
 #############################
@@ -72,10 +72,10 @@ for n in names:
 images = np.array(images)
 # images = images.reshape((images.shape[0],images.shape[1],images.shape[2]))
 images = utility.normalize_images(images)
-np.save(output_dir+'predictions/OOF.npy',images)
+np.save(output_dir+'predictions/OOF_2.npy',images)
 for i in range(0,50):
     k = np.random.randint(0,len(images))
     plt.figure()
     plt.imshow(images[k,:,:],cmap='gray')
     plt.colorbar()
-    plt.savefig(output_dir+'OOF{}.png'.format(k))
+    plt.savefig(output_dir+'OOF{}_2.png'.format(k))
