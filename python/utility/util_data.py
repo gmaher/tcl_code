@@ -151,9 +151,11 @@ class VascData2D:
         #return np.vstack((x,xret))
         return xret
 
-    def get_subset(self, N, rotate=False, translate=None, crop=None):
-
-        inds = np.random.choice(self.data_dims[0], size=N, replace=False)
+    def get_subset(self, N, rotate=False, translate=None, crop=None, random=True):
+        if random:
+            inds = np.random.choice(self.data_dims[0], size=N, replace=False)
+        else:
+            inds = np.arange(0,N,1)
         x = self.images[inds]
         #x = (x-self.min)/(self.max-self.min)
         s = x.shape

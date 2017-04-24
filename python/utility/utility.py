@@ -955,8 +955,10 @@ def snake(img,origin=[0.0,0.0],r=0.3):
     init = np.array([x, y]).T
 
 
-    snake = active_contour(gaussian(img, 3),
-                           init, alpha=0.015, beta=10, gamma=0.001)
+    # snake = active_contour(gaussian(img, 1),
+    #                        init, alpha=10.0, beta=100.0, gamma=0.01)
+
+    snake = active_contour(gaussian(img, 1),init)
 
     return snake
 
