@@ -808,7 +808,8 @@ shape = (Ntest,Pw,Ph)
 ############################
 
 translations = [1,3,5,7,10]
-net = load_model(model_dir+'I2INetFC.h5')
+net = load_model(model_dir+'I2INetFC.h5',
+    custom_objects={'scaled_cross_entropy':utility.scaled_cross_entropy, 'balanced_cross_entropy':utility.balanced_cross_entropy})
 prs = []
 pr_snakes = []
 f = open(plot_dir+'translations.csv','w')
@@ -832,9 +833,10 @@ for t in translations:
 f.close()
 
 colors = ['b','r','g','k','y']
+labels = ['2%','7%','10%','15%','22%']
 plt.figure()
 for i in range(len(translations)):
-    plt.plot(prs[i][1],prs[i][0], label=str(translations[i])+' pixels', linewidth=2, color=colors[i])
+    plt.plot(prs[i][1],prs[i][0], label=labels[i],linewidth=2, color=colors[i])
 plt.legend()
 plt.xlabel('recall')
 plt.ylabel('precision')
@@ -842,7 +844,7 @@ plt.savefig(plot_dir+'pr_translations.png',dpi=500)
 
 plt.figure()
 for i in range(len(translations)):
-    plt.plot(pr_snakes[i][1],pr_snakes[i][0], label=str(translations[i])+' pixels', linewidth=2, color=colors[i])
+    plt.plot(pr_snakes[i][1],pr_snakes[i][0], label=labels[i], linewidth=2, color=colors[i])
 plt.legend()
 plt.xlabel('recall')
 plt.ylabel('precision')

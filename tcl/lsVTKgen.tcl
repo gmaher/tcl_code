@@ -134,7 +134,7 @@ proc generate_truth_groups {img path grp} {
 		#}
 		if {[group_exists $grp]} {
 			set pathid $pathmap($grp)
-	    group_restorePreopSegs $grp
+	    #group_restorePreopSegs $grp
 
 	    global grpPoints
 	    get_group_points $grp
@@ -147,7 +147,16 @@ proc generate_truth_groups {img path grp} {
 	      set mag_fn ${imgname}.${grp}.${point}.truth.mag.vts
 	      set pot_fn ${imgname}.${grp}.${point}.truth.pot.vts
 
-				puts $pathInfoFile "${imgname} ${grp} ${point} [lindex $gPathPoints($pathid,splinePts) $point]"
+				#puts $pathInfoFile "${imgname} ${grp} ${point} [lindex $gPathPoints($pathid,splinePts) $point]"
+
+				array set items [lindex $gPathPoints($pathid,splinePts) $point]
+		    set pos [TupleToList $items(p)]
+		    set nrm [TupleToList $items(t)]
+		    set xhat [TupleToList $items(tx)]
+
+				geom_disorientProfile -src /group/$grp/$point -dst /lsGUI/$pathid/$point/ls -path_pos $pos -path_tan $nrm -path_xhat $xhat
+
+				#geom_disorientProfile -src $seg -dst blah -path_pos {2.313895 1.643045 -2.286795} -path_tan {0.534704 -0.562605 0.630530} -path_xhat {0.000000 0.746154 0.665773}
 
 				if {[repos_exists -obj /lsGUI/$pathid/$point/thr/selected]} {
 					puts "ls 1"
@@ -405,7 +414,7 @@ proc model_loop {folder} {
 proc model_groups {fold} {
 	global guiBOOLEANvars
 	global gFilenames
-
+  global createPREOPgrpKeptSelections
 	puts "loading surfaces $fold"
 	if {[llength [glob $fold/*]] <= 1} {
 		puts "empty groups folder continuing"
@@ -423,14 +432,22 @@ proc model_groups {fold} {
 	foreach grp $groups {
     	set numSegs [llength [group_get $grp]]
 			if {$numSegs > 1} {
-				catch {
+
 				set fn [open "log.txt" "a"]
 				puts $img.$grp
 				puts $fn $img.$grp
 				close $fn
-				set guiBOOLEANvars(selected_groups) $grp
-				create_model_polydata $grp
-				repos_writeVtkPolyData -file $img.$grp.vtp -obj /models/PolyData/$grp -type ascii
+				#catch {
+				#set guiBOOLEANvars(selected_groups) $grp
+				#create_model_polydata $grp
+				#repos_writeVtkPolyData -file $img.$grp.vtp -obj /models/PolyData/$grp -type ascii
+				#}
+				catch {
+				set createPREOPgrpKeptSelections [list $grp]
+				puts [llength $createPREOPgrpKeptSelections]
+				opencascade_model $grp
+				create_polydata_solid_from_nurbs $grp ${grp}pd
+				repos_writeVtkPolyData -file $img.$grp.cascade.vtp -obj /models/OpenCASCADE/$grp -type ascii
 			}
 			}
 
@@ -543,4 +560,249 @@ proc create_model_polydata {model_name} {
 
 	puts "Model creation $model_name complete"
   #tk_messageBox -title "Solid Unions Complete"  -type ok -message "Number of Free Edges: [lindex $rtnstr 0]\n (Free edges are okay for open surfaces)\n Number of Bad Edges: [lindex $rtnstr 1]"
+}
+
+proc opencascade_model {modelname} {
+   global symbolicName
+   global createPREOPgrpKeptSelections
+   global gFilenames
+   global gObjects
+   global gLoftedSolids
+   global gOptions
+
+   set gOptions(meshing_solid_kernel) OpenCASCADE
+   solid_setKernel -name $gOptions(meshing_solid_kernel)
+   set kernel $gOptions(meshing_solid_kernel)
+   set gOptions(meshing_solid_kernel) $kernel
+   solid_setKernel -name $kernel
+
+   set tv $symbolicName(guiSV_group_tree)
+  set children [$tv children {}]
+
+   if {[lsearch -exact $children .groups.all] >= 0} {
+     set children [$tv children .groups.all]
+     if {$children == ""} {
+       return
+     }
+   }
+
+   #set createPREOPgrpKeptSelections {}
+   puts "children: $children"
+
+    foreach child $children {
+      if {[lindex [$tv item $child -values] 0] == "X"} {
+  lappend createPREOPgrpKeptSelections [string range $child 12 end]
+      }
+    }
+
+   #set modelname [guiSV_model_new_surface_name 0]
+   catch {repos_delete -obj $modelname}
+   if {[model_create $kernel $modelname] != 1} {
+     guiSV_model_delete_model $kernel $modelname
+     catch {repos_delete -obj /models/$kernel/$modelname}
+     model_create $kernel $modelname
+   }
+   guiSV_model_update_tree
+
+    #set modelname $gObjects(preop_solid)
+
+   if {[llength $createPREOPgrpKeptSelections] == 0} {
+      puts "No solid models selected.  Nothing done!"
+      return
+   }
+
+   puts "Will union together the following SolidModel objects:"
+   puts "  $createPREOPgrpKeptSelections"
+
+   if {[repos_exists -obj $modelname] == 1} {
+      puts "Warning:  object $modelname existed and is being replaced."
+      repos_delete -obj $modelname
+   }
+
+    if {[repos_exists -obj /models/$kernel/$modelname] == 1} {
+      repos_delete -obj /model/$kernel/$modelname
+    }
+    # create solids
+    foreach i $createPREOPgrpKeptSelections {
+      set cursolid ""
+      catch {set cursolid $gLoftedSolids($i)}
+      # loft solid from group
+      global gPathBrowser
+      set keepgrp $gPathBrowser(currGroupName)
+      set gPathBrowser(currGroupName) $i
+      #puts "align"
+      #vis_img_SolidAlignProfiles;
+      #puts "fit"
+      #vis_img_SolidFitCurves;
+      #puts "loft"
+      #vis_img_SolidLoftSurf;
+      #vis_img_SolidCapSurf;
+      # set it back to original
+      global gRen3dFreeze
+      set oldFreeze $gRen3dFreeze
+      set gRen3dFreeze 1
+      makeSurfOCCT
+      set gRen3dFreeze $oldFreeze
+      set gPathBrowser(currGroupName) $keepgrp
+    }
+
+    set shortname [lindex $createPREOPgrpKeptSelections 0]
+    set cursolid $gLoftedSolids($shortname)
+    solid_copy -src $cursolid -dst $modelname
+    puts "copy $cursolid to preop model."
+
+    foreach i [lrange $createPREOPgrpKeptSelections 1 end] {
+      set cursolid $gLoftedSolids($i)
+      puts "union $cursolid into preop model."
+      if {[repos_type -obj $cursolid] != "SolidModel"} {
+         puts "Warning:  $cursolid is being ignored."
+         continue
+      }
+      puts $cursolid $modelname
+       solid_union -result /tmp/preop/$modelname -a $cursolid -b $modelname
+
+       repos_delete -obj $modelname
+       solid_copy -src /tmp/preop/$modelname -dst $modelname
+
+       repos_delete -obj /tmp/preop/$modelname
+    }
+
+    if {[repos_exists -obj /tmp/preop/$modelname] == 1} {
+      repos_delete -obj /tmp/preop/$modelname
+    }
+
+    #global tcl_platform
+    #if {$tcl_platform(os) == "Darwin"} {
+    #  #Find face areas and remove two smaller ones
+    #  set num [llength $createPREOPgrpKeptSelections]
+    #  if { $num > 1} {
+    #    guiSV_model_opencascade_fixup $modelname $num
+    #  }
+    #}
+
+    global gOCCTFaceNames
+    crd_ren gRenWin_3D_ren1
+    set pretty_names {}
+    set all_ids {}
+    foreach i [$modelname GetFaceIds] {
+      catch {set type [$modelname GetFaceAttr -attr gdscName -faceId $i]}
+      catch {set parent [$modelname GetFaceAttr -attr parent -faceId $i]}
+      set facename "[string trim $type]_[string trim $parent]"
+      lappend pretty_names $facename
+      set gOCCTFaceNames($i) $facename
+      $modelname SetFaceAttr -attr gdscName -faceId $i -value $facename
+      lappend all_ids $i
+    }
+    set isdups 0
+    if {[llength [lsort -unique $pretty_names]] != [llength $pretty_names]} {
+     set isdups 1
+     set duplist [lsort -dictionary $pretty_names]
+     foreach i [lsort -unique $pretty_names] {
+        set idx [lsearch -exact $duplist $i]
+        set duplist [lreplace $duplist $idx $idx]
+     }
+     set msg "Duplicate faces found, automatically renaming!\n\n"
+     set duplistids {}
+     set numdupslist {}
+     foreach dup $duplist {
+       set alldups [lsearch -exact -all $pretty_names $dup]
+       set numdups [expr [llength $alldups]-1]
+       lappend numdupslist $numdups
+       for {set i 0} {$i < $numdups} {incr i} {
+         set id [lindex $all_ids [lindex $alldups [expr $i+1]]]
+         lappend duplistids $id
+       }
+     }
+     set dupnum 0
+     for {set i 0} {$i < [llength $duplist]} {incr i} {
+       set dup [lindex $duplist $i]
+       set name_num 2
+       set numdups [lindex $numdupslist $i]
+       for {set j $dupnum} {$j < [expr $numdups+$dupnum]} {incr j} {
+         set dupid [lindex $duplistids $j]
+         set newname ${dup}_$name_num
+         incr name_num
+         set msg "$msg  Duplicate face name $dup was renamed to $newname\n"
+         set gOCCTFaceNames($dupid) $newname
+         $modelname SetFaceAttr -attr gdscName -faceId $dupid -value $newname
+       }
+       set dupnum [expr $dupnum + $numdups]
+     }
+    }
+
+    guiSV_model_add_faces_to_tree $kernel $modelname
+    guiSV_model_display_only_given_model $modelname 1
+    #if {$isdups == 1} {
+    #  tk_messageBox -title "Duplicate Face Names" -type ok -message $msg
+    #}
+
+}
+
+proc create_polydata_solid_from_nurbs {model newmodel} {
+  global guiTRIMvars
+  global symoblicName
+  global gOptions
+  global gKernel
+  global guiSVvars
+
+  #set model [guiSV_model_get_tree_current_models_selected]
+  if {[llength $model] != 1} {
+    return -code error "ERROR: Must select model from tree and only one allowed to create Discrete at a time"
+  }
+  puts $gKernel($model)
+  if {!($gKernel($model) == "Parasolid" || $gKernel($model) == "OpenCASCADE")} {
+    return -code error "ERROR: Must use  a Parasolid or OpenCASCADE model to create PolyData Model"
+  }
+  set kernel $gKernel($model)
+  set modelpd /tmp/models/$kernel/$model
+  solid_setKernel -name $kernel
+  if {[repos_exists -obj $modelpd] == 1} {
+    catch {repos_delete -obj $modelpd}
+  }
+  set facet_metric 1.0
+  if {$kernel == "Parasolid"} {
+    set facet_metric $guiSVvars(facet_max_edge_size)
+  } elseif {$kernel == "OpenCASCADE"} {
+    set facet_metric $gOptions(facet_max_angle_dev)
+  }
+  $model GetPolyData -result $modelpd -max_edge_size $facet_metric
+
+  set facevtklist {}
+  set facenames {}
+  set idlist {}
+  foreach faceid [$model GetFaceIds] {
+    catch {set facename [$model GetFaceAttr -attr gdscName -faceId $faceid]}
+    lappend facenames $facename
+    set facepd /tmp/models/$kernel/$model/$facename
+    if {[repos_exists -obj $facepd] == 1} {
+      catch {repos_delete -obj $facepd}
+    }
+    $model GetFacePolyData -face $faceid -result $facepd -max_edge_size $facet_metric
+    lappend facevtklist $facepd
+    lappend idlist $faceid
+  }
+
+  set gOptions(meshing_solid_kernel) PolyData
+  set kernel PolyData
+  solid_setKernel -name $kernel
+
+  #set newmodel [guiSV_model_new_surface_name 0]
+  set newmodelpd /models/$kernel/$newmodel
+  if {[model_create $kernel $newmodel] != 1} {
+    guiSV_model_delete_model $kernel $newmodel
+    catch {repos_delete -obj $newmodelpd}
+    model_create $kernel $newmodel
+  }
+
+  model_name_model_from_polydata_names -model $modelpd -facelist $facevtklist -ids $idlist -result $newmodel
+
+  global gPolyDataFaceNames
+  set allids [$newmodel GetFaceIds]
+  foreach id $allids {
+    set loc [lsearch -exact $idlist $id]
+    set newname [lindex $facenames $loc]
+    set gPolyDataFaceNames($id) $newname
+  }
+  guiSV_model_add_faces_to_tree $kernel $newmodel
+  guiSV_model_display_only_given_model $newmodel 1
 }
